@@ -1,0 +1,76 @@
+{
+  "version": "0.2.0-ui-pass",
+  "versionCode": 3,
+  "schemaVersion": 2,
+  "suites": [
+    {
+      "suite": "app.traxos.finance.FormViewModelTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "app.traxos.finance.HomeStartupTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "app.traxos.finance.LedgerRepositoryTest",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "app.traxos.finance.LoadingUiTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "app.traxos.finance.MoneyTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "app.traxos.finance.NavigationUiTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "app.traxos.finance.PreferencesMigrationTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "app.traxos.finance.SavedLedgerLaunchTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "app.traxos.finance.UiAppearanceTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "lintErrors": 0,
+  "lintWarnings": 14,
+  "sameSigningCertificateAsPreviousApk": true,
+  "zip16KiBAlignmentPassed": true,
+  "physicalDeviceTested": false,
+  "screenshotData": "synthetic UI-test fixture, not production data"
+}

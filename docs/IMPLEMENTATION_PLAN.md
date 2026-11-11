@@ -2,6 +2,12 @@
 
 Source of truth: [complete V3 blueprint](Traxos_Native_Android_Product_Blueprint_v3.md). Read in full before project code was written. User initialization instructions override infrastructure recommendations and milestone scope. This is a development roadmap, not a release-completion statement.
 
+## UI-only milestone — 0.2.0-ui-pass
+
+P0 refinement, with no additional finance module. Deliver custom navy dashboard (per-currency balance hero/watermark, search, inflow/outflow, active account cards, recent ledger), compact custom top/bottom navigation, Settings-configured center action (Add Transaction/Accounts/Transactions/Home), global list/dashboard amount masking, and static genuine-loading skeletons. Remove overlapping NavHost fades. Preserve existing transactions, account management, Undo, search/paging, dirty forms and financial rules.
+
+Dependencies: existing M1 repository; Room v1→v2 preference-only migration; no destructive migration, cloud service, new finance feature or emulator. Acceptance: build + existing tests + migration persistence + early-frame navigation exclusivity + shortcut/masking/theme UI + narrow/200% font checks + loading/empty states. Verify signing continuity with 0.1.1 and publish an in-place APK. Physical phone, IME, TalkBack and OEM checks remain separate gates. Host design previews use explicitly synthetic test data, never production seeds.
+
 ## Maintenance gate before Milestone 2
 
 Reopen crash hotfix 0.1.1-dev: reproduce Home's duplicate currency-row keys in a populated-state Compose test, scope keys by section, cover persisted-ledger launch/recreation, run complete build/test/lint, verify matching APK signing identity, publish an in-place update. Schema remains v1 and user data must be preserved. No transfers or navigation redesign are included in this patch.

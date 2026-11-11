@@ -49,3 +49,7 @@ Additional publishing files: `downloads/README.md`, `downloads/TRAXOS-0.1.0-dev.
 Reopen-crash patch modifies `ui/App.kt` (section-scoped lazy keys), app version/test dependencies, version catalog, README/download instructions and maintenance documentation. New host UI tests: `app/src/test/java/app/traxos/finance/HomeStartupTest.kt` and `app/src/test/java/app/traxos/finance/SavedLedgerLaunchTest.kt`. Patch validation evidence is under `docs/validation/reopen/`.
 
 Hotfix artifacts: `downloads/TRAXOS-0.1.1-dev.apk`, updated `downloads/SHA256SUMS.txt`, `docs/validation/reopen/before.txt`, `docs/validation/reopen/build.log`, `docs/validation/reopen/host-results.json`.
+
+UI pass additions: `ui/Components.kt`, `ui/Dashboard.kt`, `ui/LedgerScreens.kt`, `ui/Navigation.kt`, `ui/SettingsScreen.kt`, exported Room schema `2.json`, `PreferencesMigrationTest.kt`, `NavigationUiTest.kt`, `UiAppearanceTest.kt`, `LoadingUiTest.kt`. Modified: App.kt/forms, Theme.kt, ViewModels.kt, Database.kt/preferences DAO/migration, LedgerRepository.kt/partial preference updates, app version/test schema resources, startup tests, architecture/plan/progress/device QA and download documentation. New validation artifacts are under `docs/validation/ui-pass/`.
+
+Published UI-pass artifacts: `downloads/TRAXOS-0.2.0-ui-pass.apk`, checksum update, `docs/validation/ui-pass/{README.md,host-results.json,build.log,dashboard-light.png,dashboard-dark.png}`.

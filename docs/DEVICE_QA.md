@@ -28,3 +28,13 @@ Use an API 26+ physical phone with USB debugging; repeat on target OEMs and Andr
 - [ ] Signed in-place update keeps records; schema upgrade tests must exist before schema version changes. Never uninstall as update advice.
 
 Before release: encrypted storage/Keystore/PIN/biometrics, tested portable restore and all applicable V3 §39 cases 1–50. Save measured p95 commit/startup/50k-row results separately; no benchmark claims yet.
+
+## 0.2.0 UI pass — phone acceptance pending
+
+- Install over 0.1.1 without uninstalling/clearing storage; verify all accounts, notes, balances and journal-derived history retained.
+- Cycle Home/Activity/Accounts/Settings rapidly; no old-page text fading over new text. Back/Up, tab scroll/search and dirty form handling still correct.
+- Choose each center action in Settings, return and invoke it; restart and confirm persistence. Header Quick Add must work regardless of assignment.
+- Hide amounts, inspect dashboard/accounts/transactions, close/reopen and confirm no visible amount flash. Entry/edit amount fields remain intentionally visible.
+- Check System/Light/Dark and small phones, 200% text, long names/large amounts, landscape, TalkBack and keyboard Save reachability. Only safe touch targets (48dp+) and system insets may increase chrome height.
+- Test cold Room loading/empty data and retry/error states; cached data must not receive fake loading delays. Save/Delete/Undo, archive/restore, financial arithmetic and paging/search remain functional offline.
+- Compare actual phone render with host previews (synthetic fixture values only); host rendering is not OEM/device certification.

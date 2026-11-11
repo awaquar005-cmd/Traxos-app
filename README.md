@@ -4,11 +4,13 @@ Offline-first Kotlin/Jetpack Compose personal finance application. Development m
 
 ## Download for phone testing
 
-**0.1.1-dev fixes the crash when reopening after saving data. Install as an update over the existing app; do not uninstall or clear storage.**
+**0.2.0-ui-pass refines the dashboard/navigation and keeps the reopen-crash fix. Install as an update over the existing app; do not uninstall or clear storage.**
 
-[Download the test APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.1.1-dev.apk) · [APK folder and installation help](downloads/README.md).
+[Download the test APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.2.0-ui-pass.apk) · [APK folder and installation help](downloads/README.md).
 
 The repository is available at https://github.com/awaquar005-cmd/Traxos-app. `/workspace/...` paths in development records refer to the cloud workspace, not your laptop. Use the GitHub link to download.
+
+New UI: custom navy balance hero/watermark, compact navigation, real loading skeletons and Settings-configured center shortcut. Balance visibility is persisted and applies to dashboard/lists. Finance scope remains unchanged. Room schema 2 safely upgrades preference fields from v1. [Light/dark host previews and validation](docs/validation/ui-pass/README.md).
 
 ## Structure
 
@@ -48,7 +50,7 @@ Gradle heap: 1.5 GB, two workers, parallel project builds off, in-process Kotlin
 
 ## Development boundaries
 
-Build status: `assembleDebug`, `testDebugUnitTest` (28 tests) and `lintDebug` passed. Lint has 14 dependency-version update notices, no errors. Physical-phone acceptance is pending.
+Build status: `assembleDebug`, `testDebugUnitTest` (35 tests) and `lintDebug` passed. Lint has 14 dependency-version update notices, no errors. Physical-phone acceptance is pending.
 
 Implemented source covers cash/bank accounts, expense/income CRUD, soft-delete snackbar Undo, SQL month totals, per-currency balances, paged/debounced search, local theme preferences, persisted form fields and operation identity. Read [PROGRESS](docs/PROGRESS.md) for what actually compiled or ran; written code is not equivalent to verified behavior.
 

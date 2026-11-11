@@ -1,10 +1,10 @@
 package app.traxos.finance
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollToNode
 import androidx.test.core.app.ActivityScenario
@@ -70,11 +70,11 @@ class SavedLedgerLaunchTest {
         }
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             awaitLedger()
-            compose.onNode(hasScrollAction()).performScrollToNode(hasText("Saved lunch"))
+            compose.onNodeWithTag("dashboard_list").performScrollToNode(hasText("Saved lunch"))
             compose.onNodeWithText("Saved lunch").assertIsDisplayed()
             scenario.recreate()
             awaitLedger()
-            compose.onNode(hasScrollAction()).performScrollToNode(hasText("Saved lunch"))
+            compose.onNodeWithTag("dashboard_list").performScrollToNode(hasText("Saved lunch"))
             compose.onNodeWithText("Saved lunch").assertIsDisplayed()
             runBlocking {
                 assertEquals(1L, app.repository.dao.recordCount())
@@ -86,7 +86,7 @@ class SavedLedgerLaunchTest {
 
     private fun awaitLedger() {
         compose.waitUntil(timeoutMillis = 15000) {
-            compose.onAllNodesWithText("SPENT THIS MONTH").fetchSemanticsNodes().isNotEmpty() ||
+            compose.onAllNodesWithText("TOTAL BALANCE").fetchSemanticsNodes().isNotEmpty() ||
                 compose.onAllNodesWithText("Saved lunch").fetchSemanticsNodes().isNotEmpty()
         }
     }

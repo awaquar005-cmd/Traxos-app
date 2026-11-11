@@ -2,11 +2,10 @@ package app.traxos.finance
 
 import android.app.Application
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import app.traxos.finance.data.*
 import app.traxos.finance.ui.HomeScreen
@@ -49,8 +48,9 @@ class HomeStartupTest {
                 summary = listOf(Summary("INR", 2500, 0)),
             )
         compose.setContent { TraxosTheme("LIGHT") { HomeScreen(state, {}, {}) } }
-        compose.onNodeWithText("Account balances").performScrollTo().assertIsDisplayed()
-        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Saved lunch"))
+        compose.onNodeWithTag("dashboard_list").performScrollToNode(hasText("Recent activity"))
+        compose.onNodeWithText("Recent activity").assertIsDisplayed()
+        compose.onNodeWithTag("dashboard_list").performScrollToNode(hasText("Saved lunch"))
         compose.onNodeWithText("Saved lunch").assertIsDisplayed()
     }
 }

@@ -3,6 +3,7 @@ package app.traxos.finance.data
 import android.content.Context
 import androidx.paging.PagingSource
 import androidx.room.*
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.flow.Flow
 
@@ -61,7 +62,12 @@ data class LedgerRecord(
 )
 
 @Entity(tableName = "preferences")
-data class Preferences(@PrimaryKey val id: Int = 1, val theme: String = "SYSTEM")
+data class Preferences(
+    @PrimaryKey val id: Int = 1,
+    val theme: String = "SYSTEM",
+    @ColumnInfo(defaultValue = "'ADD_TRANSACTION'") val centerAction: String = "ADD_TRANSACTION",
+    @ColumnInfo(defaultValue = "0") val balancesHidden: Boolean = false,
+)
 
 @Entity(
     tableName = "outbox_operations",
@@ -145,6 +151,14 @@ interface LedgerDao {
 
     @Insert suspend fun insertOperation(operation: OutboxOperation)
 
+    @Query("UPDATE preferences SET theme = :theme WHERE id = 1") suspend fun setTheme(theme: String)
+
+    @Query("UPDATE preferences SET centerAction = :action WHERE id = 1")
+    suspend fun setCenterAction(action: String)
+
+    @Query("UPDATE preferences SET balancesHidden = :hidden WHERE id = 1")
+    suspend fun setBalancesHidden(hidden: Boolean)
+
     @Upsert suspend fun preferences(preferences: Preferences)
 }
 
@@ -157,15 +171,28 @@ interface LedgerDao {
             Preferences::class,
             OutboxOperation::class,
         ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class TraxosDatabase : RoomDatabase() {
     abstract fun ledger(): LedgerDao
 
     companion object {
+        val MIGRATION_1_2 =
+            object : Migration(1, 2) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "ALTER TABLE preferences ADD COLUMN centerAction TEXT NOT NULL DEFAULT 'ADD_TRANSACTION'"
+                    )
+                    db.execSQL(
+                        "ALTER TABLE preferences ADD COLUMN balancesHidden INTEGER NOT NULL DEFAULT 0"
+                    )
+                }
+            }
+
         fun open(context: Context, name: String = "traxos.db"): TraxosDatabase =
             Room.databaseBuilder(context, TraxosDatabase::class.java, name)
+                .addMigrations(MIGRATION_1_2)
                 .addCallback(
                     object : Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {

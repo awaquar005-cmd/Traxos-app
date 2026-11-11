@@ -25,10 +25,13 @@ private val Light =
         primary = Color(0xFF275AC7),
         onPrimary = Color.White,
         secondary = Color(0xFF111B2F),
-        background = Color(0xFFF6F8FB),
-        surface = Color(0xFFF6F8FB),
+        background = Color(0xFFF1F4F9),
+        surface = Color(0xFFF1F4F9),
         onSurface = Color(0xFF111B2F),
         surfaceContainer = Color(0xFFE9EEF5),
+        surfaceContainerLowest = Color.White,
+        onSurfaceVariant = Color(0xFF57647A),
+        outlineVariant = Color(0xFFD9E1EC),
         error = Color(0xFFAD302C),
     )
 private val Dark =
@@ -40,6 +43,9 @@ private val Dark =
         surface = Color(0xFF0C1423),
         onSurface = Color(0xFFE3E9F4),
         surfaceContainer = Color(0xFF1A263B),
+        surfaceContainerLowest = Color(0xFF152238),
+        onSurfaceVariant = Color(0xFFABBAD1),
+        outlineVariant = Color(0xFF2C3C55),
         error = Color(0xFFFFB4AB),
     )
 
@@ -54,9 +60,9 @@ private fun type(size: Int, line: Int, weight: FontWeight = FontWeight.Normal) =
 
 private val TraxosType =
     Typography(
-        headlineMedium = type(30, 38, FontWeight.SemiBold),
+        headlineMedium = type(32, 40, FontWeight.SemiBold),
         headlineSmall = type(24, 32, FontWeight.SemiBold),
-        titleLarge = type(21, 28, FontWeight.SemiBold),
+        titleLarge = type(20, 28, FontWeight.SemiBold),
         titleMedium = type(16, 24, FontWeight.Medium),
         bodyLarge = type(16, 24),
         bodyMedium = type(14, 21),

@@ -6,16 +6,15 @@
 package app.traxos.finance.ui
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.clickable
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -27,12 +26,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -46,15 +43,8 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
-import androidx.paging.LoadState
-import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemKey
-import app.traxos.finance.BuildConfig
-import app.traxos.finance.R
 import app.traxos.finance.data.*
 import app.traxos.finance.domain.Money
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.launch
 
 @Composable
@@ -67,6 +57,11 @@ fun TraxosApp(vm: MainViewModel) {
     val scope = rememberCoroutineScope()
     val haptic = LocalHapticFeedback.current
     val reads by vm.reads.collectAsStateWithLifecycle()
+    val loadedPreferences by vm.preferences.collectAsStateWithLifecycle()
+    val prefs = loadedPreferences ?: Preferences(balancesHidden = true)
+    val visibleReads = if (loadedPreferences == null) ReadState.Loading else reads
+    val preferenceBusy by vm.busy.collectAsStateWithLifecycle()
+    var focusSearch by rememberSaveable { mutableStateOf(false) }
     val owner = LocalLifecycleOwner.current
     DisposableEffect(owner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -75,496 +70,182 @@ fun TraxosApp(vm: MainViewModel) {
         owner.lifecycle.addObserver(observer)
         onDispose { owner.lifecycle.removeObserver(observer) }
     }
+    val mainNav: (String) -> Unit = { target ->
+        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        if (nav.currentDestination?.route != target) {
+            if (target == "settings") nav.navigate(target) { launchSingleTop = true }
+            else
+                nav.navigate(target) {
+                    popUpTo(nav.graph.startDestinationId) { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+        }
+    }
+    val add: () -> Unit = { nav.navigate("transaction/new") { launchSingleTop = true } }
+    val search: () -> Unit = {
+        focusSearch = true
+        mainNav("transactions")
+    }
     val feedback: (Feedback) -> Unit = { f ->
         if (f.close) {
             vm.refresh()
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
             nav.popBackStack()
         }
-        scope.launch {
-            val result =
-                snackbar.showSnackbar(
-                    f.text,
-                    actionLabel = if (f.undoId != null) "Undo" else null,
-                    withDismissAction = true,
-                )
-            if (result == SnackbarResult.ActionPerformed) vm.undo(f)
-        }
+        if (f.preferenceChange) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        else
+            scope.launch {
+                val result =
+                    snackbar.showSnackbar(
+                        f.text,
+                        actionLabel = if (f.undoId != null) "Undo" else null,
+                        withDismissAction = true,
+                    )
+                if (result == SnackbarResult.ActionPerformed) vm.undo(f)
+            }
     }
     LaunchedEffect(vm) { for (event in vm.events) feedback(event) }
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             if (!form)
-                TopAppBar(
-                    title = {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        ) {
-                            Icon(
-                                painterResource(R.drawable.traxos_mark),
-                                contentDescription = "Traxos",
-                                modifier = Modifier.size(28.dp),
-                                tint = MaterialTheme.colorScheme.onSurface,
-                            )
-                            Text(
-                                if (route == "settings") "Settings" else "TRAXOS",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                            )
-                        }
-                    },
-                    navigationIcon = {
-                        if (route == "settings")
-                            IconButton(onClick = { nav.popBackStack() }) {
-                                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
-                            }
-                    },
-                    actions = {
-                        if (route != "settings")
-                            IconButton(
-                                onClick = { nav.navigate("settings") { launchSingleTop = true } }
-                            ) {
-                                Icon(Icons.Default.Settings, "Settings")
-                            }
-                    },
-                )
+                Surface(color = MaterialTheme.colorScheme.background) {
+                    Box(Modifier.statusBarsPadding()) {
+                        TraxosToolbar(
+                            when (route) {
+                                "transactions" -> "Transactions"
+                                "accounts" -> "Accounts"
+                                "settings" -> "Settings"
+                                else -> "Dashboard"
+                            },
+                            back =
+                                if (route == "settings") {
+                                    {
+                                        nav.popBackStack()
+                                        Unit
+                                    }
+                                } else null,
+                            settings =
+                                if (route != "settings") {
+                                    { mainNav("settings") }
+                                } else null,
+                            add = if (route != "settings") add else null,
+                        )
+                    }
+                }
         },
         bottomBar = {
             if (!form && route != "settings")
-                NavigationBar {
-                    listOf(
-                            Triple("home", "Home", Icons.Default.Home),
-                            Triple("transactions", "Transactions", Icons.AutoMirrored.Filled.List),
-                            Triple("accounts", "Accounts", Icons.Default.AccountCircle),
-                        )
-                        .forEach { (key, label, icon) ->
-                            NavigationBarItem(
-                                selected = route == key,
-                                onClick = {
-                                    nav.navigate(key) {
-                                        popUpTo(nav.graph.startDestinationId) { saveState = true }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                },
-                                icon = { Icon(icon, label) },
-                                label = { Text(label) },
-                            )
-                        }
-                }
-        },
-        floatingActionButton = {
-            if (!form && route != "settings")
-                FloatingActionButton(
-                    onClick = { nav.navigate("transaction/new") { launchSingleTop = true } },
-                    containerColor = MaterialTheme.colorScheme.primary,
+                TraxosBottomBar(
+                    route,
+                    CenterShortcut.from(prefs.centerAction),
+                    mainNav,
+                    loadedPreferences != null,
                 ) {
-                    Icon(Icons.Default.Add, "Add transaction")
+                    when (CenterShortcut.from(prefs.centerAction)) {
+                        CenterShortcut.ADD_TRANSACTION -> add()
+                        CenterShortcut.HOME -> mainNav("home")
+                        CenterShortcut.ACCOUNTS -> mainNav("accounts")
+                        CenterShortcut.TRANSACTIONS -> mainNav("transactions")
+                    }
                 }
         },
     ) { padding ->
         NavHost(
             nav,
             startDestination = "home",
-            modifier = Modifier.fillMaxSize().padding(padding),
+            modifier =
+                Modifier.fillMaxSize()
+                    .padding(padding)
+                    .background(MaterialTheme.colorScheme.background),
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None },
         ) {
             composable("home") {
-                WithReadState(reads, vm::retry) {
-                    HomeScreen(
-                        it,
-                        { nav.navigate("account/new") { launchSingleTop = true } },
-                        { nav.navigate("transaction/$it") { launchSingleTop = true } },
-                    )
+                RoutePage("home") {
+                    WithReadState(visibleReads, vm::retry) {
+                        HomeScreen(
+                            it,
+                            { nav.navigate("account/new") { launchSingleTop = true } },
+                            { id -> nav.navigate("transaction/$id") { launchSingleTop = true } },
+                            prefs.balancesHidden,
+                            { vm.balancesHidden(!prefs.balancesHidden) },
+                            search,
+                            { mainNav("accounts") },
+                            { id -> nav.navigate("account/$id") { launchSingleTop = true } },
+                            !preferenceBusy && loadedPreferences != null,
+                        )
+                    }
                 }
             }
             composable("transactions") {
-                TransactionsScreen(
-                    vm,
-                    { nav.navigate("transaction/$it") { launchSingleTop = true } },
-                )
-            }
-            composable("accounts") {
-                WithReadState(reads, vm::retry) {
-                    AccountsScreen(
-                        it.accounts,
-                        { nav.navigate("account/$it") { launchSingleTop = true } },
+                RoutePage("transactions") {
+                    TransactionsScreen(
+                        vm,
+                        { nav.navigate("transaction/$it") { launchSingleTop = true } },
+                        prefs.balancesHidden,
+                        focusSearch,
+                        { focusSearch = false },
+                        add,
                     )
                 }
             }
-            composable("settings") { SettingsScreen(vm) }
-            composable("transaction/{id}") { FormDestination(vm, false, nav, reads, feedback) }
-            composable("account/{id}") { FormDestination(vm, true, nav, reads, feedback) }
+            composable("accounts") {
+                RoutePage("accounts") {
+                    WithReadState(visibleReads, vm::retry, "accounts") {
+                        AccountsScreen(
+                            it.accounts,
+                            { id -> nav.navigate("account/$id") { launchSingleTop = true } },
+                            prefs.balancesHidden,
+                        )
+                    }
+                }
+            }
+            composable("settings") { RoutePage("settings") { SettingsScreen(vm) } }
+            composable("transaction/{id}") {
+                RoutePage("transaction_form") { FormDestination(vm, false, nav, reads, feedback) }
+            }
+            composable("account/{id}") {
+                RoutePage("account_form") { FormDestination(vm, true, nav, reads, feedback) }
+            }
         }
     }
 }
 
 @Composable
-private fun WithReadState(
+private fun RoutePage(name: String, content: @Composable () -> Unit) {
+    Box(
+        Modifier.fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .testTag("page_$name")
+    ) {
+        content()
+    }
+}
+
+@Composable
+internal fun WithReadState(
     state: ReadState,
     retry: () -> Unit,
+    kind: String = "home",
     content: @Composable (ReadState.Ready) -> Unit,
 ) {
     when (state) {
-        ReadState.Loading ->
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
+        ReadState.Loading -> ScreenSkeleton(kind)
         ReadState.Failed ->
-            Message(
-                "Could not open local records",
-                "Your records have not been changed.",
-                "Retry",
-                retry,
-            )
-        is ReadState.Ready -> content(state)
-    }
-}
-
-@Composable
-private fun Message(
-    title: String,
-    detail: String,
-    action: String? = null,
-    onAction: () -> Unit = {},
-) {
-    Column(
-        Modifier.fillMaxWidth().padding(Space.large),
-        verticalArrangement = Arrangement.spacedBy(Space.medium),
-    ) {
-        Text(title, style = MaterialTheme.typography.titleLarge)
-        Text(
-            detail,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        if (action != null) Button(onClick = onAction) { Text(action) }
-    }
-}
-
-@Composable
-private fun MoneyText(minor: Long, currency: String, large: Boolean = false, prefix: String = "") {
-    Text(
-        prefix + Money.format(minor, currency),
-        style =
-            (if (large) MaterialTheme.typography.headlineMedium
-                else MaterialTheme.typography.titleMedium)
-                .copy(fontFeatureSettings = "tnum"),
-        fontWeight = FontWeight.SemiBold,
-        fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif,
-    )
-}
-
-@Composable
-internal fun HomeScreen(
-    state: ReadState.Ready,
-    createAccount: () -> Unit,
-    openRecord: (String) -> Unit,
-) {
-    LazyColumn(
-        Modifier.fillMaxSize(),
-        contentPadding =
-            PaddingValues(
-                start = Space.gutter,
-                end = Space.gutter,
-                top = Space.small,
-                bottom = 96.dp,
-            ),
-        verticalArrangement = Arrangement.spacedBy(Space.gutter),
-    ) {
-        item {
-            Text(
-                LocalDate.now().format(DateTimeFormatter.ofPattern("MMMM yyyy")),
-                style = MaterialTheme.typography.titleMedium,
-            )
-        }
-        item {
-            Text(
-                "Your money, in view.",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
-        item {
-            Text(
-                "On this phone only · Not backed up",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        if (state.accounts.isEmpty())
-            item {
+            Box(Modifier.padding(16.dp)) {
                 Message(
-                    "Start with an account",
-                    "Add cash or a bank account with your known opening balance. No sign-in needed.",
-                    "Create account",
-                    createAccount,
+                    "Could not open local records",
+                    "Your records are unchanged.",
+                    "Retry",
+                    retry,
                 )
             }
-        else {
-            item {
-                Text(
-                    "SPENT THIS MONTH",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            if (state.summary.isEmpty()) item { Text("No spending or income recorded this month.") }
-            items(state.summary, key = { "summary:${it.currency}" }) { s ->
-                Column(verticalArrangement = Arrangement.spacedBy(Space.small)) {
-                    MoneyText(s.expenseMinor, s.currency, true)
-                    Text(
-                        "Income · " + Money.format(s.incomeMinor, s.currency),
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
-            }
-            item {
-                HorizontalDivider()
-                Text(
-                    "Account balances",
-                    modifier = Modifier.padding(top = Space.gutter),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-            }
-            items(
-                state.accounts.groupBy { it.account.currency }.toList(),
-                key = { "balance:${it.first}" },
-            ) { (currency, accounts) ->
-                Column {
-                    MoneyText(accounts.sumOf { it.balanceMinor }, currency)
-                    Text(
-                        "${accounts.size} account(s), including archived",
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
-            }
-        }
-        item {
-            Text(
-                "Recent transactions",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
-        if (state.recent.isEmpty())
-            item {
-                Text(
-                    "Nothing recorded yet. Tap + to add an expense or income.",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        items(state.recent, key = { "recent:${it.record.id}" }) {
-            RecordItem(it) { openRecord(it.record.id) }
-        }
-        item {
-            Text(
-                "Uninstalling or clearing app storage removes local records. Encrypted backups are planned for a later milestone.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
-
-@Composable
-private fun RecordItem(row: RecordRow, click: () -> Unit) {
-    Column(
-        Modifier.fillMaxWidth().clickable(onClick = click).padding(vertical = Space.medium),
-        verticalArrangement = Arrangement.spacedBy(Space.tiny),
-    ) {
-        // Stacked amount remains fully readable at narrow widths and large font scales.
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                if (row.record.type == "INCOME") "+" else "−",
-                Modifier.padding(end = Space.medium),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.primary,
-            )
-            Column(Modifier.weight(1f)) {
-                Text(
-                    row.record.note.ifBlank { row.categoryName },
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                Text(
-                    "${row.accountName} · ${row.categoryName}",
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-        MoneyText(
-            row.record.amountMinor,
-            row.currency,
-            prefix = if (row.record.type == "INCOME") "+ " else "− ",
-        )
-        Text(
-            LocalDate.ofEpochDay(row.record.day).format(DateTimeFormatter.ofPattern("d MMM yyyy")) +
-                " · " +
-                (if (row.record.type == "INCOME") "Income" else "Expense"),
-            style = MaterialTheme.typography.labelSmall,
-        )
-    }
-    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-}
-
-@Composable
-private fun TransactionsScreen(vm: MainViewModel, open: (String) -> Unit) {
-    val search by vm.search.collectAsStateWithLifecycle()
-    val list = vm.pages.collectAsLazyPagingItems()
-    Column(Modifier.fillMaxSize()) {
-        OutlinedTextField(
-            value = search,
-            onValueChange = vm::search,
-            label = { Text("Search notes, categories, accounts") },
-            modifier = Modifier.fillMaxWidth().padding(horizontal = Space.gutter),
-            singleLine = true,
-        )
-        LazyColumn(
-            Modifier.weight(1f),
-            contentPadding =
-                PaddingValues(
-                    start = Space.gutter,
-                    end = Space.gutter,
-                    top = Space.small,
-                    bottom = 96.dp,
-                ),
-        ) {
-            if (list.loadState.refresh is LoadState.Loading)
-                item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
-            if (list.loadState.refresh is LoadState.Error)
-                item {
-                    Message(
-                        "Could not load transactions",
-                        "Local records have not been changed.",
-                        "Retry",
-                        list::retry,
-                    )
-                }
-            if (list.itemCount == 0 && list.loadState.refresh is LoadState.NotLoading)
-                item {
-                    Message(
-                        if (search.isBlank()) "Your ledger starts here"
-                        else "No matching transactions",
-                        if (search.isBlank())
-                            "Tap + to record your first expense or income. Create an account first if needed."
-                        else "Try a different note, account or category.",
-                    )
-                }
-            items(list.itemCount, key = list.itemKey { it.record.id }) { i ->
-                list[i]?.let { row -> RecordItem(row) { open(row.record.id) } }
-            }
-            if (list.loadState.append is LoadState.Loading)
-                item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
-            if (list.loadState.append is LoadState.Error)
-                item { TextButton(onClick = list::retry) { Text("Retry loading more") } }
-        }
-    }
-}
-
-@Composable
-private fun AccountsScreen(accounts: List<AccountBalance>, open: (String) -> Unit) {
-    LazyColumn(
-        Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(Space.gutter, Space.small, Space.gutter, 96.dp),
-        verticalArrangement = Arrangement.spacedBy(Space.small),
-    ) {
-        item {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    "Accounts",
-                    Modifier.weight(1f),
-                    style = MaterialTheme.typography.headlineSmall,
-                )
-                TextButton(onClick = { open("new") }) { Text("Add account") }
-            }
-        }
-        if (accounts.isEmpty())
-            item { Text("No accounts yet. Add cash or a bank account to begin.") }
-        items(accounts, key = { it.account.id }) { a ->
-            Column(
-                Modifier.fillMaxWidth()
-                    .clickable { open(a.account.id) }
-                    .padding(vertical = Space.medium),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Text(
-                    a.account.name,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                Text(
-                    a.account.type.lowercase().replaceFirstChar { it.uppercase() } +
-                        if (a.account.archived) " · Archived" else " · Active",
-                    style = MaterialTheme.typography.labelMedium,
-                )
-                MoneyText(a.balanceMinor, a.account.currency)
-                Text(
-                    "Tap to rename or ${if(a.account.archived) "restore" else "archive"}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            HorizontalDivider()
-        }
-        item {
-            Text(
-                "Opening balances are known as of the date you choose. Each currency stays separate. Archived accounts retain history and balances.",
-                style = MaterialTheme.typography.bodySmall,
-            )
-        }
-    }
-}
-
-@Composable
-private fun SettingsScreen(vm: MainViewModel) {
-    val theme by vm.theme.collectAsStateWithLifecycle()
-    val busy by vm.busy.collectAsStateWithLifecycle()
-    Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(Space.gutter),
-        verticalArrangement = Arrangement.spacedBy(Space.medium),
-    ) {
-        Text("Appearance", style = MaterialTheme.typography.titleLarge)
-        listOf("SYSTEM" to "Follow system", "LIGHT" to "Light", "DARK" to "Dark").forEach {
-            (key, label) ->
-            Row(
-                Modifier.fillMaxWidth()
-                    .selectable(
-                        selected = theme == key,
-                        enabled = !busy,
-                        role = Role.RadioButton,
-                        onClick = { vm.theme(key) },
-                    )
-                    .heightIn(min = 48.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                RadioButton(selected = theme == key, onClick = null, enabled = !busy)
-                Text(label, Modifier.padding(start = Space.medium))
-            }
-        }
-        HorizontalDivider()
-        Text("TRAXOS", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        Text("Version ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
-        Text("Native Android · Offline personal finance")
-        Text("Development milestone 1", style = MaterialTheme.typography.labelLarge)
-        Text(
-            "Saved on this phone only. Uninstalling, clearing storage or losing this phone can permanently remove your records."
-        )
-        Text(
-            "Not yet implemented: encrypted backup/restore, PIN/biometrics, encrypted database, transfers, cards, plans and shared groups. This build uses app-private Room storage and is not ready for public release.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            "No advertising, analytics or cloud SDKs in this build.",
-            style = MaterialTheme.typography.bodySmall,
-        )
+        is ReadState.Ready -> content(state)
     }
 }
 
@@ -636,17 +317,10 @@ private fun FormDestination(
             dismissButton = { TextButton(onClick = { delete = false }) { Text("Cancel") } },
         )
     Column(Modifier.fillMaxSize()) {
-        TopAppBar(
-            windowInsets = WindowInsets(0, 0, 0, 0),
-            title = {
-                Text(
-                    if (account) if (vm.isNew) "New account" else "Edit account"
-                    else if (vm.isNew) "Add transaction" else "Edit transaction"
-                )
-            },
-            navigationIcon = {
-                IconButton(onClick = leave) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
-            },
+        TraxosToolbar(
+            if (account) if (vm.isNew) "New account" else "Edit account"
+            else if (vm.isNew) "Add transaction" else "Edit transaction",
+            back = leave,
         )
         Column(
             Modifier.fillMaxSize()
@@ -655,7 +329,9 @@ private fun FormDestination(
                 .padding(horizontal = Space.gutter),
             verticalArrangement = Arrangement.spacedBy(Space.medium),
         ) {
-            if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
+            if (loading) {
+                repeat(3) { SkeletonBlock(Modifier.fillMaxWidth().height(52.dp)) }
+            }
             if (fields.isNotEmpty()) {
                 if (account) AccountFields(fields, vm.isNew, !busy, vm::set)
                 else
@@ -680,6 +356,7 @@ private fun FormDestination(
                 if (fields.isEmpty()) TextButton(onClick = vm::load) { Text("Retry") }
             }
             Button(
+                shape = Radius.control,
                 onClick = vm::save,
                 enabled =
                     !busy &&
@@ -732,6 +409,13 @@ private fun Field(
         modifier = Modifier.fillMaxWidth().focusRequester(requester),
         singleLine = !multiline,
         minLines = if (multiline) 2 else 1,
+        shape = Radius.control,
+        colors =
+            OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+            ),
         keyboardOptions =
             KeyboardOptions(keyboardType = if (number) KeyboardType.Decimal else KeyboardType.Text),
     )
@@ -748,6 +432,12 @@ private fun Picker(
     var show by rememberSaveable { mutableStateOf(false) }
     val value = options.firstOrNull { it.first == selected }?.second ?: "Choose $label"
     OutlinedButton(
+        shape = Radius.control,
+        colors =
+            ButtonDefaults.outlinedButtonColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+            ),
         onClick = { show = true },
         enabled = enabled,
         modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),

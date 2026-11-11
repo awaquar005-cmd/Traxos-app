@@ -13,9 +13,10 @@ android {
         applicationId = "app.traxos.finance"
         minSdk = 26
         targetSdk = 36
-        versionCode = 2
-        versionName = "0.1.1-dev"
+        versionCode = 3
+        versionName = "0.2.0-ui-pass"
     }
+    sourceSets.getByName("test").resources.srcDir("schemas")
     buildFeatures {
         compose = true
         buildConfig = true

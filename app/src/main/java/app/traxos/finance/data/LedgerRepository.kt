@@ -192,6 +192,15 @@ class LedgerRepository(private val db: TraxosDatabase) {
 
     suspend fun setTheme(theme: String) {
         require(theme in listOf("SYSTEM", "LIGHT", "DARK"))
-        dao.preferences(Preferences(theme = theme))
+        dao.setTheme(theme)
+    }
+
+    suspend fun setCenterAction(action: String) {
+        require(action in listOf("ADD_TRANSACTION", "ACCOUNTS", "TRANSACTIONS", "HOME"))
+        dao.setCenterAction(action)
+    }
+
+    suspend fun setBalancesHidden(hidden: Boolean) {
+        dao.setBalancesHidden(hidden)
     }
 }

@@ -33,12 +33,14 @@ data class Feedback(
     val undoId: String? = null,
     val undoRevision: Long? = null,
     val undoDeleted: Boolean = true,
+    val preferenceChange: Boolean = false,
 )
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class MainViewModel(val repository: LedgerRepository, private val saved: SavedStateHandle) :
     ViewModel() {
     private val retry = MutableStateFlow(0)
+    private val preferenceRetry = MutableStateFlow(0)
     private val month = MutableStateFlow(LocalDate.now().withDayOfMonth(1))
     val reads =
         retry
@@ -64,18 +66,24 @@ class MainViewModel(val repository: LedgerRepository, private val saved: SavedSt
                     }
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ReadState.Loading)
-    val theme =
-        retry
+    val preferences =
+        preferenceRetry
             .flatMapLatest {
                 repository.dao
                     .preferences()
-                    .map { it?.theme ?: "SYSTEM" }
+                    .map<Preferences?, Preferences?> { it ?: Preferences() }
                     .catch { e ->
                         if (e is CancellationException) throw e
-                        events.send(Feedback("Could not load appearance. Choose a theme to retry."))
-                        emit("SYSTEM")
+                        events.send(
+                            Feedback("Could not read preferences. Reopen the app to retry.")
+                        )
+                        emit(Preferences(balancesHidden = true))
                     }
             }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    val theme =
+        preferences
+            .map { it?.theme ?: "SYSTEM" }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "SYSTEM")
     val search = saved.getStateFlow("search", "")
     val pages =
@@ -106,22 +114,32 @@ class MainViewModel(val repository: LedgerRepository, private val saved: SavedSt
         retry.value += 1
     }
 
-    fun theme(value: String) {
+    private fun preferenceChange(message: String, change: suspend () -> Unit) {
         if (busy.value) return
         busy.value = true
         viewModelScope.launch {
             try {
-                repository.setTheme(value)
-                retry.value += 1
-                events.send(Feedback("Appearance saved"))
+                change()
+                preferenceRetry.value += 1
+                events.send(Feedback(message, preferenceChange = true))
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
-                events.send(Feedback("Could not save appearance. Please retry."))
+                events.send(Feedback("Could not save preference. Please retry."))
             } finally {
                 busy.value = false
             }
         }
     }
+
+    fun theme(value: String) = preferenceChange("Appearance saved") { repository.setTheme(value) }
+
+    fun centerAction(value: String) =
+        preferenceChange("Center action updated") { repository.setCenterAction(value) }
+
+    fun balancesHidden(hidden: Boolean) =
+        preferenceChange(if (hidden) "Financial amounts hidden" else "Financial amounts visible") {
+            repository.setBalancesHidden(hidden)
+        }
 
     fun undo(feedback: Feedback) {
         if (busy.value) {

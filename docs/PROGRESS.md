@@ -1,5 +1,17 @@
 # Progress
 
+## UI-only pass — 0.2.0-ui-pass (version code 3)
+
+**BUILT, TESTED AND PUBLISHED.** No new finance module. Dashboard/custom compact chrome, neutral/blue surfaces, smaller 20dp mark, five-square hero watermark, per-currency balance hero/visibility toggle, monthly mini summaries, search shortcut, active account rail and recent activity implemented. Lists, empty states, settings and forms use shared components. Center action choices persist in Room and dispatch real existing routes. Header Quick Add stays available when the center is reassigned.
+
+Navigation cause: default Navigation Compose fades drew outgoing/incoming page text together. Enter/exit/pop fades are explicitly disabled and each route is opaque. Static skeletons cover real dashboard/account/preferences/paging/form loading; no artificial delay or shimmer. Preference success snackbars were also found to obstruct lower settings choices; successes now use selected state, a saving indication and haptic. Errors and financial Undo snackbars remain.
+
+Schema 2 changes only two preferences; explicit v1→v2 migration preserves finance tables/journal. Independent preference updates cannot reset each other. Until preferences load, financial totals are masked/held behind genuine loading state. Physical-phone validation is pending; no emulator used.
+
+Final validation: **assembleDebug passed; 35 tests passed, no failures/skips; lint passed with zero errors and 14 dependency-update notices**. All original money/repository/form/startup tests retained. New migration, navigation/settings, skeleton/empty-state and light/dark/narrow-layout tests pass. Host previews reviewed with synthetic test fixture data; they are not phone screenshots. APK signature matches 0.1.1; version code 3 and package ID verified; 16 KiB ZIP alignment passed.
+
+APK: `downloads/TRAXOS-0.2.0-ui-pass.apk` (also `/workspace/releases/TRAXOS-0.2.0-ui-pass.apk`). Source/debug build output: `app/build/outputs/apk/debug/app-debug.apk`. Install in place; do not uninstall/clear storage. Preferences migrate v1→v2; financial tables are unchanged. No API/cloud/permissions added. Code, checksums, rendered previews and exact host evidence are in GitHub; `docs/validation/ui-pass/` contains the report. See DEVICE_QA for remaining physical-device checks.
+
 ## Reopen crash hotfix — 0.1.1-dev
 
 User reports the app closes when reopened after saving data. Confirmed in a native-graphics Robolectric Compose regression: `IllegalArgumentException: Key "INR" was already used`. Home reused the raw currency string in separate summary and balance sections of one LazyColumn. It did not occur in an empty first-launch state.
@@ -26,7 +38,7 @@ Milestone 1 implementation BUILT and AUTOMATED TESTS PASSED. Physical-phone acce
 - Persisted System/Light/Dark; deep-navy/cobalt palettes, explicit typography/spacing/shapes, system-bar contrast, transparent provisional SVG/native VectorDrawable.
 - Atomic financial/account + immutable journal writes, operation-ID primary key, repository mutex, UI single-flight gate, stale revision checks, soft deletion/restoration events and SHA-256 payload hashes (not encryption).
 - Room-indexed paging (40-row target), 300ms debounced escaped-literal search, SQL aggregates, saved form inputs and operation ID, Back discard protection, IME-aware scrollable forms, untruncated amounts and haptic/snackbar feedback.
-- Exported Room version-1 schema committed; no destructive migration fallback. No released prior schema exists; future changes require forward migration plus tests.
+- Exported Room schemas v1/v2 committed; explicit preference-only migration from shipped v1 is tested. No destructive migration fallback; future changes require forward migration plus tests.
 
 ## Executed validation — original 0.1.0 build
 
