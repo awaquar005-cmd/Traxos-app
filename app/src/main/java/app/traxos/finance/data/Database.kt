@@ -1,0 +1,194 @@
+package app.traxos.finance.data
+
+import android.content.Context
+import androidx.paging.PagingSource
+import androidx.room.*
+import androidx.sqlite.db.SupportSQLiteDatabase
+import kotlinx.coroutines.flow.Flow
+
+@Entity(tableName = "accounts", indices = [Index("profileId")])
+data class Account(
+    @PrimaryKey val id: String,
+    val name: String,
+    val type: String,
+    val currency: String,
+    val openingMinor: Long,
+    val openingDate: Long,
+    val archived: Boolean = false,
+    val revision: Long = 1,
+    val profileId: String = "local",
+)
+
+@Entity(tableName = "categories")
+data class Category(@PrimaryKey val id: String, val name: String, val type: String)
+
+@Entity(
+    tableName = "transactions",
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = Account::class,
+                parentColumns = ["id"],
+                childColumns = ["accountId"],
+                onDelete = ForeignKey.RESTRICT,
+            ),
+            ForeignKey(
+                entity = Category::class,
+                parentColumns = ["id"],
+                childColumns = ["categoryId"],
+                onDelete = ForeignKey.RESTRICT,
+            ),
+        ],
+    indices =
+        [
+            Index(value = ["profileId", "day", "id"]),
+            Index(value = ["accountId", "day"]),
+            Index(value = ["categoryId", "day"]),
+        ],
+)
+data class LedgerRecord(
+    @PrimaryKey val id: String,
+    val accountId: String,
+    val categoryId: String,
+    val type: String,
+    val amountMinor: Long,
+    val day: Long,
+    val zoneId: String,
+    val note: String,
+    val revision: Long = 1,
+    val deleted: Boolean = false,
+    val profileId: String = "local",
+)
+
+@Entity(tableName = "preferences")
+data class Preferences(@PrimaryKey val id: Int = 1, val theme: String = "SYSTEM")
+
+@Entity(
+    tableName = "outbox_operations",
+    indices = [Index(value = ["state", "createdAt"]), Index("entityId")],
+)
+data class OutboxOperation(
+    @PrimaryKey val operationId: String,
+    val entityId: String,
+    val entityType: String,
+    val kind: String,
+    val baseRevision: Long,
+    val localRevision: Long,
+    val payload: String,
+    val payloadHash: String,
+    val createdAt: Long,
+    val payloadSchemaVersion: Int = 1,
+    val state: String = "LOCAL_ONLY",
+    val profileId: String = "local",
+)
+
+data class AccountBalance(@Embedded val account: Account, val balanceMinor: Long)
+
+data class RecordRow(
+    @Embedded val record: LedgerRecord,
+    val accountName: String,
+    val categoryName: String,
+    val currency: String,
+)
+
+data class Summary(val currency: String, val expenseMinor: Long, val incomeMinor: Long)
+
+@Dao
+interface LedgerDao {
+    @Query(
+        "SELECT a.*, a.openingMinor + COALESCE(SUM(CASE WHEN t.deleted = 0 THEN CASE WHEN t.type = 'INCOME' THEN t.amountMinor ELSE -t.amountMinor END ELSE 0 END),0) AS balanceMinor FROM accounts a LEFT JOIN transactions t ON a.id = t.accountId WHERE a.profileId = 'local' GROUP BY a.id ORDER BY a.archived, a.name COLLATE NOCASE"
+    )
+    fun accounts(): Flow<List<AccountBalance>>
+
+    @Query("SELECT * FROM categories ORDER BY name") fun categories(): Flow<List<Category>>
+
+    @Query("SELECT * FROM preferences WHERE id = 1") fun preferences(): Flow<Preferences?>
+
+    @Query("SELECT * FROM accounts WHERE id = :id") suspend fun account(id: String): Account?
+
+    @Query("SELECT * FROM categories WHERE id = :id") suspend fun category(id: String): Category?
+
+    @Query("SELECT * FROM transactions WHERE id = :id")
+    suspend fun record(id: String): LedgerRecord?
+
+    @Query("SELECT * FROM outbox_operations WHERE operationId = :id")
+    suspend fun operation(id: String): OutboxOperation?
+
+    @Query("SELECT COUNT(*) FROM transactions") suspend fun recordCount(): Long
+
+    @Query("SELECT COUNT(*) FROM accounts") suspend fun accountCount(): Long
+
+    @Query("SELECT COUNT(*) FROM outbox_operations") suspend fun operationCount(): Long
+
+    @Query(
+        "SELECT t.*, a.name AS accountName, c.name AS categoryName, a.currency FROM transactions t JOIN accounts a ON a.id = t.accountId JOIN categories c ON c.id = t.categoryId WHERE t.deleted = 0 AND t.profileId = 'local' ORDER BY t.day DESC, t.id DESC LIMIT 6"
+    )
+    fun recent(): Flow<List<RecordRow>>
+
+    @Query(
+        "SELECT t.*, a.name AS accountName, c.name AS categoryName, a.currency FROM transactions t JOIN accounts a ON a.id = t.accountId JOIN categories c ON c.id = t.categoryId WHERE t.deleted = 0 AND t.profileId = 'local' AND (t.note LIKE '%' || :search || '%' ESCAPE '\\' OR c.name LIKE '%' || :search || '%' ESCAPE '\\' OR a.name LIKE '%' || :search || '%' ESCAPE '\\') ORDER BY t.day DESC, t.id DESC"
+    )
+    fun page(search: String): PagingSource<Int, RecordRow>
+
+    @Query(
+        "SELECT a.currency, COALESCE(SUM(CASE WHEN t.type = 'EXPENSE' THEN t.amountMinor ELSE 0 END),0) AS expenseMinor, COALESCE(SUM(CASE WHEN t.type = 'INCOME' THEN t.amountMinor ELSE 0 END),0) AS incomeMinor FROM transactions t JOIN accounts a ON a.id = t.accountId WHERE t.deleted = 0 AND t.profileId = 'local' AND t.day >= :start AND t.day < :end GROUP BY a.currency"
+    )
+    fun summary(start: Long, end: Long): Flow<List<Summary>>
+
+    @Insert suspend fun insertAccount(account: Account)
+
+    @Update suspend fun updateAccount(account: Account)
+
+    @Insert suspend fun insertRecord(record: LedgerRecord)
+
+    @Update suspend fun updateRecord(record: LedgerRecord)
+
+    @Insert suspend fun insertOperation(operation: OutboxOperation)
+
+    @Upsert suspend fun preferences(preferences: Preferences)
+}
+
+@Database(
+    entities =
+        [
+            Account::class,
+            Category::class,
+            LedgerRecord::class,
+            Preferences::class,
+            OutboxOperation::class,
+        ],
+    version = 1,
+    exportSchema = true,
+)
+abstract class TraxosDatabase : RoomDatabase() {
+    abstract fun ledger(): LedgerDao
+
+    companion object {
+        fun open(context: Context, name: String = "traxos.db"): TraxosDatabase =
+            Room.databaseBuilder(context, TraxosDatabase::class.java, name)
+                .addCallback(
+                    object : Callback() {
+                        override fun onCreate(db: SupportSQLiteDatabase) {
+                            val categories =
+                                listOf(
+                                    Triple("food", "Food & drink", "EXPENSE"),
+                                    Triple("groceries", "Groceries", "EXPENSE"),
+                                    Triple("travel", "Transport", "EXPENSE"),
+                                    Triple("bills", "Bills", "EXPENSE"),
+                                    Triple("other-expense", "Other expense", "EXPENSE"),
+                                    Triple("salary", "Salary", "INCOME"),
+                                    Triple("other-income", "Other income", "INCOME"),
+                                )
+                            categories.forEach { (id, name, type) ->
+                                db.execSQL(
+                                    "INSERT INTO categories (id,name,type) VALUES (?,?,?)",
+                                    arrayOf(id, name, type),
+                                )
+                            }
+                            db.execSQL("INSERT INTO preferences (id,theme) VALUES (1,'SYSTEM')")
+                        }
+                    }
+                )
+                .build()
+    }
+}

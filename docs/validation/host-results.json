@@ -1,0 +1,68 @@
+{
+  "build": "assembleDebug passed",
+  "test_framework": "JUnit + Robolectric API 28 host tests, no emulator",
+  "suites": [
+    {
+      "suite": "app.traxos.finance.FormViewModelTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "saveGateRejectsTenCallbacksAndEmitsOneSuccess",
+        "validationFailureKeepsFieldsAndWritesNothing",
+        "recreatedViewModelPreservesOperationIdentityAndDraft"
+      ]
+    },
+    {
+      "suite": "app.traxos.finance.LedgerRepositoryTest",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "archivedAccountBlocksNewPostsButPreservesHistory",
+        "invalidCategoryDoesNotWrite",
+        "themeAndNotesSurviveDatabaseReopen",
+        "editDeleteUndoUpdateBalances",
+        "balancesAndJournalAreAtomic",
+        "pagedLiteralSearchUsesDatabase",
+        "seededCategoriesAreNotFinancialData",
+        "staleEditKeepsOriginalAndJournal",
+        "datesBeforeOpeningRejected",
+        "currenciesStaySeparate",
+        "journalSnapshotRetainsOriginalAfterEdit",
+        "currencyChangeRejectedOnEdit",
+        "failureWritingOutboxRollsBackLedger",
+        "retryAfterReopenDoesNotDuplicate",
+        "tenConcurrentTapsOneIntendedOperation"
+      ]
+    },
+    {
+      "suite": "app.traxos.finance.MoneyTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "ledgerSigns",
+        "scalesFollowCurrency",
+        "rejectsInvalidInputs",
+        "rejectsRounding",
+        "rejectsOverflow",
+        "editableRoundtrip",
+        "zeroOpeningIsExplicit",
+        "exactPaise"
+      ]
+    }
+  ],
+  "lint": {
+    "errors": 0,
+    "warnings": 14,
+    "warning_ids": [
+      "AndroidGradlePluginVersion",
+      "GradleDependency"
+    ]
+  },
+  "physical_device": "not tested"
+}

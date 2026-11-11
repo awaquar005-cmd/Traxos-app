@@ -1,0 +1,34 @@
+[versions]
+agp = "8.10.1"
+kotlin = "2.1.20"
+ksp = "2.1.20-1.0.32"
+compose = "2025.04.01"
+room = "2.7.1"
+lifecycle = "2.9.0"
+[libraries]
+compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose" }
+compose-ui = { module = "androidx.compose.ui:ui" }
+compose-tooling = { module = "androidx.compose.ui:ui-tooling" }
+compose-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
+compose-material3 = { module = "androidx.compose.material3:material3" }
+compose-icons = { module = "androidx.compose.material:material-icons-core" }
+activity-compose = { module = "androidx.activity:activity-compose", version = "1.10.1" }
+lifecycle-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
+lifecycle-viewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
+lifecycle-savedstate = { module = "androidx.lifecycle:lifecycle-viewmodel-savedstate", version.ref = "lifecycle" }
+navigation = { module = "androidx.navigation:navigation-compose", version = "2.9.0" }
+room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
+room-paging = { module = "androidx.room:room-paging", version.ref = "room" }
+room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+paging = { module = "androidx.paging:paging-compose", version = "3.3.6" }
+coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version = "1.10.2" }
+coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version = "1.10.2" }
+junit = { module = "junit:junit", version = "4.13.2" }
+robolectric = { module = "org.robolectric:robolectric", version = "4.14.1" }
+android-test-core = { module = "androidx.test:core", version = "1.6.1" }
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
