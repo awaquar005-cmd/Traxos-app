@@ -42,7 +42,7 @@ JAVA_HOME=/workspace/tools/jdk/jdk-21.0.13+9 ANDROID_USER_HOME=/workspace/tools/
 - INR/USD/EUR/JPY/KWD supported; currency never auto-converted or added across currencies. Limits: 99,999,999,999 minor units per amount, 1 million transaction rows, 1,000 accounts; account names 80/note 500 characters. Large-history stress testing pending.
 - Amounts saved before account opening date are rejected. Opening balances nonnegative in M1; future liabilities/overdraft opening corrections need explicit semantics.
 - Transparent logo SVG is a provisional five-square reconstruction, not a verified exact raster trace: inline attachment was nearly black and no image file was mounted.
-- No GitHub remote exists. Earlier connected integration rejected repository creation with HTTP 403; local Git repository is provided.
+- Source successfully pushed to the user-created https://github.com/awaquar005-cmd/Traxos-app repository. Release asset upload was rejected with HTTP 401; the same verified APK is provided in `downloads/` with its SHA-256 checksum and direct download instructions.
 
 ## Resource use and local setup
 

@@ -16,3 +16,5 @@
 - Private GitHub repo creation was previously rejected by connected integration (HTTP 403). Keep local Git history; no claimed remote repository.
 
 - Final M1 validation: Gradle wrapper assembleDebug/testDebugUnitTest/lintDebug succeeded; 26 tests passed; lint has 14 dependency-update advisories only. Keep this tested version set for M1 and evaluate upgrades/security advisories deliberately before release. Use locally installed full Temurin JDK 21.0.13+9; system runtime lacked javac launcher. SDK and JDK live under /workspace/tools. Physical phone acceptance is outstanding.
+
+- User created `awaquar005-cmd/Traxos-app` and authorized pushing source/APK. Git push succeeded. GitHub release asset upload failed with HTTP 401; publish this single 11 MB test APK in `downloads/` for accessible phone testing. Later CI should use a properly scoped release uploader to avoid successive binary commits.

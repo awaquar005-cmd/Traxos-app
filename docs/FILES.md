@@ -43,3 +43,5 @@ All files below were created for Milestone 1 in the refreshed workspace. Impleme
 - `gradlew`
 - `gradlew.bat`
 - `settings.gradle.kts`
+
+Additional publishing files: `downloads/README.md`, `downloads/TRAXOS-0.1.0-dev.apk`, `downloads/SHA256SUMS.txt`.

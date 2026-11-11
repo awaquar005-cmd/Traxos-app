@@ -2,6 +2,12 @@
 
 Offline-first Kotlin/Jetpack Compose personal finance application. Development milestone 1; **not a finished commercial release**. Source of truth: [V3 specification](docs/Traxos_Native_Android_Product_Blueprint_v3.md).
 
+## Download for phone testing
+
+[Download the test APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.1.0-dev.apk) · [APK folder and installation help](downloads/README.md).
+
+The repository is available at https://github.com/awaquar005-cmd/Traxos-app. `/workspace/...` paths in development records refer to the cloud workspace, not your laptop. Use the GitHub link to download.
+
 ## Structure
 
 - `app/src/main/java/app/traxos/finance/domain`: exact money validation/formatting and entry signs.
