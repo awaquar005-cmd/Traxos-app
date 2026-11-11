@@ -1,5 +1,17 @@
 # Progress
 
+## Reopen crash hotfix — 0.1.1-dev
+
+User reports the app closes when reopened after saving data. Confirmed in a native-graphics Robolectric Compose regression: `IllegalArgumentException: Key "INR" was already used`. Home reused the raw currency string in separate summary and balance sections of one LazyColumn. It did not occur in an empty first-launch state.
+
+Fix uses section-scoped stable keys (`summary:`, `balance:`, `recent:`). No financial mutation, data reset, schema migration, or new feature is involved. Version code advances from 1 to 2; package ID and development signing identity are preserved for an in-place update. Existing records must not be deleted to work around the crash.
+
+Validation: before-fix UI regression failed as expected. **0.1.1 build passed; all 28 tests passed (zero failures/skips); lint has zero errors.** The formerly failing populated-Home UI test now passes. APK metadata and matching original/update signing certificates verified; 16 KiB ZIP alignment passed. Package `app.traxos.finance`, version code 2, schema v1 unchanged. Additional integration test writes ledger data, closes the database, launches the real MainActivity from persisted data, recreates the Activity and checks the saved record/journal remain unchanged. This is a host test, not physical-device or actual OS process-death certification.
+
+The pasted Milestone 2 brief was read as context. Navigation redesign/transfers are not implemented by this crash-only patch.
+
+Patch APK: `downloads/TRAXOS-0.1.1-dev.apk`; published through the existing GitHub repository. Original and update APK SHA-256 checksums are in `downloads/SHA256SUMS.txt`. Validation evidence is under `docs/validation/reopen/`.
+
 ## Actual status
 
 Milestone 1 implementation BUILT and AUTOMATED TESTS PASSED. Physical-phone acceptance is pending. TRAXOS is not complete or commercially ready.
@@ -16,7 +28,7 @@ Milestone 1 implementation BUILT and AUTOMATED TESTS PASSED. Physical-phone acce
 - Room-indexed paging (40-row target), 300ms debounced escaped-literal search, SQL aggregates, saved form inputs and operation ID, Back discard protection, IME-aware scrollable forms, untruncated amounts and haptic/snackbar feedback.
 - Exported Room version-1 schema committed; no destructive migration fallback. No released prior schema exists; future changes require forward migration plus tests.
 
-## Executed validation
+## Executed validation — original 0.1.0 build
 
 Final wrapper command (cloud-local environment prefix and test init configure proxy/CA/writable user directories):
 

@@ -257,7 +257,7 @@ private fun MoneyText(minor: Long, currency: String, large: Boolean = false, pre
 }
 
 @Composable
-private fun HomeScreen(
+internal fun HomeScreen(
     state: ReadState.Ready,
     createAccount: () -> Unit,
     openRecord: (String) -> Unit,
@@ -311,7 +311,7 @@ private fun HomeScreen(
                 )
             }
             if (state.summary.isEmpty()) item { Text("No spending or income recorded this month.") }
-            items(state.summary, key = { it.currency }) { s ->
+            items(state.summary, key = { "summary:${it.currency}" }) { s ->
                 Column(verticalArrangement = Arrangement.spacedBy(Space.small)) {
                     MoneyText(s.expenseMinor, s.currency, true)
                     Text(
@@ -328,8 +328,10 @@ private fun HomeScreen(
                     style = MaterialTheme.typography.titleMedium,
                 )
             }
-            items(state.accounts.groupBy { it.account.currency }.toList(), key = { it.first }) {
-                (currency, accounts) ->
+            items(
+                state.accounts.groupBy { it.account.currency }.toList(),
+                key = { "balance:${it.first}" },
+            ) { (currency, accounts) ->
                 Column {
                     MoneyText(accounts.sumOf { it.balanceMinor }, currency)
                     Text(
@@ -353,7 +355,9 @@ private fun HomeScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-        items(state.recent, key = { it.record.id }) { RecordItem(it) { openRecord(it.record.id) } }
+        items(state.recent, key = { "recent:${it.record.id}" }) {
+            RecordItem(it) { openRecord(it.record.id) }
+        }
         item {
             Text(
                 "Uninstalling or clearing app storage removes local records. Encrypted backups are planned for a later milestone.",

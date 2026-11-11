@@ -1,5 +1,12 @@
 # Physical Android QA checklist
 
+## 0.1.1 update/reopen check (requires user's phone)
+
+- [ ] Install 0.1.1-dev over the existing 0.1.0-dev app; choose Update. Do not uninstall or clear storage.
+- [ ] Existing accounts, amounts and notes are visible. Check Home monthly summary and balances; scroll to recent transactions.
+- [ ] Force-stop and open from the launcher several times, including in airplane mode. No automatic close and no duplicated records.
+- [ ] Repeat with the saved theme and after screen rotation. Existing financial data remains unchanged.
+
 Status: NOT RUN. No USB phone is connected to this cloud workspace. No emulator is permitted. Host JVM/database tests do not certify device behavior.
 
 Use an API 26+ physical phone with USB debugging; repeat on target OEMs and Android 16 edge-to-edge behavior before release. Use only fictional test records.

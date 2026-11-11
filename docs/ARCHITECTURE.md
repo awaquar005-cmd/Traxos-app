@@ -14,6 +14,8 @@ Amounts limited to 999,999,999.99 for 2-decimal currencies, 1 million transactio
 
 Home has month spending/income and per-currency account balance plus recent six rows, honest local-only status and Quick Add. Transactions is Room Paging 3 with debounced search; add/edit form validates amount, account/category, date/note. Accounts supports cash/bank create, rename, archive/restore (archive blocks new posts). Settings has persisted System/Light/Dark and version/data-loss explanation. Navigation preserves tab state; forms retain inputs and immutable operation ID in SavedStateHandle. Discard confirmation on dirty Back; commit gate disables actions synchronously. UI reports commit failure without clearing form; cancellation propagates. Material accessible controls, scrollable IME-aware form, full money values, ellipsized titles with editable full text.
 
+Mixed-section Home LazyColumn keys are namespaced by section and stable identity; currency summary and balance rows must never share a key. Populated-state Compose rendering and persisted-ledger Activity launch/recreation are tested on the host in addition to repository math.
+
 ## Future extensibility (contracts, not implemented features)
 
 Add paired postings for transfer/card settlement, linked refund/debt/group source payment and exact share allocations in M2. Existing expense/income cannot be relabeled as a settlement. Extend schema via tested forward migrations; do not shoehorn transfers into income/expense. Financial corrections preserve journal history and base revisions. Local profile namespace is reserved; account switching must isolate all rows/caches/work.

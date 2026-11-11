@@ -1,0 +1,7 @@
+Regression reproduced before changing Home row keys.
+
+Command: :app:testDebugUnitTest --tests app.traxos.finance.HomeStartupTest
+Result: 1 test, 1 failure.
+Exception: java.lang.IllegalArgumentException: Key "INR" was already used. If you are using LazyColumn/Row please make sure you provide a unique key for each item.
+
+After: section-scoped keys, 28 tests passed including the formerly failing test and persisted-ledger MainActivity launch/recreation.

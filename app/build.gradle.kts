@@ -13,8 +13,8 @@ android {
         applicationId = "app.traxos.finance"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0-dev"
+        versionCode = 2
+        versionName = "0.1.1-dev"
     }
     buildFeatures {
         compose = true
@@ -52,6 +52,7 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.compose.icons)
     debugImplementation(libs.compose.tooling)
+    debugImplementation(libs.compose.test.manifest)
     implementation(libs.activity.compose)
     implementation(libs.lifecycle.compose)
     implementation(libs.lifecycle.viewmodel)
@@ -63,6 +64,7 @@ dependencies {
     implementation(libs.room.paging)
     ksp(libs.room.compiler)
     implementation(libs.paging)
+    testImplementation(libs.compose.test)
     testImplementation(libs.coroutines.test)
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)

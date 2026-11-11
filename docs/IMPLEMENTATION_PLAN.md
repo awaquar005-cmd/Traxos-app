@@ -2,6 +2,10 @@
 
 Source of truth: [complete V3 blueprint](Traxos_Native_Android_Product_Blueprint_v3.md). Read in full before project code was written. User initialization instructions override infrastructure recommendations and milestone scope. This is a development roadmap, not a release-completion statement.
 
+## Maintenance gate before Milestone 2
+
+Reopen crash hotfix 0.1.1-dev: reproduce Home's duplicate currency-row keys in a populated-state Compose test, scope keys by section, cover persisted-ledger launch/recreation, run complete build/test/lint, verify matching APK signing identity, publish an in-place update. Schema remains v1 and user data must be preserved. No transfers or navigation redesign are included in this patch.
+
 ## Priority and milestone policy
 
 P0 = essential offline finance and durability. P1 = security, recovery, backup, sync, sharing and advanced entry. P2 = premium, developer controls and later enhancements. Original V3 release-blocker priorities remain binding for commercial release even where scheduled after M1. No cloud SDK in M1. All features below are PLANNED unless PROGRESS explicitly records implementation and evidence.

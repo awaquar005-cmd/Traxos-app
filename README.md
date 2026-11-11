@@ -4,7 +4,9 @@ Offline-first Kotlin/Jetpack Compose personal finance application. Development m
 
 ## Download for phone testing
 
-[Download the test APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.1.0-dev.apk) · [APK folder and installation help](downloads/README.md).
+**0.1.1-dev fixes the crash when reopening after saving data. Install as an update over the existing app; do not uninstall or clear storage.**
+
+[Download the test APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.1.1-dev.apk) · [APK folder and installation help](downloads/README.md).
 
 The repository is available at https://github.com/awaquar005-cmd/Traxos-app. `/workspace/...` paths in development records refer to the cloud workspace, not your laptop. Use the GitHub link to download.
 
@@ -46,7 +48,7 @@ Gradle heap: 1.5 GB, two workers, parallel project builds off, in-process Kotlin
 
 ## Development boundaries
 
-Build status: `assembleDebug`, `testDebugUnitTest` (26 tests) and `lintDebug` passed. Lint has 14 dependency-version update notices, no errors. Physical-phone acceptance is pending.
+Build status: `assembleDebug`, `testDebugUnitTest` (28 tests) and `lintDebug` passed. Lint has 14 dependency-version update notices, no errors. Physical-phone acceptance is pending.
 
 Implemented source covers cash/bank accounts, expense/income CRUD, soft-delete snackbar Undo, SQL month totals, per-currency balances, paged/debounced search, local theme preferences, persisted form fields and operation identity. Read [PROGRESS](docs/PROGRESS.md) for what actually compiled or ran; written code is not equivalent to verified behavior.
 

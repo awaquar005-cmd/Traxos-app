@@ -7,6 +7,8 @@ room = "2.7.1"
 lifecycle = "2.9.0"
 [libraries]
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose" }
+compose-test = { module = "androidx.compose.ui:ui-test-junit4" }
+compose-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 compose-ui = { module = "androidx.compose.ui:ui" }
 compose-tooling = { module = "androidx.compose.ui:ui-tooling" }
 compose-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
