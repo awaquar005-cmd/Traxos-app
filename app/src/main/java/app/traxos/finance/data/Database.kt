@@ -134,6 +134,7 @@ data class RecordRow(
     val merchantName: String? = null,
     val categoryIcon: String = "tag",
     val categoryColor: String = "BLUE",
+    val loggedAt: Long? = null,
 )
 
 data class CategoryReport(
@@ -194,12 +195,12 @@ interface LedgerDao {
     @Query("SELECT COUNT(*) FROM outbox_operations") suspend fun operationCount(): Long
 
     @Query(
-        "SELECT t.*, a.name AS accountName, c.name AS categoryName, a.currency, m.name AS merchantName, c.icon AS categoryIcon, c.color AS categoryColor FROM transactions t JOIN accounts a ON a.id = t.accountId JOIN categories c ON c.id = t.categoryId LEFT JOIN entry_labels m ON m.id = t.merchantId WHERE t.deleted = 0 AND t.profileId = 'local' ORDER BY t.day DESC, t.id DESC LIMIT 6"
+        "SELECT t.*, a.name AS accountName, c.name AS categoryName, a.currency, m.name AS merchantName, c.icon AS categoryIcon, c.color AS categoryColor, (SELECT MIN(o.createdAt) FROM outbox_operations o WHERE o.entityId=t.id AND o.entityType='TRANSACTION') AS loggedAt FROM transactions t JOIN accounts a ON a.id = t.accountId JOIN categories c ON c.id = t.categoryId LEFT JOIN entry_labels m ON m.id = t.merchantId WHERE t.deleted = 0 AND t.profileId = 'local' ORDER BY t.day DESC, t.id DESC LIMIT 6"
     )
     fun recent(): Flow<List<RecordRow>>
 
     @Query(
-        "SELECT t.*, a.name AS accountName, c.name AS categoryName, a.currency, m.name AS merchantName, c.icon AS categoryIcon, c.color AS categoryColor FROM transactions t JOIN accounts a ON a.id = t.accountId JOIN categories c ON c.id = t.categoryId LEFT JOIN entry_labels m ON m.id = t.merchantId WHERE t.deleted = :deleted AND (NOT :deleted OR t.linkId IS NULL OR t.type IN ('TRANSFER_OUT','PAYMENT_OUT')) AND t.profileId = 'local' AND t.day >= :start AND t.day <= :end AND (:account='' OR t.accountId=:account) AND (:category='' OR t.categoryId=:category) AND (:currency='' OR a.currency=:currency) AND (:filter='ALL' OR (:filter='EXPENSES' AND t.type IN ('EXPENSE','REFUND')) OR (:filter='INCOME' AND t.type='INCOME') OR (:filter='TRANSFERS' AND t.type IN ('TRANSFER_IN','TRANSFER_OUT')) OR (:filter='CARD_PAYMENTS' AND t.type IN ('PAYMENT_IN','PAYMENT_OUT'))) AND (t.note LIKE '%' || :search || '%' ESCAPE '\\' OR c.name LIKE '%' || :search || '%' ESCAPE '\\' OR a.name LIKE '%' || :search || '%' ESCAPE '\\' OR m.name LIKE '%' || :search || '%' ESCAPE '\\') ORDER BY CASE WHEN :sort='OLDEST' THEN t.day END ASC, CASE WHEN :sort='OLDEST' THEN t.id END ASC, t.day DESC, t.id DESC"
+        "SELECT t.*, a.name AS accountName, c.name AS categoryName, a.currency, m.name AS merchantName, c.icon AS categoryIcon, c.color AS categoryColor, (SELECT MIN(o.createdAt) FROM outbox_operations o WHERE o.entityId=t.id AND o.entityType='TRANSACTION') AS loggedAt FROM transactions t JOIN accounts a ON a.id = t.accountId JOIN categories c ON c.id = t.categoryId LEFT JOIN entry_labels m ON m.id = t.merchantId WHERE t.deleted = :deleted AND (NOT :deleted OR t.linkId IS NULL OR t.type IN ('TRANSFER_OUT','PAYMENT_OUT')) AND t.profileId = 'local' AND t.day >= :start AND t.day <= :end AND (:account='' OR t.accountId=:account) AND (:category='' OR t.categoryId=:category) AND (:currency='' OR a.currency=:currency) AND (:filter='ALL' OR (:filter='EXPENSES' AND t.type IN ('EXPENSE','REFUND')) OR (:filter='INCOME' AND t.type='INCOME') OR (:filter='TRANSFERS' AND t.type IN ('TRANSFER_IN','TRANSFER_OUT')) OR (:filter='CARD_PAYMENTS' AND t.type IN ('PAYMENT_IN','PAYMENT_OUT'))) AND (t.note LIKE '%' || :search || '%' ESCAPE '\\' OR c.name LIKE '%' || :search || '%' ESCAPE '\\' OR a.name LIKE '%' || :search || '%' ESCAPE '\\' OR m.name LIKE '%' || :search || '%' ESCAPE '\\') ORDER BY CASE WHEN :sort='OLDEST' THEN t.day END ASC, CASE WHEN :sort='OLDEST' THEN t.id END ASC, t.day DESC, t.id DESC"
     )
     fun page(
         search: String,

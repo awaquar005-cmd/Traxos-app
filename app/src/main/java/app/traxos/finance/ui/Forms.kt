@@ -41,7 +41,25 @@ internal fun FormDestination(
     val keyboard = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
     val latestFeedback by rememberUpdatedState(feedback)
-    LaunchedEffect(vm) { for (event in vm.events) latestFeedback(event) }
+    var addCardAfterSave by rememberSaveable { mutableStateOf(false) }
+    val wantsCard by rememberUpdatedState(addCardAfterSave)
+    LaunchedEffect(vm) {
+        for (event in vm.events) {
+            if (
+                account &&
+                    vm.isNew &&
+                    wantsCard &&
+                    event.close &&
+                    vm.fields.value["type"] in setOf("CREDIT_CARD", "BANK")
+            ) {
+                latestFeedback(event.copy(close = false))
+                nav.navigate("card_details/${vm.entityId}") {
+                    popUpTo("account/new") { inclusive = true }
+                    launchSingleTop = true
+                }
+            } else latestFeedback(event)
+        }
+    }
     val preferences by main.preferences.collectAsStateWithLifecycle()
     val fields by vm.fields.collectAsStateWithLifecycle()
     val busy by vm.busy.collectAsStateWithLifecycle()
@@ -89,123 +107,133 @@ internal fun FormDestination(
             fields.isNotEmpty() &&
             selectionsReady &&
             (account || reads is ReadState.Ready)
-    Column(Modifier.fillMaxSize().imePadding()) {
-        TraxosToolbar(
-            if (account) if (vm.isNew) "New account" else "Edit account"
-            else if (vm.isNew) "Add transaction" else "Edit transaction",
-            back = leave,
-        )
-        Column(
-            Modifier.weight(1f)
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            if (loading) repeat(3) { SkeletonBlock(Modifier.fillMaxWidth().height(60.dp)) }
-            else if (!fields["linkId"].isNullOrBlank()) {
-                TraxosNotice(
-                    "Linked movement. Delete / Undo changes both accounts together. To correct the amount, delete and record a new movement.",
-                    NoticeKind.INFO,
-                )
-                Text(fields["amount"].orEmpty(), style = MaterialTheme.typography.titleLarge)
-            } else if (fields.isNotEmpty()) {
-                if (account) {
-                    AccountFormFields(fields, vm.isNew, !busy, vm::set)
-                    if (!vm.isNew && fields["type"] == "CREDIT_CARD")
-                        TraxosButton(
-                            {
-                                nav.navigate(
-                                    "card_details/${nav.currentBackStackEntry?.arguments?.getString("id")}"
-                                ) {
-                                    launchSingleTop = true
-                                }
-                            },
-                            Modifier.fillMaxWidth(),
-                            !busy,
-                            tone = ButtonTone.SECONDARY,
-                        ) {
-                            Text("Card number, expiry & CVV")
-                        }
-                    if (!vm.isNew && fields["type"] == "CREDIT_CARD")
-                        TraxosButton(
-                            {
-                                nav.navigate(
-                                    "card_payment/${nav.currentBackStackEntry?.arguments?.getString("id")}"
-                                )
-                            },
-                            Modifier.fillMaxWidth(),
-                            !busy,
-                            tone = ButtonTone.SECONDARY,
-                        ) {
-                            Text("Pay card")
-                        }
-                } else
-                    when (reads) {
-                        ReadState.Loading ->
-                            repeat(3) { SkeletonBlock(Modifier.fillMaxWidth().height(60.dp)) }
-                        ReadState.Failed -> {
-                            TraxosNotice(
-                                "Could not read accounts and categories.",
-                                NoticeKind.ERROR,
-                            )
-                            TraxosTextButton(main::retry) { Text("Retry local records") }
-                        }
-                        is ReadState.Ready ->
-                            TransactionFormFields(
-                                fields,
-                                reads,
-                                !busy,
-                                vm.isNew,
-                                vm::set,
-                                preferences ?: Preferences(),
-                                vm::default,
-                                main.repository,
-                            ) {
-                                nav.navigate("account/new") { launchSingleTop = true }
-                            }
-                    }
-            }
-            if (!account && !vm.isNew)
-                TraxosButton(
-                    { delete = true },
-                    Modifier.fillMaxWidth().testTag("form_delete"),
-                    !busy && !loading && fields["revision"] != null,
-                    tone = ButtonTone.SECONDARY,
-                ) {
-                    Text("Delete transaction", color = MaterialTheme.colorScheme.error)
-                }
-            Spacer(Modifier.height(8.dp))
-        }
-        Surface(color = MaterialTheme.colorScheme.background) {
+    TraxosFormPanel {
+        Column(Modifier.fillMaxWidth()) {
+            TraxosToolbar(
+                if (account) if (vm.isNew) "New account" else "Edit account"
+                else if (vm.isNew) "Add transaction" else "Edit transaction",
+                back = leave,
+            )
             Column(
-                Modifier.fillMaxWidth().padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                Modifier.weight(1f, fill = false)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                if (error != null) {
-                    TraxosNotice(error!!, NoticeKind.ERROR, Modifier.testTag("form_error"))
-                    if (fields.isEmpty())
-                        TraxosTextButton(vm::load) { Text("Retry opening record") }
+                if (loading) repeat(3) { SkeletonBlock(Modifier.fillMaxWidth().height(60.dp)) }
+                else if (!fields["linkId"].isNullOrBlank()) {
+                    TraxosNotice(
+                        "Linked movement. Delete / Undo changes both accounts together. To correct the amount, delete and record a new movement.",
+                        NoticeKind.INFO,
+                    )
+                    Text(fields["amount"].orEmpty(), style = MaterialTheme.typography.titleLarge)
+                } else if (fields.isNotEmpty()) {
+                    if (account) {
+                        AccountFormFields(fields, vm.isNew, !busy, vm::set)
+                        if (vm.isNew && fields["type"] in setOf("CREDIT_CARD", "BANK"))
+                            TraxosCheckbox(
+                                addCardAfterSave,
+                                { addCardAfterSave = it },
+                                "Add card number, CVV & expiry after saving",
+                                enabled = !busy,
+                            )
+                        if (!vm.isNew && fields["type"] in setOf("CREDIT_CARD", "BANK"))
+                            TraxosButton(
+                                {
+                                    nav.navigate(
+                                        "card_details/${nav.currentBackStackEntry?.arguments?.getString("id")}"
+                                    ) {
+                                        launchSingleTop = true
+                                    }
+                                },
+                                Modifier.fillMaxWidth(),
+                                !busy,
+                                tone = ButtonTone.SECONDARY,
+                            ) {
+                                Text("Card number, expiry & CVV")
+                            }
+                        if (!vm.isNew && fields["type"] == "CREDIT_CARD")
+                            TraxosButton(
+                                {
+                                    nav.navigate(
+                                        "card_payment/${nav.currentBackStackEntry?.arguments?.getString("id")}"
+                                    )
+                                },
+                                Modifier.fillMaxWidth(),
+                                !busy,
+                                tone = ButtonTone.SECONDARY,
+                            ) {
+                                Text("Pay card")
+                            }
+                    } else
+                        when (reads) {
+                            ReadState.Loading ->
+                                repeat(3) { SkeletonBlock(Modifier.fillMaxWidth().height(60.dp)) }
+                            ReadState.Failed -> {
+                                TraxosNotice(
+                                    "Could not read accounts and categories.",
+                                    NoticeKind.ERROR,
+                                )
+                                TraxosTextButton(main::retry) { Text("Retry local records") }
+                            }
+                            is ReadState.Ready ->
+                                TransactionFormFields(
+                                    fields,
+                                    reads,
+                                    !busy,
+                                    vm.isNew,
+                                    vm::set,
+                                    preferences ?: Preferences(),
+                                    vm::default,
+                                    main.repository,
+                                ) {
+                                    nav.navigate("account/new") { launchSingleTop = true }
+                                }
+                        }
                 }
-                TraxosButton(
-                    {
-                        keyboard?.hide()
-                        focusManager.clearFocus()
-                        vm.save()
-                    },
-                    Modifier.fillMaxWidth().testTag("form_save"),
-                    enabled = ready && fields["linkId"].isNullOrBlank(),
-                    busy = busy,
+                if (!account && !vm.isNew)
+                    TraxosButton(
+                        { delete = true },
+                        Modifier.fillMaxWidth().testTag("form_delete"),
+                        !busy && !loading && fields["revision"] != null,
+                        tone = ButtonTone.SECONDARY,
+                    ) {
+                        Text("Delete transaction", color = MaterialTheme.colorScheme.error)
+                    }
+                Spacer(Modifier.height(8.dp))
+            }
+            Surface(color = MaterialTheme.colorScheme.background) {
+                Column(
+                    Modifier.fillMaxWidth().padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
+                    if (error != null) {
+                        TraxosNotice(error!!, NoticeKind.ERROR, Modifier.testTag("form_error"))
+                        if (fields.isEmpty())
+                            TraxosTextButton(vm::load) { Text("Retry opening record") }
+                    }
+                    TraxosButton(
+                        {
+                            keyboard?.hide()
+                            focusManager.clearFocus()
+                            vm.save()
+                        },
+                        Modifier.fillMaxWidth().testTag("form_save"),
+                        enabled = ready && fields["linkId"].isNullOrBlank(),
+                        busy = busy,
+                    ) {
+                        Text(
+                            if (busy) "Saving…"
+                            else if (account) "Save account" else "Save transaction"
+                        )
+                    }
                     Text(
-                        if (busy) "Saving…" else if (account) "Save account" else "Save transaction"
+                        "Records stay on this phone · No cloud backup",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                Text(
-                    "Records stay on this phone · No cloud backup",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
             }
         }
     }

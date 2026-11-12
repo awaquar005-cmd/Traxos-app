@@ -1,5 +1,9 @@
 # Created files
 
+## 0.9.2 changed files
+
+Updated LedgerScreens (conditional compact SMS action, card details, Recorded timestamp), Forms/ViewModels (save account then optional card editor), CardDetailsScreen, GiftWalletScreens and Overlays (compact centered panels/dialogs), CardVault (BANK/CREDIT_CARD eligibility), Database (query-only Recorded projection), CompactCardTest, version/release documentation. Schema9 and logo assets unchanged.
+
 ## 0.9.1 changed files
 
 Updated Dashboard, LedgerScreens, App, SmartInboxScreen, SmartViewModel, SmartParser, SmartRepository and version metadata; added BankMessageParserTest; updated SmartInboxUiTest, release documentation and validation. No Room/schema/logo/dependency change.

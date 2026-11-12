@@ -217,48 +217,54 @@ internal fun TraxosSheet(
     if (!LocalAppInteractionAllowed.current) return
 
     val maximumHeight = overlayMaxHeight()
-    ModalBottomSheet(
+    Dialog(
         onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        dragHandle = null,
-        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-        tonalElevation = 0.dp,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
-        Column(
-            Modifier.fillMaxWidth()
-                .heightIn(max = maximumHeight)
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp)
-                .semantics { paneTitle = title }
-                .testTag("traxos_sheet")
+        Surface(
+            shape = RoundedCornerShape(14.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerLowest,
+            modifier =
+                Modifier.padding(12.dp)
+                    .widthIn(max = 440.dp)
+                    .fillMaxWidth()
+                    .heightIn(max = maximumHeight),
         ) {
-            Row(
-                Modifier.fillMaxWidth().heightIn(min = 56.dp),
-                verticalAlignment = Alignment.CenterVertically,
+            Column(
+                Modifier.fillMaxWidth()
+                    .heightIn(max = maximumHeight)
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 16.dp)
+                    .semantics { paneTitle = title }
+                    .testTag("traxos_sheet")
             ) {
-                Text(
-                    title,
-                    Modifier.weight(1f),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                TraxosIconButton(onDismiss) {
-                    Text(
-                        "×",
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.semantics { contentDescription = "Close picker" },
-                    )
-                }
-            }
-            if (scrollable)
-                Column(
-                    Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                Row(
+                    Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    content()
+                    Text(
+                        title,
+                        Modifier.weight(1f),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    TraxosIconButton(onDismiss) {
+                        Text(
+                            "×",
+                            style = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier.semantics { contentDescription = "Close picker" },
+                        )
+                    }
                 }
-            else content()
+                if (scrollable)
+                    Column(
+                        Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        content()
+                    }
+                else content()
+            }
         }
     }
 }
@@ -417,7 +423,7 @@ internal fun TraxosDateField(
         TraxosSheet("Choose date", { open = false }) {
             Column(
                 Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
                     "Choose a quick date or enter any date below.",
@@ -553,4 +559,22 @@ internal fun TraxosActionMenu(options: List<Pair<String, String>>, onSelect: (St
 private fun overlayMaxHeight(): Dp {
     val size = LocalWindowInfo.current.containerSize
     return (with(LocalDensity.current) { size.height.toDp() } * .8f).coerceAtLeast(180.dp)
+}
+
+/** Stable centered form surface: no enter/exit animation or keyboard focus side effects. */
+@Composable
+internal fun TraxosFormPanel(content: @Composable () -> Unit) {
+    BoxWithConstraints(Modifier.fillMaxSize().imePadding(), contentAlignment = Alignment.Center) {
+        Surface(
+            modifier =
+                Modifier.padding(8.dp)
+                    .widthIn(max = 480.dp)
+                    .fillMaxWidth()
+                    .heightIn(max = (maxHeight - 16.dp).coerceAtLeast(120.dp)),
+            shape = Radius.card,
+            color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        ) {
+            content()
+        }
+    }
 }

@@ -1,5 +1,20 @@
 # Progress
 
+## 0.9.2 Personal — compact forms and card references
+
+**BUILT: 169 Personal host tests passed; zero failures/errors/skips. Lint passed: 0 errors / 21 existing warnings.** Update signing identity and 16KiB ZIP/64-bit ELF alignment verified. No Play APK or emulator. The Bank-row account-title tap target is now explicit, preventing the nested card-details action from intercepting the account-name click. [Actual validation](validation/compact-forms/README.md).
+
+Activity's SMS shortcut is a compact header action, absent at zero pending suggestions. No separate full-width SMS row or empty gap. Existing Smart Add approvals are unchanged.
+
+Bank accounts can hold optional debit-card references; credit-card accounts retain liability accounting. New Bank/Credit Card accounts offer “Add card number, CVV & expiry after saving”. It saves the financial account first, then opens the encrypted/masked editor; cancelling details leaves the account intact. Existing Accounts rows and edit forms expose the same editor. No credentials enter SavedStateHandle or the audit journal. No new account type, credit-limit semantics or payment processing. Existing Keystore recovery limits apply.
+
+Account, transaction, gift and card-detail entry use a bounded centered surface, compact spacing, scrollable body and pinned Save. Pickers/review sheets use a centered Dialog without the old ModalBottomSheet slide/settle animation. Safe hit targets, Back/dismiss and draft state remain. This removes a known animated sheet transition, but does not establish phone frame-time/jank results; actual IME and OEM form-opening smoothness require phone validation.
+
+Activity/recent rows show a clearly labelled Recorded timestamp from the existing indexed operation journal where available, formatted in the record's time zone. This is entry-recording time, not a fabricated bank payment time: old ledger rows contain a transaction date only. Rows without a timestamp omit it. No schema migration or timestamp backfill was introduced. Actual user-editable payment-time capture remains a future data-model change.
+
+Only Personal built. Update without uninstalling. Same package/key, version code12, Room schema9 unchanged. See validation/compact-forms for actual build/test/lint results and device limitations.
+
+
 ## 0.9.1 Personal — SMS quick review and hero correction
 
 **BUILT: 168 Personal host tests passed, zero failures/errors/skips; lint 0 errors / 21 existing warnings.** Signature matches earlier releases; 16KiB ZIP/64-bit ELF alignment verified. Only Personal built. [Actual validation](validation/sms-quick-review/README.md). Physical-device SMS/UI acceptance remains pending.

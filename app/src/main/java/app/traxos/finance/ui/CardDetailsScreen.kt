@@ -50,8 +50,8 @@ internal class CardDetailsViewModel(val repository: CardVaultRepository, val id:
             loading.value = true
             error.value = null
             try {
-                require(repository.db.ledger().account(id)?.type == "CREDIT_CARD") {
-                    "Credit card account unavailable"
+                require(repository.db.ledger().account(id)?.type in setOf("CREDIT_CARD", "BANK")) {
+                    "Card account unavailable"
                 }
                 val result = repository.read(id)
                 original = result.first
@@ -139,81 +139,89 @@ internal fun CardDetailsScreen(
             { remove = false },
             destructive = true,
         )
-    Column(
-        Modifier.fillMaxSize()
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .imePadding()
-            .testTag("card_details_form")
-    ) {
-        TraxosToolbar("Card details", back = leave)
+    TraxosFormPanel {
         Column(
-            Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            Modifier.fillMaxWidth()
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .testTag("card_details_form")
         ) {
-            account?.let {
-                Text(it.account.name, style = MaterialTheme.typography.titleMedium)
-                Text(
-                    if (it.balanceMinor < 0) "Amount owed" else "Credit balance",
-                    style = MaterialTheme.typography.labelMedium,
-                )
-                MoneyText(kotlin.math.abs(it.balanceMinor), it.account.currency)
-            }
-            Text(
-                "Optional local reference. Details are encrypted and masked; this does not make payments or provide backup.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            if (loading) repeat(3) { RowSkeleton() }
-            else {
-                TraxosInput(
-                    "Card number",
-                    fields.number,
-                    { v -> vm.update { it.copy(number = v.take(24)) } },
-                    enabled = !busy,
-                    number = true,
-                    secret = true,
-                    id = "card_number",
-                )
-                TraxosInput(
-                    "Expiry · MM/YY",
-                    fields.expiry,
-                    { v -> vm.update { it.copy(expiry = v.take(7)) } },
-                    enabled = !busy,
-                    id = "card_expiry",
-                )
-                TraxosInput(
-                    "CVV (optional)",
-                    fields.cvv,
-                    { v -> vm.update { it.copy(cvv = v.take(4)) } },
-                    enabled = !busy,
-                    number = true,
-                    secret = true,
-                    id = "card_cvv",
-                )
-                if (
-                    vm.revision > 0 &&
-                        runCatching { fields.validated().expired() }.getOrDefault(false)
-                )
-                    TraxosNotice(
-                        "This card has expired. Historical transactions are retained.",
-                        NoticeKind.WARNING,
-                    )
-                if (vm.revision > 0)
-                    TraxosTextButton({ remove = true }, enabled = !busy) {
-                        Text("Remove stored details", color = MaterialTheme.colorScheme.error)
-                    }
-            }
-        }
-        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (error != null) TraxosNotice(error!!, NoticeKind.ERROR)
-            TraxosButton(
-                { vm.save() },
-                Modifier.fillMaxWidth().testTag("save_card_details"),
-                !busy && !loading,
-                busy,
+            TraxosToolbar("Card details", back = leave)
+            Column(
+                Modifier.weight(1f, fill = false)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text("Save card details")
+                account?.let {
+                    Text(it.account.name, style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        if (it.account.type == "BANK") "Account balance"
+                        else if (it.balanceMinor < 0) "Amount owed" else "Credit balance",
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                    MoneyText(
+                        if (it.account.type == "BANK") it.balanceMinor
+                        else kotlin.math.abs(it.balanceMinor),
+                        it.account.currency,
+                    )
+                }
+                Text(
+                    "Optional local reference. Details are encrypted and masked; this does not make payments or provide backup.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                if (loading) repeat(3) { RowSkeleton() }
+                else {
+                    TraxosInput(
+                        "Card number",
+                        fields.number,
+                        { v -> vm.update { it.copy(number = v.take(24)) } },
+                        enabled = !busy,
+                        number = true,
+                        secret = true,
+                        id = "card_number",
+                    )
+                    TraxosInput(
+                        "Expiry · MM/YY",
+                        fields.expiry,
+                        { v -> vm.update { it.copy(expiry = v.take(7)) } },
+                        enabled = !busy,
+                        id = "card_expiry",
+                    )
+                    TraxosInput(
+                        "CVV (optional)",
+                        fields.cvv,
+                        { v -> vm.update { it.copy(cvv = v.take(4)) } },
+                        enabled = !busy,
+                        number = true,
+                        secret = true,
+                        id = "card_cvv",
+                    )
+                    if (
+                        vm.revision > 0 &&
+                            runCatching { fields.validated().expired() }.getOrDefault(false)
+                    )
+                        TraxosNotice(
+                            "This card has expired. Historical transactions are retained.",
+                            NoticeKind.WARNING,
+                        )
+                    if (vm.revision > 0)
+                        TraxosTextButton({ remove = true }, enabled = !busy) {
+                            Text("Remove stored details", color = MaterialTheme.colorScheme.error)
+                        }
+                }
+            }
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (error != null) TraxosNotice(error!!, NoticeKind.ERROR)
+                TraxosButton(
+                    { vm.save() },
+                    Modifier.fillMaxWidth().testTag("save_card_details"),
+                    !busy && !loading,
+                    busy,
+                ) {
+                    Text("Save card details")
+                }
             }
         }
     }

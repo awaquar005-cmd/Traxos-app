@@ -4,11 +4,11 @@ Offline-first Kotlin/Jetpack Compose personal finance application. Development m
 
 ## Download for phone testing
 
-**[Download TRAXOS 0.9.1 Personal APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.9.1-personal.apk)**. Choose **Update**, never uninstall or clear storage. Same package/signature, code11 and safe Room migration preserve records.
+**[Download TRAXOS 0.9.2 Personal APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.9.2-personal.apk)**. Choose **Update**, never uninstall or clear storage. Same package/signature, code12 and safe Room migration preserve records.
 
 Previous / Unslop OFF design, tighter dashboard/Activity spacing, borderless actions, improved gift text detection/defaults and saved merchant choices. Optional encrypted card number/CVV/expiry references are under Edit credit-card account. Card purchases/repayments retain correct liability accounting. Only Personal is built for this release.
 
-[Current behavior and limitations](docs/COMPACT_PERSONAL.md) · [Actual validation](docs/validation/sms-quick-review/README.md) · [Installation help](downloads/README.md). App lock does not encrypt the general ledger. There is no portable Keystore/PIN recovery. Physical-phone acceptance is pending; no emulator used. User review is required for Smart Add; OCR remains removed. Existing future-module gallery remains explicitly sample-only.
+[Current behavior and limitations](docs/COMPACT_PERSONAL.md) · [Actual validation](docs/validation/compact-forms/README.md) · [Installation help](downloads/README.md). App lock does not encrypt the general ledger. There is no portable Keystore/PIN recovery. Physical-phone acceptance is pending; no emulator used. User review is required for Smart Add; OCR remains removed. Existing future-module gallery remains explicitly sample-only.
 
 ## Structure
 
@@ -62,3 +62,5 @@ Cloud sync, portable backup/export, whole-database encryption, general transfers
 Next: complete the [physical acceptance checklist](docs/DEVICE_QA.md), including upgrade preservation, biometrics/credentials, installer-restricted SMS and accessibility. Fix measured issues before another feature. Encrypted portable recovery remains a separate future milestone; the full V3 roadmap is not complete.
 
 0.9.1: restored only dashboard hero proportions; direct card-details access in Accounts; Activity SMS pending indicator; inline Approve/Reject and Edit-only sheet; improved bank SMS fields. [Quick-review guide](docs/SMS_QUICK_REVIEW.md).
+
+0.9.2: compact SMS header button hidden at zero; debit/credit card-reference access including after new-account Save; centered compact forms/pickers; clearly labelled Recorded times (not inferred payment times). [Guide](docs/COMPACT_FORMS.md).

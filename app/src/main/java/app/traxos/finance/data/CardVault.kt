@@ -109,8 +109,8 @@ class CardVaultRepository(val db: TraxosDatabase, private val cipher: GiftCipher
             UUID.fromString(operation)
             val valid = secret.validated()
             db.withTransaction {
-                require(db.ledger().account(id)?.type == "CREDIT_CARD") {
-                    "Choose a credit card account"
+                require(db.ledger().account(id)?.type in setOf("CREDIT_CARD", "BANK")) {
+                    "Choose a bank or credit card account"
                 }
                 val old = db.cardReferences().get(id)
                 if (old?.operationId == operation) return@withTransaction

@@ -1,5 +1,6 @@
 package app.traxos.finance.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -112,7 +113,16 @@ internal fun RecordItem(row: RecordRow, hidden: Boolean = false, click: () -> Un
                         "TRANSFER_IN",
                         "TRANSFER_OUT" -> "Own-account transfer"
                         else -> "Expense"
-                    },
+                    } +
+                    (row.loggedAt?.let { timestamp ->
+                        val zone =
+                            runCatching { java.time.ZoneId.of(row.record.zoneId) }
+                                .getOrDefault(java.time.ZoneId.systemDefault())
+                        " · Recorded " +
+                            java.time.Instant.ofEpochMilli(timestamp)
+                                .atZone(zone)
+                                .format(DateTimeFormatter.ofPattern("d MMM HH:mm"))
+                    } ?: ""),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -194,6 +204,12 @@ internal fun TransactionsScreen(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+            if (smartPending > 0)
+                CompactAction(
+                    "SMS · $smartPending",
+                    openSmart,
+                    Modifier.testTag("activity_smart_add"),
+                )
             CompactAction(
                 if (scope.active) "Filters · On" else "Filters",
                 { filtering = true },
@@ -207,9 +223,6 @@ internal fun TransactionsScreen(
                 (if (largeFont) Modifier.weight(1f) else Modifier).testTag("activity_sort"),
                 preferences != null && !preferenceBusy,
             )
-        }
-        TraxosTextButton(openSmart, Modifier.fillMaxWidth().testTag("activity_smart_add")) {
-            Text("SMS Smart Add · $smartPending waiting for review")
         }
         LedgerSearch(search, vm::search, requester)
         if (scope.active) {
@@ -349,7 +362,9 @@ internal fun AccountsScreen(
                         )
                         Text(
                             a.account.name,
-                            Modifier.weight(1f),
+                            Modifier.weight(1f).heightIn(min = 48.dp).clickable {
+                                open(a.account.id)
+                            },
                             style = MaterialTheme.typography.titleMedium,
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
@@ -372,7 +387,7 @@ internal fun AccountsScreen(
                         a.account.currency,
                         hidden = hidden,
                     )
-                    if (a.account.type == "CREDIT_CARD")
+                    if (a.account.type in setOf("CREDIT_CARD", "BANK"))
                         TraxosTextButton({ cardDetails(a.account.id) }) {
                             Text("Card number, expiry & CVV")
                         }

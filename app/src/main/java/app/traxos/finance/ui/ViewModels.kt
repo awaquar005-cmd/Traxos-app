@@ -371,7 +371,7 @@ class FormViewModel(
     val error = MutableStateFlow<String?>(null)
     val events = Channel<Feedback>(Channel.BUFFERED)
     private val id: String = saved.get<String>("id") ?: "new"
-    private val entityId: String =
+    val entityId: String =
         saved.get<String>("entityId")
             ?: (if (id == "new") UUID.randomUUID().toString() else id).also {
                 saved["entityId"] = it

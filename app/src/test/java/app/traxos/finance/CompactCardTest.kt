@@ -88,6 +88,52 @@ class CompactCardTest {
     }
 
     @Test
+    fun debitCardReferencesKeepBankBalanceAndShowOnlyKnownRecordedTime() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Application>()
+        val name = "debit-${UUID.randomUUID()}.db"
+        val db = TraxosDatabase.open(context, name)
+        try {
+            val ledger = LedgerRepository(db)
+            val day = LocalDate.now().toEpochDay()
+            ledger.saveAccount(
+                UUID.randomUUID().toString(),
+                "bank",
+                "Debit bank",
+                "BANK",
+                "INR",
+                10000,
+                openingDate = day - 1,
+            )
+            val vault = CardVaultRepository(db, TestGiftCipher())
+            vault.save(
+                "bank",
+                CardSecret("4111111111111111", "123", "12/30"),
+                0,
+                UUID.randomUUID().toString(),
+            )
+            assertEquals(10000L, db.ledger().accounts().first().single().balanceMinor)
+            val category = db.ledger().categories().first().first { it.type == "EXPENSE" }.id
+            ledger.saveRecord(
+                UUID.randomUUID().toString(),
+                "debit-purchase",
+                "bank",
+                category,
+                "EXPENSE",
+                1000,
+                day,
+                "Test",
+            )
+            val row = db.ledger().recent().first().single()
+            assertNotNull(row.loggedAt)
+            assertTrue(row.loggedAt!! <= System.currentTimeMillis())
+            assertEquals(9000L, db.ledger().accounts().first().single().balanceMinor)
+        } finally {
+            db.close()
+            context.deleteDatabase(name)
+        }
+    }
+
+    @Test
     fun encryptedCardDetailsAreIdempotentAndPreserveDebtAccountingAcrossRestart() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Application>()
         val name = "card-${UUID.randomUUID()}.db"
