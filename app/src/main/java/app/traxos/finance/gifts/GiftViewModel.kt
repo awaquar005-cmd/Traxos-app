@@ -56,7 +56,13 @@ data class GiftDraft(
             byteArrayOf(),
             "",
             if (kind == "DISCOUNT") null else GiftRules.amount(original, currency),
-            if (kind == "DISCOUNT") null else GiftRules.amount(remaining, currency),
+            if (kind == "DISCOUNT") null
+            else
+                GiftRules.amount(
+                    if (revision == 0L && !historyLocked && remaining.isBlank()) original
+                    else remaining,
+                    currency,
+                ),
             currency,
             runCatching { LocalDate.parse(received).toEpochDay() }
                 .getOrElse { throw IllegalArgumentException("Use YYYY-MM-DD for received date") },

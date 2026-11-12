@@ -30,7 +30,7 @@ object ImportTextSafety {
 object GiftParser {
     private val gift =
         Regex(
-            "(?i)\\b(?:gift\\s*(?:card|voucher)|voucher|e-?gift|claim code|redemption code|promo(?:tional)? code|coupon)\\b"
+            "(?i)\\b(?:gift\\s*(?:card|voucher)|pay\\s+code|voucher|e-?gift|claim code|redemption code|promo(?:tional)? code|coupon)\\b"
         )
     private val codeLabel =
         Regex(
@@ -149,9 +149,12 @@ object GiftParser {
                 }
             }
             val pin =
-                Regex("(?i)\\b(?:gift\\s*card\\s*)?pin\\s*(?::|=|is)?\\s*(\\d{4,8})\\b").find(line)
+                Regex(
+                        "(?i)\\b(?:gift\\s*card\\s*)?pin\\s*(?::|=|is)?\\s*([A-Za-z0-9][A-Za-z0-9_-]{2,31})\\b"
+                    )
+                    .find(line)
                     ?: if (Regex("(?i)^pin\\s*[:=]?$").matches(prev))
-                        Regex("^(\\d{4,8})$").find(line)
+                        Regex("^([A-Za-z0-9][A-Za-z0-9_-]{2,31})$").find(line)
                     else null
             if (pin != null && isGift) candidates += ImportCandidate("pin", pin.groupValues[1], 90)
             for (m in currencyNumber.findAll(line)) {

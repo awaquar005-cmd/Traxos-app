@@ -1,5 +1,11 @@
 # Progress
 
+## Compact Personal release — 0.9.0 (code10)
+
+**BUILT: 166 Personal host tests passed; lint passed with 0 errors / 21 existing warnings.** APK signature matches the previous release; 16KiB ZIP/64-bit ELF alignment and permission checks passed. No Play APK built.
+
+Previous / Unslop OFF styling is final. Dashboard/card/page gaps and Activity controls reduced without shrinking 48dp hit targets; duplicate account summary removed. Action buttons and logos are borderless. Generic gift Pay Code/alphanumeric PIN extraction, safe new-card remaining-value default and promoted saved merchant picker implemented. Optional encrypted/masked credit-card number/CVV/expiry editor connects to existing liability accounts and balances. Schema9 adds only the reference table through explicit 8→9 migration. No new dependency or cloud access. Personal only. [Behavior/security/access](COMPACT_PERSONAL.md), [actual validation](validation/compact-cards/README.md). Physical phone acceptance remains pending.
+
 ## Complete offline ledger tools + splash fix — 0.8.0-offline-tools (code9)
 
 **BUILT AND HOST VALIDATION PASSED.** Three real end-to-end features: Activity inclusive date/account/category/currency filters with preserved sheet drafts and saved newest/oldest ordering; per-currency calendar-month category reports with income/purchases/refunds, reactive totals and exact Activity drill-through/Back; paged deleted transactions with ordinary/paired restore, confirmation, stale-revision protection and Undo. Archived references stay available. No automatic purge or fictitious deletion timestamps; linked movements appear once and restore together. Reports exclude transfers/card repayments/opening balances/gift redemption/tombstones; posted-month refunds can produce negative net spending. New tools are in More/Activity's menu/Settings, and Reports is a real optional nav destination. [Behavior and limits](OFFLINE_TOOLS.md), [plan](OFFLINE_TOOLS_PLAN.md).

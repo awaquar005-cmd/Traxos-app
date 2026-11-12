@@ -1,5 +1,9 @@
 # TRAXOS implementation plan
 
+## 0.9.0 scope delivered
+
+Compact baseline UI; borderless actions; generic Pay Code/PIN parsing; new-gift value defaults; promoted saved merchant reuse; optional encrypted credit-card reference editor and safe schema9 migration. Existing card accounting reused without a new finance engine. Personal-only build/test/lint; real-device security/IME/accessibility acceptance pending. No future finance modules added.
+
 Source of truth: [complete V3 blueprint](Traxos_Native_Android_Product_Blueprint_v3.md). Read in full before project code was written. User initialization instructions override infrastructure recommendations and milestone scope. This is a development roadmap, not a release-completion statement.
 
 ## Component refinement — 0.3.0-ui-components

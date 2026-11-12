@@ -76,7 +76,8 @@ fun TraxosApp(vm: MainViewModel) {
         route.startsWith("transaction/") ||
             route.startsWith("account/") ||
             route.startsWith("gift_edit/") ||
-            route.startsWith("ui_review")
+            route.startsWith("ui_review") ||
+            route.startsWith("card_details/")
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(Unit) {
         for (message in snackbarGiftEvents) {
@@ -463,6 +464,17 @@ fun TraxosApp(vm: MainViewModel) {
             composable("labels/{kind}") { e ->
                 RoutePage("labels") {
                     CatalogScreen(vm.repository, e.arguments?.getString("kind") ?: "MERCHANT")
+                }
+            }
+            composable("card_details/{id}") { e ->
+                RoutePage("card_details") {
+                    CardDetailsScreen(
+                        app.cardVault,
+                        e.arguments?.getString("id").orEmpty(),
+                        { nav.popBackStack() },
+                    ) { message ->
+                        feedback(Feedback(message, close = true))
+                    }
                 }
             }
             composable("card_payment/{id}") { e ->

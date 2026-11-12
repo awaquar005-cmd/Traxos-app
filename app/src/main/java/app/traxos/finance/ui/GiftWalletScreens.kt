@@ -278,8 +278,8 @@ internal fun GiftFormScreen(
             return@Column
         }
         Column(
-            Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             TraxosInput(
                 "Merchant",
@@ -288,6 +288,14 @@ internal fun GiftFormScreen(
                 enabled = !busy,
                 id = "gift_merchant",
             )
+            val ledger =
+                remember(vm.repository) {
+                    app.traxos.finance.data.LedgerRepository(vm.repository.db)
+                }
+            SavedLabelPicker(ledger, "MERCHANT") { merchant ->
+                vm.update { it.copy(merchant = merchant.name) }
+            }
+
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TraxosButton(scan, Modifier.weight(1f), !busy, tone = ButtonTone.SECONDARY) {
                     Text("Scan QR / barcode")
@@ -337,9 +345,12 @@ internal fun GiftFormScreen(
                     enabled = !busy && !d.historyLocked,
                     number = true,
                     id = "gift_remaining",
+                    placeholder = if (d.revision == 0L && !d.historyLocked) d.original else "",
                 )
                 Text(
-                    "${d.currency} · Leave blank if unknown",
+                    if (d.revision == 0L && !d.historyLocked && d.original.isNotBlank())
+                        "${d.currency} · Blank uses original value"
+                    else "${d.currency} · Leave blank if unknown",
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
@@ -363,14 +374,6 @@ internal fun GiftFormScreen(
             }
             if (details)
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    val ledger =
-                        remember(vm.repository) {
-                            app.traxos.finance.data.LedgerRepository(vm.repository.db)
-                        }
-                    SavedLabelPicker(ledger, "MERCHANT") { merchant ->
-                        vm.update { it.copy(merchant = merchant.name) }
-                    }
-
                     TraxosInput(
                         "Card name",
                         d.name,
@@ -664,7 +667,7 @@ internal fun GiftDetailScreen(vm: GiftViewModel, id: String, edit: () -> Unit, b
     Column(
         Modifier.fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp)
+            .padding(12.dp)
             .testTag("gift_detail"),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {

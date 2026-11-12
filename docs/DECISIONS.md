@@ -1,5 +1,9 @@
 # Decisions
 
+## 0.9.0 Personal and compact baseline
+
+Use the previous appearance as final, preserve experiment separately, build only Personal. Keep compact visual controls inside accessible touch regions. Reuse saved MERCHANT catalog in current and future entry forms. Keep optional encrypted card references separate from financial postings; no payments or inferred credit limits. Apply original→remaining fallback only to new unredeemed gifts. Never infer an absent gift amount.
+
 - 2026-11-11: Read all 1,164 lines of V3 before code. Preserve exact source and block-level requirement inventory. User milestone/cost constraints take precedence over recommended infrastructure.
 - Single app module + package boundaries/manual DI: conservative Gradle overhead; split only as measured build/team needs grow.
 - Native Kotlin/Compose/Material3, Room, Navigation, Paging and coroutines. No emulator, web wrapper, cloud SDK, analytics or paid API.

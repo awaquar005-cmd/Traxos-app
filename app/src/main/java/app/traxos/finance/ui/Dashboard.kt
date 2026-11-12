@@ -12,7 +12,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.traxos.finance.data.*
@@ -41,8 +40,8 @@ internal fun HomeScreen(
     val active = remember(state.accounts) { state.accounts.filterNot { it.account.archived } }
     LazyColumn(
         Modifier.fillMaxSize().testTag("dashboard_list"),
-        contentPadding = PaddingValues(16.dp, 8.dp, 16.dp, 20.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        contentPadding = PaddingValues(12.dp, 4.dp, 12.dp, 12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         item(key = "hero") {
             Surface(
@@ -56,8 +55,8 @@ internal fun HomeScreen(
                         Modifier.align(Alignment.CenterEnd).padding(end = 8.dp).size(140.dp)
                     )
                     Column(
-                        Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
                         Row(
                             Modifier.fillMaxWidth(),
@@ -139,47 +138,39 @@ internal fun HomeScreen(
         }
         item(key = "search") { SearchShortcut(search) }
         item(key = "monthly") {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     "THIS MONTH",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     MetricCard("Inflow", summaries, true, hidden, Modifier.weight(1f))
                     MetricCard("Net outflow", summaries, false, hidden, Modifier.weight(1f))
                 }
-                Surface(
-                    shape = Radius.control,
-                    color = MaterialTheme.colorScheme.surfaceContainerLowest,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Row(
-                        Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        Icon(
-                            TraxosIcons.wallet,
-                            null,
-                            Modifier.size(19.dp),
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                        Text(
-                            "Active accounts",
-                            Modifier.weight(1f),
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                        Text(
-                            active.size.toString(),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                    }
-                }
             }
         }
-        item(key = "account_header") { SectionHeader("Active accounts", "Manage", openAccounts) }
+        item(key = "account_header") {
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Icon(
+                    TraxosIcons.wallet,
+                    null,
+                    Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    "Active accounts",
+                    Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Text(active.size.toString(), style = MaterialTheme.typography.labelMedium)
+                TraxosTextButton(openAccounts) { Text("Manage") }
+            }
+        }
         if (state.accounts.isEmpty())
             item(key = "account_empty") {
                 Message(
@@ -200,7 +191,7 @@ internal fun HomeScreen(
             }
         else
             item(key = "account_cards") {
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     items(active, key = { it.account.id }) { a ->
                         Surface(
                             onClick = { openAccount(a.account.id) },
@@ -209,7 +200,7 @@ internal fun HomeScreen(
                             modifier = Modifier.width(220.dp),
                         ) {
                             Column(
-                                Modifier.padding(14.dp),
+                                Modifier.padding(12.dp),
                                 verticalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
                                 Row(

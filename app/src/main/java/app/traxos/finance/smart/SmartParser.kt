@@ -40,7 +40,7 @@ data class SmartDraft(
 object SmartParser {
     private val giftContext =
         Regex(
-            "(?i)\\b(?:gift\\s*(?:card|voucher)|voucher|claim code|promo code|coupon code|redemption code)\\b"
+            "(?i)\\b(?:gift\\s*(?:card|voucher)|pay\\s+code|voucher|claim code|promo code|coupon code|redemption code)\\b"
         )
     private val bankContext = Regex("(?i)\\b(?:bank|a/c|acct?|account|upi|card|imps|neft|rtgs)\\b")
     private val direction =

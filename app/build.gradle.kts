@@ -13,8 +13,8 @@ android {
         applicationId = "app.traxos.finance"
         minSdk = 26
         targetSdk = 36
-        versionCode = 9
-        versionName = "0.8.0-offline-tools"
+        versionCode = 10
+        versionName = "0.9.0-personal"
     }
     flavorDimensions += "distribution"
     productFlavors {

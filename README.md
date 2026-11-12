@@ -4,20 +4,11 @@ Offline-first Kotlin/Jetpack Compose personal finance application. Development m
 
 ## Download for phone testing
 
-**[Download TRAXOS 0.8.0 Personal APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.8.0-personal.apk)**. Install as **Update**; do not uninstall or clear storage. Your records, app PIN, gift secrets and navigation preferences are preserved by the signed update and explicit Room migration.
+**[Download TRAXOS 0.9.0 Personal APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.9.0-personal.apk)**. Choose **Update**, never uninstall or clear storage. Same package/signature, code10 and safe Room migration preserve records.
 
-[SMS-free Play build](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.8.0-play.apk) · [Installation help/checksums](downloads/README.md) · [Current guide and limitations](docs/OFFLINE_TOOLS.md) · [Actual tests/lint/previews](docs/validation/offline-tools/README.md).
+Previous / Unslop OFF design, tighter dashboard/Activity spacing, borderless actions, improved gift text detection/defaults and saved merchant choices. Optional encrypted card number/CVV/expiry references are under Edit credit-card account. Card purchases/repayments retain correct liability accounting. Only Personal is built for this release.
 
-
-This release adds **real Activity filters and saved ordering, monthly category reports with drill-through, and deleted-transaction restore/Undo**. Reports separate currencies and exclude transfers/card payments; linked movements restore atomically. Find the new tools in More, Activity's menu and Settings → Accounts & Data. [Behavior and edge cases](docs/OFFLINE_TOOLS.md).
-
-The splash mark now fits Android12's icon mask with all five squares intact. The logo has no outline; action buttons use minimal half-dp borders. Existing financial data, UI themes/navigation, gifts and security remain. More → Explore all screen flows still opens 100 explicitly labeled sample pages for future V3 hierarchy review. [Review inventory](docs/UI_REVIEW_COVERAGE.md).
-
-OCR is removed; QR/barcodes, manual/text gift entry, reminders and redemption remain. Custom categories/accounts, inline creation, saved entry options, compact forms, automatic biometric prompting, a branded PIN/splash, compact menus and Settings fresh-entry navigation are implemented. Credit-card charges/refunds/paired payments use signed debt and do not count credit limits or repayments as income/expense.
-
-Personal SMS: Settings → Smart Tracking → Incoming financial SMS → disclosure → Android permission. Only future incoming eligible messages create encrypted review suggestions; approval is required. Android/installer restrictions can deny access even for sideloaded apps; share/paste is always available. Play excludes SMS permissions and receiver code. Neither build reads historical SMS or uploads financial data. App lock does not encrypt the ledger; no portable recovery/backup exists yet. Actual native biometrics/SMS/phone acceptance is pending.
-
-The repository is https://github.com/awaquar005-cmd/Traxos-app. `/workspace/...` paths refer to the cloud workspace, not your laptop; use the download link.
+[Current behavior and limitations](docs/COMPACT_PERSONAL.md) · [Actual validation](docs/validation/compact-cards/README.md) · [Installation help](downloads/README.md). App lock does not encrypt the general ledger. There is no portable Keystore/PIN recovery. Physical-phone acceptance is pending; no emulator used. User review is required for Smart Add; OCR remains removed. Existing future-module gallery remains explicitly sample-only.
 
 ## Structure
 

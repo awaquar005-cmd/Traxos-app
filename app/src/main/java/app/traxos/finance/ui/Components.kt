@@ -406,15 +406,13 @@ internal fun TraxosToolbar(
     home: (() -> Unit)? = null,
 ) {
     Row(
-        Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(horizontal = 12.dp),
+        Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (back != null) TraxosIconButton(onClick = back) { Icon(TraxosIcons.back, "Back") }
         else {
             if (home != null)
-                TraxosIconButton(home, Modifier.testTag("toolbar_home"), outlined = false) {
-                    BrandMark()
-                }
+                TraxosIconButton(home, Modifier.testTag("toolbar_home")) { BrandMark() }
             else BrandMark()
             Spacer(Modifier.width(if (home != null) 2.dp else 10.dp))
         }
@@ -447,7 +445,7 @@ internal fun TraxosCard(
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
     ) {
         Column(
-            Modifier.padding(16.dp),
+            Modifier.padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             content = content,
         )
@@ -499,7 +497,7 @@ internal fun Message(
     action: String? = null,
     onAction: () -> Unit = {},
 ) {
-    TraxosCard(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+    TraxosCard(Modifier.fillMaxWidth()) {
         Box(
             Modifier.size(40.dp)
                 .background(MaterialTheme.colorScheme.primary.copy(alpha = .08f), Radius.control),

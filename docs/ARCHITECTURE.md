@@ -1,5 +1,9 @@
 # Architecture
 
+## 0.9.0 encrypted card reference extension
+
+Optional `account_card_secrets` is keyed by financial account ID with a restrictive foreign key. Only CREDIT_CARD accounts can store encrypted metadata. Android Keystore AES-GCM cipher uses a dedicated key namespace and row-bound associated data. No secret journal or saved-state persistence. Dedicated route-scoped editor uses single-flight saves and revision/operation checks; normal account lists never decrypt credentials. Existing ledger remains the source of card debt. Schema8→9 creates only this table. See COMPACT_PERSONAL.md.
+
 Current implementation is 0.6.0: see [the current guide](UX_SMART_ENTRY.md) and the 0.6 section below. Earlier milestone sections document the evolution and are not current completion claims.
 
 ## Boundary and dependency direction

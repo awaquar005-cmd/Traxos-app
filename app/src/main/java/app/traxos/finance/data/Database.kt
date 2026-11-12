@@ -296,11 +296,14 @@ interface LedgerDao {
             GiftNotification::class,
             SmartSuggestion::class,
             EntryLabel::class,
+            CardReference::class,
         ],
-    version = 8,
+    version = 9,
     exportSchema = true,
 )
 abstract class TraxosDatabase : RoomDatabase() {
+    abstract fun cardReferences(): CardReferenceDao
+
     abstract fun ledger(): LedgerDao
 
     abstract fun gifts(): GiftDao
@@ -441,6 +444,15 @@ abstract class TraxosDatabase : RoomDatabase() {
                 }
             }
 
+        val MIGRATION_8_9 =
+            object : Migration(8, 9) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS account_card_secrets (accountId TEXT NOT NULL, payload BLOB NOT NULL, revision INTEGER NOT NULL, operationId TEXT NOT NULL, PRIMARY KEY(accountId), FOREIGN KEY(accountId) REFERENCES accounts(id) ON UPDATE NO ACTION ON DELETE RESTRICT)"
+                    )
+                }
+            }
+
         fun open(context: Context, name: String = "traxos.db"): TraxosDatabase =
             Room.databaseBuilder(context, TraxosDatabase::class.java, name)
                 .addMigrations(
@@ -451,6 +463,7 @@ abstract class TraxosDatabase : RoomDatabase() {
                     MIGRATION_5_6,
                     MIGRATION_6_7,
                     MIGRATION_7_8,
+                    MIGRATION_8_9,
                 )
                 .addCallback(
                     object : Callback() {

@@ -48,8 +48,6 @@ enum class NoticeKind {
 
 internal data class ButtonPalette(val foreground: Color, val background: Color, val pressed: Color)
 
-internal fun controlOutline(colors: ColorScheme) = colors.onSurfaceVariant.copy(alpha = .40f)
-
 internal fun buttonPalette(tone: ButtonTone, colors: ColorScheme): ButtonPalette {
     val foreground =
         when (tone) {
@@ -62,7 +60,7 @@ internal fun buttonPalette(tone: ButtonTone, colors: ColorScheme): ButtonPalette
         when (tone) {
             ButtonTone.PRIMARY -> colors.primaryContainer
             ButtonTone.DESTRUCTIVE -> Ink.coral
-            ButtonTone.SECONDARY -> colors.surfaceContainerLowest
+            ButtonTone.SECONDARY -> colors.surfaceContainer
             ButtonTone.GHOST -> Color.Transparent
         }
     val pressed =
@@ -98,15 +96,6 @@ internal fun TraxosButton(
                 .alpha(if (enabled) 1f else .65f)
                 .clip(shape)
                 .background(background)
-                .then(
-                    Modifier.border(
-                        .5.dp,
-                        if (tone == ButtonTone.PRIMARY || tone == ButtonTone.DESTRUCTIVE)
-                            foreground.copy(alpha = .20f)
-                        else controlOutline(MaterialTheme.colorScheme),
-                        shape,
-                    )
-                )
                 .clickable(
                     interactionSource = source,
                     indication = null,
@@ -151,7 +140,6 @@ internal fun TraxosIconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    outlined: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     val source = remember { MutableInteractionSource() }
@@ -163,15 +151,6 @@ internal fun TraxosIconButton(
             .background(
                 if (pressed) MaterialTheme.colorScheme.primary.copy(alpha = .10f)
                 else Color.Transparent
-            )
-            .then(
-                if (outlined)
-                    Modifier.border(
-                        .5.dp,
-                        controlOutline(MaterialTheme.colorScheme),
-                        Radius.control,
-                    )
-                else Modifier
             )
             .alpha(if (enabled) 1f else .65f)
             .clickable(
@@ -561,6 +540,50 @@ internal fun TraxosSegment(
                         else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+        }
+    }
+}
+
+/** A32dp visual chip inside a48dp accessible hit target. No border or layout animation. */
+@Composable
+internal fun CompactAction(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    active: Boolean = false,
+) {
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val c = MaterialTheme.colorScheme
+    Box(
+        modifier
+            .heightIn(min = 48.dp)
+            .clickable(
+                interaction,
+                null,
+                enabled && LocalAppInteractionAllowed.current,
+                role = Role.Button,
+                onClick = onClick,
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(
+            Modifier.heightIn(min = 32.dp)
+                .clip(Radius.small)
+                .background(
+                    if (active) c.primaryContainer
+                    else if (pressed) c.surfaceContainer else c.surfaceContainerLowest
+                )
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            Text(
+                label,
+                style = MaterialTheme.typography.labelMedium,
+                color = if (active) c.onPrimaryContainer else c.onSurface,
+            )
         }
     }
 }

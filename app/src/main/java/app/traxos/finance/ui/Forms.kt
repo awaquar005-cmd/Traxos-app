@@ -116,6 +116,21 @@ internal fun FormDestination(
                         TraxosButton(
                             {
                                 nav.navigate(
+                                    "card_details/${nav.currentBackStackEntry?.arguments?.getString("id")}"
+                                ) {
+                                    launchSingleTop = true
+                                }
+                            },
+                            Modifier.fillMaxWidth(),
+                            !busy,
+                            tone = ButtonTone.SECONDARY,
+                        ) {
+                            Text("Card number, expiry & CVV")
+                        }
+                    if (!vm.isNew && fields["type"] == "CREDIT_CARD")
+                        TraxosButton(
+                            {
+                                nav.navigate(
                                     "card_payment/${nav.currentBackStackEntry?.arguments?.getString("id")}"
                                 )
                             },

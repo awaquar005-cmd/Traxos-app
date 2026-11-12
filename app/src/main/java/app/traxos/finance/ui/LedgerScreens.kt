@@ -174,8 +174,8 @@ internal fun TransactionsScreen(
         }
     }
     Column(
-        Modifier.fillMaxSize().padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        Modifier.fillMaxSize().padding(horizontal = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         val largeFont = LocalDensity.current.fontScale > 1.3f
         if (largeFont) Text("Activity", style = MaterialTheme.typography.titleMedium)
@@ -192,28 +192,19 @@ internal fun TransactionsScreen(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-            TraxosButton(
+            CompactAction(
+                if (scope.active) "Filters · On" else "Filters",
                 { filtering = true },
                 (if (largeFont) Modifier.weight(1f) else Modifier).testTag("activity_filters"),
                 reads is ReadState.Ready,
-                tone = ButtonTone.SECONDARY,
-            ) {
-                Text(
-                    if (scope.active) "Filters · On" else "Filters",
-                    style = MaterialTheme.typography.labelMedium,
-                )
-            }
-            TraxosButton(
+                scope.active,
+            )
+            CompactAction(
+                if (sort == "OLDEST") "Oldest first" else "Newest first",
                 { sorting = true },
                 (if (largeFont) Modifier.weight(1f) else Modifier).testTag("activity_sort"),
                 preferences != null && !preferenceBusy,
-                tone = ButtonTone.SECONDARY,
-            ) {
-                Text(
-                    if (sort == "OLDEST") "Oldest first" else "Newest first",
-                    style = MaterialTheme.typography.labelMedium,
-                )
-            }
+            )
         }
         LedgerSearch(search, vm::search, requester)
         if (scope.active) {
@@ -264,13 +255,7 @@ internal fun TransactionsScreen(
                     "CARD_PAYMENTS" to "Card payments",
                 )
                 .forEach { (id, label) ->
-                    TraxosButton(
-                        { vm.recordFilter(id) },
-                        tone = if (filter == id) ButtonTone.PRIMARY else ButtonTone.SECONDARY,
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                    ) {
-                        Text(label, style = MaterialTheme.typography.labelMedium)
-                    }
+                    CompactAction(label, { vm.recordFilter(id) }, active = filter == id)
                 }
         }
         LazyColumn(

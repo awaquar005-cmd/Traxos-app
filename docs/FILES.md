@@ -1,5 +1,9 @@
 # Created files
 
+## 0.9.0 compact Personal changes
+
+Created `data/CardVault.kt`, `ui/CardDetailsScreen.kt`, Room schema9, `CompactCardTest.kt`, `CardVaultMigrationTest.kt`, `CardDetailsUiTest.kt`, `docs/COMPACT_CARD_PLAN.md`, `docs/COMPACT_PERSONAL.md` and validation/compact-cards. Updated build metadata, TraxosApplication, Database, GiftParser/GiftViewModel, SmartParser, App/Forms, shared Controls/Components/Navigation, Dashboard, LedgerScreens and GiftWalletScreens. Updated release/download documentation and checksum. Existing logo assets unchanged.
+
 ## 0.8.0 offline ledger tools
 
 `LedgerToolsScreens.kt` implements filter drafts, deleted recovery and monthly reports; `ActivityScope.kt` defines validated date/ID criteria. Room queries/MVVM add paging/aggregate/sort/restore state without changing financial entities. Schema8 adds only activitySort. Reports joins the real destination registry; More/Settings/Activity expose all completed tools. Shared button borders are half-dp; the header logo explicitly opts out. `traxos_splash_icon.xml` adds Android12 safe-area padding separate from animation. No new SDK/dependency or permission.
