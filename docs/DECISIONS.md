@@ -1,5 +1,9 @@
 # Decisions
 
+## 0.10.0 recurring defaults
+
+Default new schedules to paused until explicit automatic-posting consent. Month-end anchoring and100-item resumable batches avoid skipped days/large blocking work. Do not infer bank payment confirmation or SMS matching from a schedule. Keep recurring transfers/card settlements out of this expense/income feature. Clipboard marking/clearing is best-effort and must not remove another clip. Reserve a future long-press callback without implementing fake recording.
+
 ## 0.9.0 Personal and compact baseline
 
 Use the previous appearance as final, preserve experiment separately, build only Personal. Keep compact visual controls inside accessible touch regions. Reuse saved MERCHANT catalog in current and future entry forms. Keep optional encrypted card references separate from financial postings; no payments or inferred credit limits. Apply original→remaining fallback only to new unredeemed gifts. Never infer an absent gift amount.

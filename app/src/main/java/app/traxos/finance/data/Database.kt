@@ -298,11 +298,14 @@ interface LedgerDao {
             SmartSuggestion::class,
             EntryLabel::class,
             CardReference::class,
+            RecurringRule::class,
         ],
-    version = 9,
+    version = 10,
     exportSchema = true,
 )
 abstract class TraxosDatabase : RoomDatabase() {
+    abstract fun recurring(): RecurringDao
+
     abstract fun cardReferences(): CardReferenceDao
 
     abstract fun ledger(): LedgerDao
@@ -454,6 +457,24 @@ abstract class TraxosDatabase : RoomDatabase() {
                 }
             }
 
+        val MIGRATION_9_10 =
+            object : Migration(9, 10) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS recurring_rules (id TEXT NOT NULL, accountId TEXT NOT NULL, categoryId TEXT NOT NULL, type TEXT NOT NULL, amountMinor INTEGER NOT NULL, note TEXT NOT NULL, frequency TEXT NOT NULL, anchorDay INTEGER NOT NULL, nextDay INTEGER NOT NULL, enabled INTEGER NOT NULL, deleted INTEGER NOT NULL, revision INTEGER NOT NULL, lastError TEXT NOT NULL, operationId TEXT NOT NULL, PRIMARY KEY(id), FOREIGN KEY(accountId) REFERENCES accounts(id) ON UPDATE NO ACTION ON DELETE RESTRICT, FOREIGN KEY(categoryId) REFERENCES categories(id) ON UPDATE NO ACTION ON DELETE RESTRICT)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_recurring_rules_accountId ON recurring_rules(accountId)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_recurring_rules_categoryId ON recurring_rules(categoryId)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_recurring_rules_enabled_deleted_nextDay ON recurring_rules(enabled,deleted,nextDay)"
+                    )
+                }
+            }
+
         fun open(context: Context, name: String = "traxos.db"): TraxosDatabase =
             Room.databaseBuilder(context, TraxosDatabase::class.java, name)
                 .addMigrations(
@@ -465,6 +486,7 @@ abstract class TraxosDatabase : RoomDatabase() {
                     MIGRATION_6_7,
                     MIGRATION_7_8,
                     MIGRATION_8_9,
+                    MIGRATION_9_10,
                 )
                 .addCallback(
                     object : Callback() {

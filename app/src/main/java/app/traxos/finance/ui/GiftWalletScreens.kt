@@ -279,9 +279,7 @@ internal fun GiftFormScreen(
                 return@Column
             }
             Column(
-                Modifier.weight(1f, fill = false)
-                    .verticalScroll(rememberScrollState())
-                    .padding(12.dp),
+                Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 TraxosInput(

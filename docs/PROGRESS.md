@@ -1,5 +1,24 @@
 # Progress
 
+## 0.10.0 recurring and compact interactions
+
+**BUILT: 180 Personal host tests passed, zero failures/errors/skips. Lint passed: 0 errors, 21 existing warnings and one non-blocking primitive-state allocation hint.** Same signing identity, 16KiB ZIP/64-bit ELF alignment verified. No Play build or emulator. [Actual validation](validation/recurring-compact/README.md). Phone frame timing/IME/OEM and background acceptance remain unverified.
+
+Accounts → Recurring: create daily/weekly/monthly income or expenses, choose account/category, exact amount, description and next date. Automatic posting is opt-in per schedule; paused schedules create nothing. Edit, pause/resume and delete are functional. Deleting schedules never deletes posted transactions. Month-end schedules preserve the original day (Jan31→Feb28/29→Mar31). New/edited next dates must be today/future, within10 years. Resuming an overdue schedule catches up missed dates. Credit cards allow purchases, not recurring income, repayments or transfers. No currency conversion or bank-payment verification is implied. Avoid importing the same payment again from SMS; cross-source matches are not inferred.
+
+Room schema10 adds only recurring_rules with account/category foreign keys and due-date indexes, using explicit9→10 migration. WorkManager checks offline daily and on app foreground, at approximate OS-controlled times, with100-occurrence batches and retry. Force-stop delays work until reopening. Deterministic occurrence IDs and one atomic transaction for ledger posting/schedule advancement prevent duplicate retry writes. A private ledger repository inside this transaction avoids UI mutex/database lock inversion. Validation failures retain due dates and show errors; fix the references and edit or pause/resume to retry. No failed operation is silently converted into income/expense. Rules can be paused independently; there is no fake global setting.
+
+Accounts owns Transfer as a dialog; no standalone route or More entry. Paired accounting and snackbar Undo remain. Account/card cards are smaller; report income/net spending share a row; selectors use one compact line; segmented controls retain48dp accessible targets. Confirmations have side-by-side actions. Instruction notices use smaller text, a tinted surface and a fine accent border. Dashboard source, logo assets and watermark are unchanged.
+
+Form surfaces now have a stable bounded frame during loading; editors use a scrolling body and fixed footer. Native dialog window animations are disabled. Selectors and confirmations no longer forcibly hide the parent keyboard/clear focus as their window appears. These address identifiable layout/window causes, but no phone FPS/jank certification is claimed. Native host tests do not replace physical OEM/IME/TalkBack verification.
+
+Card-detail editors have separate Copy number/CVV/expiry actions beside their inputs. No account-list decryption or combined credential copying. The clipboard is marked sensitive; a60-second timer attempts to clear only the same owned clip, never later copied content. Android background restrictions/process death can prevent clearing; do not rely on the timer as guaranteed erasure. Copy failure has explicit feedback without secrets. Keystore/PIN portability and general ledger-encryption limitations remain.
+
+The centre Plus control exposes an optional future long-press callback while preserving normal taps. Recording is not implemented; no microphone permission or misleading recording control.
+
+Build only Personal: `./gradlew :app:assemblePersonalDebug :app:testPersonalDebugUnitTest :app:lintPersonalDebug`. Install `adb install -r downloads/TRAXOS-0.10.0-personal.apk` as Update; never uninstall/clear storage. Same signing key/package, code13. See validation/recurring-compact for actual checks. No emulator.
+
+
 ## 0.9.2 Personal — compact forms and card references
 
 **BUILT: 169 Personal host tests passed; zero failures/errors/skips. Lint passed: 0 errors / 21 existing warnings.** Update signing identity and 16KiB ZIP/64-bit ELF alignment verified. No Play APK or emulator. The Bank-row account-title tap target is now explicit, preventing the nested card-details action from intercepting the account-name click. [Actual validation](validation/compact-forms/README.md).

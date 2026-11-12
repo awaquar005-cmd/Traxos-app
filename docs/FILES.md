@@ -1,5 +1,9 @@
 # Created files
 
+## 0.10.0 changed files
+
+Created data/Recurring.kt, recurring/RecurringWork.kt, ui/RecurringPanel.kt, ui/CardClipboard.kt, schema10, RecurringTest/RecurringMigrationTest/RecurringPanelUiTest/CardClipboardTest and recurring release documentation/validation. Updated Application/MainActivity scheduler wiring, Database migration, Overlays/Forms/GiftWalletScreens/CardDetailsScreen frame/window/copy behavior, Controls/Navigation compact interaction contract, LedgerScreens/Reports/UiHierarchy/App/TransferScreen ownership and build metadata. Dashboard.kt, brand assets and splash resources unchanged.
+
 ## 0.9.2 changed files
 
 Updated LedgerScreens (conditional compact SMS action, card details, Recorded timestamp), Forms/ViewModels (save account then optional card editor), CardDetailsScreen, GiftWalletScreens and Overlays (compact centered panels/dialogs), CardVault (BANK/CREDIT_CARD eligibility), Database (query-only Recorded projection), CompactCardTest, version/release documentation. Schema9 and logo assets unchanged.

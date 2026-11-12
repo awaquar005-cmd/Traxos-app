@@ -510,7 +510,7 @@ internal fun TraxosSegment(
         Modifier.fillMaxWidth()
             .clip(Radius.control)
             .background(MaterialTheme.colorScheme.surfaceContainer)
-            .padding(4.dp),
+            .padding(2.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         options.forEach { (id, label) ->
@@ -529,7 +529,7 @@ internal fun TraxosSegment(
                         role = Role.Tab,
                         onClick = { onSelect(id) },
                     )
-                    .padding(horizontal = 8.dp, vertical = 10.dp),
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(

@@ -27,6 +27,7 @@ class MainActivity : FragmentActivity() {
 
     override fun onStart() {
         super.onStart()
+        (application as TraxosApplication).recurringScheduler.kick()
         if (::security.isInitialized) security.foreground()
     }
 

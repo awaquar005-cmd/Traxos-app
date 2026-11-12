@@ -384,18 +384,27 @@ internal fun MonthlyReportsScreen(vm: MainViewModel, hidden: Boolean, activity: 
                     .forEach { (currency, rows) ->
                         item(key = "total:$currency") {
                             SettingsGroup(currency) {
-                                ReportTotal(
-                                    "Income",
-                                    rows.sumOf { it.incomeMinor },
-                                    currency,
-                                    hidden,
-                                )
-                                ReportTotal(
-                                    "Net spending",
-                                    rows.sumOf { it.expenseMinor - it.refundMinor },
-                                    currency,
-                                    hidden,
-                                )
+                                Row(
+                                    Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
+                                    Box(Modifier.weight(1f)) {
+                                        ReportTotal(
+                                            "Income",
+                                            rows.sumOf { it.incomeMinor },
+                                            currency,
+                                            hidden,
+                                        )
+                                    }
+                                    Box(Modifier.weight(1f)) {
+                                        ReportTotal(
+                                            "Net spending",
+                                            rows.sumOf { it.expenseMinor - it.refundMinor },
+                                            currency,
+                                            hidden,
+                                        )
+                                    }
+                                }
                             }
                         }
                         val categories =

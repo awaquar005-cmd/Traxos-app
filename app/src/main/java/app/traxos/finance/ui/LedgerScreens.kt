@@ -325,13 +325,26 @@ internal fun AccountsScreen(
     open: (String) -> Unit,
     hidden: Boolean = false,
     cardDetails: (String) -> Unit = {},
+    transfer: () -> Unit = {},
+    recurring: () -> Unit = {},
 ) {
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp, 8.dp, 16.dp, 20.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        contentPadding = PaddingValues(12.dp, 4.dp, 12.dp, 12.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         item { SectionHeader("Your accounts", "Add account") { open("new") } }
+        item {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                CompactAction(
+                    "Transfer",
+                    transfer,
+                    Modifier.weight(1f),
+                    accounts.count { !it.account.archived && it.account.type != "CREDIT_CARD" } >= 2,
+                )
+                CompactAction("Recurring", recurring, Modifier.weight(1f))
+            }
+        }
         if (accounts.isEmpty())
             item {
                 Message(
@@ -349,7 +362,7 @@ internal fun AccountsScreen(
                 color = MaterialTheme.colorScheme.surfaceContainerLowest,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -362,9 +375,10 @@ internal fun AccountsScreen(
                         )
                         Text(
                             a.account.name,
-                            Modifier.weight(1f).heightIn(min = 48.dp).clickable {
-                                open(a.account.id)
-                            },
+                            Modifier.weight(1f)
+                                .heightIn(min = 48.dp)
+                                .wrapContentHeight(Alignment.CenterVertically)
+                                .clickable { open(a.account.id) },
                             style = MaterialTheme.typography.titleMedium,
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
@@ -375,22 +389,23 @@ internal fun AccountsScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    if (a.account.type == "CREDIT_CARD")
-                        Text(
-                            if (a.balanceMinor < 0) "Amount owed" else "Credit balance",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    MoneyText(
-                        if (a.account.type == "CREDIT_CARD") kotlin.math.abs(a.balanceMinor)
-                        else a.balanceMinor,
-                        a.account.currency,
-                        hidden = hidden,
-                    )
-                    if (a.account.type in setOf("CREDIT_CARD", "BANK"))
-                        TraxosTextButton({ cardDetails(a.account.id) }) {
-                            Text("Card number, expiry & CVV")
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            if (a.account.type == "CREDIT_CARD")
+                                Text(
+                                    if (a.balanceMinor < 0) "Amount owed" else "Credit balance",
+                                    style = MaterialTheme.typography.labelSmall,
+                                )
+                            MoneyText(
+                                if (a.account.type == "CREDIT_CARD") kotlin.math.abs(a.balanceMinor)
+                                else a.balanceMinor,
+                                a.account.currency,
+                                hidden = hidden,
+                            )
                         }
+                        if (a.account.type in setOf("CREDIT_CARD", "BANK"))
+                            CompactAction("Card details", { cardDetails(a.account.id) })
+                    }
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             accountTypeLabel(a.account.type) +

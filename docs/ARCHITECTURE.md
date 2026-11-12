@@ -1,5 +1,9 @@
 # Architecture
 
+## 0.10.0 recurring execution and interaction ownership
+
+Account-owned recurring rules use indexed Room due reads and explicit schema9→10 migration. Ledger mutation and occurrence advancement are one database transaction using deterministic per-rule/date UUIDs. A private ledger repository avoids lock inversion against UI writes; worker retries retain idempotence. Local unique WorkManager jobs perform bounded batches. Invalid references retain due dates and surface errors. Account Transfer is now a dialog rather than a NavHost route; Undo stays in root feedback. Forms have fixed bounded frames; dialog windows suppress inherited animation. Native phone smoothness remains a device gate. See RECURRING_COMPACT.md.
+
 ## 0.9.2 entry presentation
 
 Account/transaction/gift/card editors share a bounded centered surface; reusable selection/review sheets now use centered native Dialog windows with the existing custom content and no bottom-sheet slide. New-account card opt-in navigates only after successful account persistence and removes the new-account route. BANK debit references share the encrypted card vault without changing bank accounting. RecordRow has a nullable query-only Recorded timestamp projected from the indexed immutable journal; no entity/schema change or inferred payment timestamp.

@@ -115,7 +115,7 @@ internal fun FormDestination(
                 back = leave,
             )
             Column(
-                Modifier.weight(1f, fill = false)
+                Modifier.weight(1f)
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 12.dp),

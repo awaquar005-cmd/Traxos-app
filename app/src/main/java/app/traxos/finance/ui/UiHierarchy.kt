@@ -144,18 +144,7 @@ internal fun MoreScreen(navigate: (String) -> Unit) {
                         "Codes, balances and expiry",
                         TraxosIcons.gift,
                     ),
-                    ToolEntry(
-                        "smart",
-                        "Smart Add",
-                        "Review shared text and SMS",
-                        TraxosIcons.spark,
-                    ),
-                    ToolEntry(
-                        "transfer",
-                        "Transfer between accounts",
-                        "Own money · not income or expense",
-                        TraxosIcons.transfer,
-                    ),
+                    ToolEntry("smart", "Smart Add", "Review shared text and SMS", TraxosIcons.spark),
                 )
                 .forEach { ToolRow(it, false, navigate) }
         }

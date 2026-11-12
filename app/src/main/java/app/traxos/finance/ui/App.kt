@@ -78,6 +78,26 @@ fun TraxosApp(vm: MainViewModel) {
             route.startsWith("gift_edit/") ||
             route.startsWith("ui_review") ||
             route.startsWith("card_details/")
+    val transferEvents = remember {
+        kotlinx.coroutines.channels.Channel<String>(kotlinx.coroutines.channels.Channel.BUFFERED)
+    }
+    var transferCloseRequested by remember { mutableStateOf(false) }
+    var transferOpen by rememberSaveable { mutableStateOf(false) }
+    var recurringOpen by rememberSaveable { mutableStateOf(false) }
+    if (transferOpen)
+        TraxosSheet("Transfer between accounts", { transferCloseRequested = true }) {
+            TransferScreen(
+                vm.repository,
+                back = { transferOpen = false },
+                closeRequested = transferCloseRequested,
+                closeHandled = { transferCloseRequested = false },
+            ) { id ->
+                transferOpen = false
+                transferEvents.trySend(id)
+            }
+        }
+    if (recurringOpen)
+        RecurringPanel(app.recurring, { recurringOpen = false }, app.recurringScheduler::kick)
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(Unit) {
         for (message in snackbarGiftEvents) {
@@ -169,6 +189,14 @@ fun TraxosApp(vm: MainViewModel) {
             }
     }
     LaunchedEffect(vm) { for (event in vm.events) feedback(event) }
+    LaunchedEffect(transferEvents) {
+        for (id in transferEvents) {
+            vm.refresh()
+            feedback(
+                Feedback("Transfer recorded between your accounts", undoId = id, undoRevision = 1)
+            )
+        }
+    }
     Scaffold(
         modifier = Modifier.fillMaxSize().imePadding(),
         containerColor = MaterialTheme.colorScheme.background,
@@ -335,6 +363,8 @@ fun TraxosApp(vm: MainViewModel) {
                             { id -> nav.navigate("account/$id") { launchSingleTop = true } },
                             prefs.balancesHidden,
                             { id -> nav.navigate("card_details/$id") { launchSingleTop = true } },
+                            { transferOpen = true },
+                            { recurringOpen = true },
                         )
                     }
                 }
@@ -484,20 +514,6 @@ fun TraxosApp(vm: MainViewModel) {
                 RoutePage("card_payment") {
                     CardPaymentScreen(vm.repository, e.arguments?.getString("id").orEmpty()) {
                         nav.popBackStack()
-                    }
-                }
-            }
-            composable("transfer") {
-                RoutePage("transfer") {
-                    TransferScreen(vm.repository, back = { nav.popBackStack() }) { id ->
-                        feedback(
-                            Feedback(
-                                "Transfer recorded between your accounts",
-                                close = true,
-                                undoId = id,
-                                undoRevision = 1,
-                            )
-                        )
                     }
                 }
             }

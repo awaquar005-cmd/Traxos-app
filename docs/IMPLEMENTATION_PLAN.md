@@ -1,5 +1,9 @@
 # TRAXOS implementation plan
 
+## 0.10.0 scope
+
+Implemented account-owned daily/weekly/monthly recurring expense/income rules, offline bounded automatic catch-up, edit/pause/resume/delete and explicit9→10 preservation. Compact account/report/selector/confirmation hierarchy; transfer moved into Accounts dialog; sensitive per-field card copy; stable form/window behavior. Phone frame-time/IME/background acceptance remains pending. Voice recording remains future work; no new unrelated modules.
+
 ## 0.9.0 scope delivered
 
 Compact baseline UI; borderless actions; generic Pay Code/PIN parsing; new-gift value defaults; promoted saved merchant reuse; optional encrypted credit-card reference editor and safe schema9 migration. Existing card accounting reused without a new finance engine. Personal-only build/test/lint; real-device security/IME/accessibility acceptance pending. No future finance modules added.

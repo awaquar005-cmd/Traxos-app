@@ -24,6 +24,8 @@ open class TraxosApplication : Application(), androidx.work.Configuration.Provid
             KeystoreGiftCipher("traxos.card.references"),
         )
     }
+    val recurring by lazy { app.traxos.finance.data.RecurringRepository(database) }
+    val recurringScheduler by lazy { app.traxos.finance.recurring.RecurringScheduler(this) }
     val database by lazy { TraxosDatabase.open(this) }
     val repository by lazy { LedgerRepository(database) }
     val giftScheduler by lazy { AndroidGiftScheduler(this) }
@@ -41,5 +43,6 @@ open class TraxosApplication : Application(), androidx.work.Configuration.Provid
     override fun onCreate() {
         super.onCreate()
         giftScheduler.start()
+        recurringScheduler.start()
     }
 }

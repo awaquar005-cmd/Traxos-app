@@ -7,6 +7,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -100,6 +101,8 @@ internal fun CardDetailsScreen(
         viewModel(
             factory = viewModelFactory { initializer { CardDetailsViewModel(repository, id) } }
         )
+    val context = LocalContext.current
+    var copied by remember { mutableStateOf<String?>(null) }
     val fields by vm.fields.collectAsStateWithLifecycle()
     val loading by vm.loading.collectAsStateWithLifecycle()
     val busy by vm.busy.collectAsStateWithLifecycle()
@@ -148,7 +151,7 @@ internal fun CardDetailsScreen(
         ) {
             TraxosToolbar("Card details", back = leave)
             Column(
-                Modifier.weight(1f, fill = false)
+                Modifier.weight(1f)
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -173,31 +176,82 @@ internal fun CardDetailsScreen(
                 )
                 if (loading) repeat(3) { RowSkeleton() }
                 else {
-                    TraxosInput(
-                        "Card number",
-                        fields.number,
-                        { v -> vm.update { it.copy(number = v.take(24)) } },
-                        enabled = !busy,
-                        number = true,
-                        secret = true,
-                        id = "card_number",
-                    )
-                    TraxosInput(
-                        "Expiry · MM/YY",
-                        fields.expiry,
-                        { v -> vm.update { it.copy(expiry = v.take(7)) } },
-                        enabled = !busy,
-                        id = "card_expiry",
-                    )
-                    TraxosInput(
-                        "CVV (optional)",
-                        fields.cvv,
-                        { v -> vm.update { it.copy(cvv = v.take(4)) } },
-                        enabled = !busy,
-                        number = true,
-                        secret = true,
-                        id = "card_cvv",
-                    )
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                    ) {
+                        TraxosInput(
+                            "Card number",
+                            fields.number,
+                            { v -> vm.update { it.copy(number = v.take(24)) } },
+                            modifier = Modifier.weight(1f),
+                            enabled = !busy,
+                            number = true,
+                            secret = true,
+                            id = "card_number",
+                        )
+                        TraxosTextButton(
+                            {
+                                copied =
+                                    if (copyCardDetail(context, fields.number))
+                                        "Copied number · clipboard clear requested after 60 seconds"
+                                    else "Clipboard unavailable; try again while Traxos is open"
+                            },
+                            enabled = !busy && fields.number.isNotBlank(),
+                        ) {
+                            Text("Copy number")
+                        }
+                    }
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                    ) {
+                        TraxosInput(
+                            "Expiry · MM/YY",
+                            fields.expiry,
+                            { v -> vm.update { it.copy(expiry = v.take(7)) } },
+                            modifier = Modifier.weight(1f),
+                            enabled = !busy,
+                            id = "card_expiry",
+                        )
+                        TraxosTextButton(
+                            {
+                                copied =
+                                    if (copyCardDetail(context, fields.expiry))
+                                        "Copied expiry · clipboard clear requested after 60 seconds"
+                                    else "Clipboard unavailable; try again while Traxos is open"
+                            },
+                            enabled = !busy && fields.expiry.isNotBlank(),
+                        ) {
+                            Text("Copy expiry")
+                        }
+                    }
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                    ) {
+                        TraxosInput(
+                            "CVV (optional)",
+                            fields.cvv,
+                            { v -> vm.update { it.copy(cvv = v.take(4)) } },
+                            modifier = Modifier.weight(1f),
+                            enabled = !busy,
+                            number = true,
+                            secret = true,
+                            id = "card_cvv",
+                        )
+                        TraxosTextButton(
+                            {
+                                copied =
+                                    if (copyCardDetail(context, fields.cvv))
+                                        "Copied CVV · clipboard clear requested after 60 seconds"
+                                    else "Clipboard unavailable; try again while Traxos is open"
+                            },
+                            enabled = !busy && fields.cvv.isNotBlank(),
+                        ) {
+                            Text("Copy CVV")
+                        }
+                    }
                     if (
                         vm.revision > 0 &&
                             runCatching { fields.validated().expired() }.getOrDefault(false)
@@ -213,6 +267,11 @@ internal fun CardDetailsScreen(
                 }
             }
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (copied != null)
+                    TraxosNotice(
+                        copied!!,
+                        if (copied!!.startsWith("Copied")) NoticeKind.SUCCESS else NoticeKind.ERROR,
+                    )
                 if (error != null) TraxosNotice(error!!, NoticeKind.ERROR)
                 TraxosButton(
                     { vm.save() },

@@ -1,6 +1,7 @@
 package app.traxos.finance.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.*
@@ -62,6 +63,7 @@ internal fun TraxosBottomBar(
     shortcutEnabled: Boolean = true,
     slots: List<String> = NavigationLayout.defaults,
     systemInsets: Boolean = true,
+    onQuickAddHold: (() -> Unit)? = null,
     launchShortcut: () -> Unit,
 ) {
     Surface(color = MaterialTheme.colorScheme.surfaceContainerLowest) {
@@ -86,13 +88,19 @@ internal fun TraxosBottomBar(
             }
             Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 Surface(
-                    onClick = launchShortcut,
-                    enabled = shortcutEnabled,
                     shape = Radius.card,
                     color = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = Color.White,
                     modifier =
                         Modifier.size(48.dp)
+                            .combinedClickable(
+                                enabled = shortcutEnabled,
+                                role = Role.Button,
+                                onClick = launchShortcut,
+                                onLongClick =
+                                    if (shortcut == CenterShortcut.ADD_TRANSACTION) onQuickAddHold
+                                    else null,
+                            )
                             .testTag(if (systemInsets) "center_action" else "preview_center_action"),
                 ) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

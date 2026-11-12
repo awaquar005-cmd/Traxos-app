@@ -19,6 +19,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.*
@@ -45,7 +46,8 @@ internal fun TraxosNotice(text: String, kind: NoticeKind, modifier: Modifier = M
             .fillMaxWidth()
             .clip(Radius.control)
             .background(accent.copy(alpha = .07f))
-            .padding(12.dp)
+            .border(BorderStroke(.5.dp, accent.copy(alpha = .35f)), Radius.control)
+            .padding(horizontal = 10.dp, vertical = 6.dp)
             .semantics { liveRegion = LiveRegionMode.Polite },
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -66,7 +68,7 @@ internal fun TraxosNotice(text: String, kind: NoticeKind, modifier: Modifier = M
         Text(
             text,
             Modifier.weight(1f),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurface,
         )
     }
@@ -150,17 +152,12 @@ internal fun TraxosDialog(
 ) {
     if (!LocalAppInteractionAllowed.current) return
 
-    val keyboard = LocalSoftwareKeyboardController.current
-    val parentFocus = LocalFocusManager.current
-    LaunchedEffect(Unit) {
-        keyboard?.hide()
-        parentFocus.clearFocus()
-    }
     val maximumHeight = overlayMaxHeight()
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
+        StableDialogWindow()
         Surface(
             shape = RoundedCornerShape(14.dp),
             color = MaterialTheme.colorScheme.surfaceContainerLowest,
@@ -193,15 +190,17 @@ internal fun TraxosDialog(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                TraxosButton(
-                    onConfirm,
-                    Modifier.fillMaxWidth().testTag("dialog_confirm"),
-                    enabled,
-                    tone = if (destructive) ButtonTone.DESTRUCTIVE else ButtonTone.PRIMARY,
-                ) {
-                    Text(confirmLabel)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TraxosTextButton(onDismiss, Modifier.weight(1f), enabled) { Text(cancelLabel) }
+                    TraxosButton(
+                        onConfirm,
+                        Modifier.weight(1f).testTag("dialog_confirm"),
+                        enabled,
+                        tone = if (destructive) ButtonTone.DESTRUCTIVE else ButtonTone.PRIMARY,
+                    ) {
+                        Text(confirmLabel)
+                    }
                 }
-                TraxosTextButton(onDismiss, Modifier.fillMaxWidth(), enabled) { Text(cancelLabel) }
             }
         }
     }
@@ -221,6 +220,7 @@ internal fun TraxosSheet(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
+        StableDialogWindow()
         Surface(
             shape = RoundedCornerShape(14.dp),
             color = MaterialTheme.colorScheme.surfaceContainerLowest,
@@ -317,22 +317,24 @@ internal fun TraxosSelector(
         }
     ) {
         TraxosButton(
-            {
-                keyboard?.hide()
-                parentFocus.clearFocus()
-                open = true
-            },
+            { open = true },
             Modifier.fillMaxWidth().testTag("selector_$label"),
             enabled && (options.isNotEmpty() || onCreate != null),
             tone = ButtonTone.SECONDARY,
+            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
         ) {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(
+                Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 Text(
                     label,
+                    Modifier.weight(.45f),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Text(value, style = MaterialTheme.typography.bodyMedium)
+                Text(value, Modifier.weight(.55f), style = MaterialTheme.typography.bodyMedium)
             }
             Icon(TraxosIcons.arrow, null, Modifier.size(18.dp))
         }
@@ -568,13 +570,24 @@ internal fun TraxosFormPanel(content: @Composable () -> Unit) {
         Surface(
             modifier =
                 Modifier.padding(8.dp)
+                    .testTag("traxos_form_panel")
                     .widthIn(max = 480.dp)
                     .fillMaxWidth()
-                    .heightIn(max = (maxHeight - 16.dp).coerceAtLeast(120.dp)),
+                    .height((maxHeight - 16.dp).coerceIn(120.dp, 620.dp)),
             shape = Radius.card,
             color = MaterialTheme.colorScheme.surfaceContainerLowest,
         ) {
             content()
         }
+    }
+}
+
+/** Suppress inherited platform window transitions; navigation remains instant. */
+@Composable
+private fun StableDialogWindow() {
+    val window = (LocalView.current.parent as? DialogWindowProvider)?.window
+    DisposableEffect(window) {
+        window?.setWindowAnimations(0)
+        onDispose {}
     }
 }

@@ -22,6 +22,8 @@ import kotlinx.coroutines.launch
 internal fun TransferScreen(
     repository: LedgerRepository,
     back: () -> Unit,
+    closeRequested: Boolean = false,
+    closeHandled: () -> Unit = {},
     saved: (String) -> Unit,
 ) {
     val rows by repository.dao.accounts().collectAsStateWithLifecycle(emptyList())
@@ -35,7 +37,7 @@ internal fun TransferScreen(
     val scope = rememberCoroutineScope()
     val currency = rows.firstOrNull { it.account.id == source }?.account?.currency
     var discard by rememberSaveable { mutableStateOf(false) }
-    BackHandler {
+    val leave: () -> Unit = {
         if (!busy) {
             if (
                 amount.isNotBlank() ||
@@ -45,6 +47,13 @@ internal fun TransferScreen(
             )
                 discard = true
             else back()
+        }
+    }
+    BackHandler(onBack = leave)
+    LaunchedEffect(closeRequested) {
+        if (closeRequested) {
+            leave()
+            closeHandled()
         }
     }
     if (discard)
@@ -65,12 +74,11 @@ internal fun TransferScreen(
             if (repository.dao.operation(op) != null) saved(op) else busy = false
         }
     }
-    Column(Modifier.fillMaxSize().imePadding()) {
+    Column(Modifier.fillMaxWidth().heightIn(max = 560.dp).imePadding()) {
         Column(
-            Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Text("Move money, keep spending accurate", style = MaterialTheme.typography.titleLarge)
             TraxosNotice(
                 "Between your own accounts. Neither side is income or an expense. Credit card bills use Pay card.",
                 NoticeKind.INFO,
@@ -101,7 +109,7 @@ internal fun TransferScreen(
             )
         }
         Column(
-            Modifier.fillMaxWidth().padding(16.dp),
+            Modifier.fillMaxWidth().padding(10.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (error != null) TraxosNotice(error!!, NoticeKind.ERROR)
