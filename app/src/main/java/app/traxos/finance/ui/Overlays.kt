@@ -191,14 +191,17 @@ internal fun TraxosDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TraxosTextButton(onDismiss, Modifier.weight(1f), enabled) { Text(cancelLabel) }
+                    TraxosTextButton(onDismiss, Modifier.weight(1f), enabled) { Text("Cancel") }
                     TraxosButton(
                         onConfirm,
-                        Modifier.weight(1f).testTag("dialog_confirm"),
+                        Modifier.weight(1f)
+                            .padding(top = 4.dp)
+                            .testTag("dialog_confirm")
+                            .semantics { contentDescription = confirmLabel },
                         enabled,
                         tone = if (destructive) ButtonTone.DESTRUCTIVE else ButtonTone.PRIMARY,
                     ) {
-                        Text(confirmLabel)
+                        Text(confirmLabel.trim().substringBefore(" "))
                     }
                 }
             }
@@ -563,22 +566,14 @@ private fun overlayMaxHeight(): Dp {
     return (with(LocalDensity.current) { size.height.toDp() } * .8f).coerceAtLeast(180.dp)
 }
 
-/** Stable centered form surface: no enter/exit animation or keyboard focus side effects. */
+/** Routed editors fill the screen; only actual dialogs retain a popup surface. */
 @Composable
 internal fun TraxosFormPanel(content: @Composable () -> Unit) {
-    BoxWithConstraints(Modifier.fillMaxSize().imePadding(), contentAlignment = Alignment.Center) {
-        Surface(
-            modifier =
-                Modifier.padding(8.dp)
-                    .testTag("traxos_form_panel")
-                    .widthIn(max = 480.dp)
-                    .fillMaxWidth()
-                    .height((maxHeight - 16.dp).coerceIn(120.dp, 620.dp)),
-            shape = Radius.card,
-            color = MaterialTheme.colorScheme.surfaceContainerLowest,
-        ) {
-            content()
-        }
+    Surface(
+        Modifier.fillMaxSize().imePadding().testTag("traxos_form_panel"),
+        color = MaterialTheme.colorScheme.background,
+    ) {
+        content()
     }
 }
 

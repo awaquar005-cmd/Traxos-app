@@ -199,7 +199,7 @@ internal fun FormDestination(
                         !busy && !loading && fields["revision"] != null,
                         tone = ButtonTone.SECONDARY,
                     ) {
-                        Text("Delete transaction", color = MaterialTheme.colorScheme.error)
+                        Text("Delete", color = MaterialTheme.colorScheme.error)
                     }
                 Spacer(Modifier.height(8.dp))
             }
@@ -223,10 +223,7 @@ internal fun FormDestination(
                         enabled = ready && fields["linkId"].isNullOrBlank(),
                         busy = busy,
                     ) {
-                        Text(
-                            if (busy) "Saving…"
-                            else if (account) "Save account" else "Save transaction"
-                        )
+                        Text(if (busy) "Saving…" else if (account) "Save" else "Save")
                     }
                     Text(
                         "Records stay on this phone · No cloud backup",

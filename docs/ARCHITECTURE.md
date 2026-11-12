@@ -1,5 +1,9 @@
 # Architecture
 
+## 0.10.1 editor presentation
+
+TraxosFormPanel is now a full-screen surface; actual Dialog windows retain their own bounded presentation. This removes the previous floating frame from routed editors while preserving stable loading bounds and keyboard/scroll handling. FLAG_SECURE is applied only outside DEBUG; debug captures are explicitly enabled for UI review. Gift detail data/security contracts are unchanged; presentation is consolidated into one full-width panel.
+
 ## 0.10.0 recurring execution and interaction ownership
 
 Account-owned recurring rules use indexed Room due reads and explicit schema9→10 migration. Ledger mutation and occurrence advancement are one database transaction using deterministic per-rule/date UUIDs. A private ledger repository avoids lock inversion against UI writes; worker retries retain idempotence. Local unique WorkManager jobs perform bounded batches. Invalid references retain due dates and surface errors. Account Transfer is now a dialog rather than a NavHost route; Undo stays in root feedback. Forms have fixed bounded frames; dialog windows suppress inherited animation. Native phone smoothness remains a device gate. See RECURRING_COMPACT.md.

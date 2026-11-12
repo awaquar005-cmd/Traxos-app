@@ -147,7 +147,7 @@ internal fun TransferScreen(
                 !busy && currency != null && destination.isNotBlank(),
                 busy,
             ) {
-                Text("Record transfer")
+                Text("Transfer")
             }
         }
     }

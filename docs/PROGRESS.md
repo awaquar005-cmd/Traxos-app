@@ -1,5 +1,16 @@
 # Progress
 
+## 0.10.1 full-screen editors and gift layout
+
+**BUILT: 180 unique host cases verified.** Full regression passed178 cases; corrected two suites with outdated label/page-padding assertions and reran them successfully, without changing production code. Merged results: zero failures/errors/skips. Lint:0 errors,21 existing warnings,1 advisory hint. Debug capture flag checked; release protection remains source-guarded. Signed update/16KiB alignment verified. [Actual validation](validation/fullscreen-gifts/README.md). No Play APK, emulator or phone acceptance claimed.
+
+Routed account/transaction/gift/card editors now fill the available screen, with no floating rounded frame or width/height cap. Their scrolling bodies and pinned Save actions remain. Actual selection/confirmation dialogs stay compact and centered. Confirmation buttons show a single word, with the full action retained as an accessibility description; explanatory title/body remain above a spaced action row.
+
+Gift wallet rows are compact and full width, with balance/expiry opposite Open. The individual gift view combines value, metadata and masked code/PIN controls into one full-width panel. Redeem/Edit, Reveal/Copy and Archive/Delete are grouped side by side; common gift actions use short labels. Original value, expiry, redemption/Undo/refund/archive and secret masking remain functional. Dashboard, accounting, recurring rules and schema10 are unchanged.
+
+Screenshots and recent-task previews are allowed in DEBUG builds for development UI review. Non-debug builds still set FLAG_SECURE. Security/Privacy copy reflects development behavior. This does not disable PIN/biometrics or encryption. The Personal debug build was tested on the host; release capture behavior is guarded in source, not claimed as physical-device validation.
+
+
 ## 0.10.0 recurring and compact interactions
 
 **BUILT: 180 Personal host tests passed, zero failures/errors/skips. Lint passed: 0 errors, 21 existing warnings and one non-blocking primitive-state allocation hint.** Same signing identity, 16KiB ZIP/64-bit ELF alignment verified. No Play build or emulator. [Actual validation](validation/recurring-compact/README.md). Phone frame timing/IME/OEM and background acceptance remain unverified.

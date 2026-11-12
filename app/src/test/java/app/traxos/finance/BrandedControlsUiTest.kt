@@ -46,7 +46,8 @@ class BrandedControlsUiTest {
         compose.onNodeWithTag("traxos_dialog").assertDoesNotExist()
         assertEquals(0, confirms)
         compose.runOnIdle { open = true }
-        compose.onNodeWithText("Remove record").performScrollTo().performClick()
+        compose.onNodeWithText("Remove").assertExists()
+        compose.onNodeWithTag("dialog_confirm").performScrollTo().performClick()
         assertEquals(1, confirms)
         compose.onNodeWithTag("traxos_dialog").assertDoesNotExist()
     }

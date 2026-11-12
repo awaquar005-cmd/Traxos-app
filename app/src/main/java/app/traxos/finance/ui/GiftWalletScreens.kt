@@ -84,10 +84,10 @@ internal fun GiftWalletScreen(
         }
     LazyColumn(
         Modifier.fillMaxSize().testTag("gift_wallet"),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(12.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        item { Text("Value waiting for you", style = MaterialTheme.typography.headlineSmall) }
+        item { Text("Gift wallet", style = MaterialTheme.typography.titleMedium) }
         item {
             TraxosCard(Modifier.fillMaxWidth()) {
                 val active =
@@ -121,9 +121,9 @@ internal fun GiftWalletScreen(
         }
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TraxosButton(add, Modifier.weight(1f)) { Text("Add card") }
+                TraxosButton(add, Modifier.weight(1f)) { Text("Add") }
                 TraxosButton(import, Modifier.weight(1f), tone = ButtonTone.SECONDARY) {
-                    Text("Smart import")
+                    Text("Import")
                 }
             }
         }
@@ -169,15 +169,25 @@ internal fun GiftWalletScreen(
                 )
             }
         items(visible, key = { it.id }) { c ->
-            TraxosCard {
-                Row(Modifier.fillMaxWidth()) {
-                    Text(
-                        c.merchant,
-                        Modifier.weight(1f),
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+            TraxosCard(Modifier.fillMaxWidth()) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            c.merchant,
+                            style = MaterialTheme.typography.titleMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            c.name,
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                     Text(
                         GiftRules.state(c, today).lowercase().replaceFirstChar(Char::titlecase),
                         style = MaterialTheme.typography.labelSmall,
@@ -187,28 +197,29 @@ internal fun GiftWalletScreen(
                             else MaterialTheme.colorScheme.primary,
                     )
                 }
-                Text(
-                    c.name,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                Text(
-                    if (c.kind == "DISCOUNT") "Discount voucher · No cash balance"
-                    else
-                        c.remainingMinor?.let { giftWalletMoney(hidden, it, c.currency) }
-                            ?: "Balance not confirmed",
-                    style = MaterialTheme.typography.titleLarge,
-                )
-                Text(
-                    c.expiryDay?.let { "Expires ${LocalDate.ofEpochDay(it)}" }
-                        ?: "No expiry recorded",
-                    style = MaterialTheme.typography.bodySmall,
-                )
-                TraxosTextButton({ open(c.id) }) { Text("Open card") }
+                Row(
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            if (c.kind == "DISCOUNT") "Discount voucher"
+                            else
+                                c.remainingMinor?.let { giftWalletMoney(hidden, it, c.currency) }
+                                    ?: "Balance not confirmed",
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                        Text(
+                            c.expiryDay?.let { "Expires ${LocalDate.ofEpochDay(it)}" }
+                                ?: "No expiry recorded",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                    CompactAction("Open", { open(c.id) })
+                }
             }
         }
-        item { TraxosTextButton(settings) { Text("Gift wallet settings") } }
+        item { TraxosTextButton(settings) { Text("Settings") } }
         item {
             Text(
                 "Gift value is kept separate from cash/bank balances. Merchant terms determine redemption rules.",
@@ -299,7 +310,7 @@ internal fun GiftFormScreen(
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TraxosButton(scan, Modifier.weight(1f), !busy, tone = ButtonTone.SECONDARY) {
-                        Text("Scan QR / barcode")
+                        Text("Scan")
                     }
                     TraxosButton(
                         {
@@ -328,7 +339,7 @@ internal fun GiftFormScreen(
                         !busy,
                         tone = ButtonTone.SECONDARY,
                     ) {
-                        Text("Paste code")
+                        Text("Paste")
                     }
                 }
                 TraxosInput(
@@ -377,7 +388,7 @@ internal fun GiftFormScreen(
                     Text(if (details) "Less details" else "More details")
                 }
                 if (details)
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         TraxosInput(
                             "Card name",
                             d.name,
@@ -625,7 +636,7 @@ internal fun GiftDetailScreen(vm: GiftViewModel, id: String, edit: () -> Unit, b
                 !busy,
                 busy,
             ) {
-                Text("Confirm redemption")
+                Text("Confirm")
             }
         }
     if (action in listOf("DELETE", "ARCHIVE", "UNDO", "REFUND", "EXPIRE", "RESTORE_EXPIRY"))
@@ -674,16 +685,16 @@ internal fun GiftDetailScreen(vm: GiftViewModel, id: String, edit: () -> Unit, b
             .verticalScroll(rememberScrollState())
             .padding(12.dp)
             .testTag("gift_detail"),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Text(c.merchant, style = MaterialTheme.typography.headlineSmall)
-        Text(c.name, style = MaterialTheme.typography.titleMedium)
-        TraxosCard {
+        Text(c.merchant, style = MaterialTheme.typography.titleLarge)
+        Text(c.name, style = MaterialTheme.typography.bodySmall)
+        TraxosCard(Modifier.fillMaxWidth().testTag("gift_detail_card")) {
             Text(GiftRules.state(c, today), style = MaterialTheme.typography.labelMedium)
             Text(
                 if (c.kind == "DISCOUNT") "Discount voucher"
                 else c.remainingMinor?.let { Money.format(it, c.currency) } ?: "Unknown balance",
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.headlineSmall,
             )
             Text(
                 "Original: ${c.originalMinor?.let {Money.format(it,c.currency)} ?: "Not recorded"}",
@@ -700,9 +711,11 @@ internal fun GiftDetailScreen(vm: GiftViewModel, id: String, edit: () -> Unit, b
                 if (c.partialAllowed) "Partial use confirmed by you" else "Full redemption only",
                 style = MaterialTheme.typography.bodySmall,
             )
-        }
-        TraxosCard {
-            Text("Sensitive details", style = MaterialTheme.typography.titleMedium)
+            HorizontalDivider(
+                Modifier.padding(vertical = 4.dp),
+                color = MaterialTheme.colorScheme.outlineVariant,
+            )
+            Text("Code & PIN", style = MaterialTheme.typography.titleSmall)
             Text(
                 if (reveal) secret?.code ?: "Loading…" else "•••• •••• ••••",
                 style = MaterialTheme.typography.titleLarge,
@@ -728,6 +741,7 @@ internal fun GiftDetailScreen(vm: GiftViewModel, id: String, edit: () -> Unit, b
                                 }
                             }
                     },
+                    modifier = Modifier.weight(1f),
                     enabled = !busy,
                     tone = ButtonTone.SECONDARY,
                 ) {
@@ -740,10 +754,11 @@ internal fun GiftDetailScreen(vm: GiftViewModel, id: String, edit: () -> Unit, b
                             copyCode(s.code)
                         }
                     },
+                    modifier = Modifier.weight(1f),
                     enabled = !busy,
                     tone = ButtonTone.SECONDARY,
                 ) {
-                    Text("Copy code")
+                    Text("Copy")
                 }
             }
             if (reveal && secret?.image != null) {
@@ -764,39 +779,41 @@ internal fun GiftDetailScreen(vm: GiftViewModel, id: String, edit: () -> Unit, b
             }
         }
         if (error != null) TraxosNotice(error!!, NoticeKind.ERROR)
-        if (GiftRules.state(c, today) in listOf("ACTIVE", "EXPIRING"))
-            TraxosButton(
-                {
-                    amount = c.remainingMinor?.let { Money.editable(it, c.currency) }.orEmpty()
-                    op = UUID.randomUUID().toString()
-                    vm.clearError()
-                    action = "REDEEM"
-                },
-                Modifier.fillMaxWidth(),
-                !busy,
-            ) {
-                Text("Record redemption")
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (GiftRules.state(c, today) in listOf("ACTIVE", "EXPIRING"))
+                TraxosButton(
+                    {
+                        amount = c.remainingMinor?.let { Money.editable(it, c.currency) }.orEmpty()
+                        op = UUID.randomUUID().toString()
+                        vm.clearError()
+                        action = "REDEEM"
+                    },
+                    Modifier.weight(1f),
+                    !busy,
+                ) {
+                    Text("Redeem")
+                }
+            TraxosButton(edit, Modifier.weight(1f), !busy, tone = ButtonTone.SECONDARY) {
+                Text("Edit")
             }
-        TraxosButton(edit, Modifier.fillMaxWidth(), !busy, tone = ButtonTone.SECONDARY) {
-            Text("Edit card")
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TraxosTextButton({ action = "ARCHIVE" }, enabled = !busy) {
+            TraxosTextButton({ action = "ARCHIVE" }, Modifier.weight(1f), enabled = !busy) {
                 Text(if (c.archived) "Restore" else "Archive")
             }
-            TraxosTextButton({ action = "DELETE" }, enabled = !busy) { Text("Delete") }
+            TraxosTextButton({ action = "DELETE" }, Modifier.weight(1f), enabled = !busy) {
+                Text("Delete")
+            }
         }
         if (GiftRules.state(c, today) in listOf("ACTIVE", "EXPIRING"))
-            TraxosTextButton({ action = "EXPIRE" }, enabled = !busy) { Text("Mark expired") }
+            TraxosTextButton({ action = "EXPIRE" }, enabled = !busy) { Text("Expire") }
         if (c.manuallyExpired)
-            TraxosTextButton({ action = "RESTORE_EXPIRY" }, enabled = !busy) {
-                Text("Use recorded expiry again")
-            }
+            TraxosTextButton({ action = "RESTORE_EXPIRY" }, enabled = !busy) { Text("Restore") }
         Text("Redemption history", style = MaterialTheme.typography.titleMedium)
         if (history.isEmpty())
             Text("No redemptions recorded", style = MaterialTheme.typography.bodySmall)
         history.forEach { entry ->
-            TraxosCard {
+            TraxosCard(Modifier.fillMaxWidth()) {
                 Text(
                     entry.kind.lowercase().replaceFirstChar(Char::titlecase),
                     fontWeight = FontWeight.Bold,
@@ -824,7 +841,7 @@ internal fun GiftDetailScreen(vm: GiftViewModel, id: String, edit: () -> Unit, b
                 !busy,
                 tone = ButtonTone.SECONDARY,
             ) {
-                Text("Undo last redemption")
+                Text("Undo")
             }
             TraxosTextButton(
                 {
@@ -833,7 +850,7 @@ internal fun GiftDetailScreen(vm: GiftViewModel, id: String, edit: () -> Unit, b
                 },
                 enabled = !busy,
             ) {
-                Text("Record merchant refund of last redemption")
+                Text("Refund")
             }
         }
     }

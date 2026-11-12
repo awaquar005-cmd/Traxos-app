@@ -463,7 +463,10 @@ internal fun SecuritySettingsScreen(vm: LockViewModel) {
         }
         if (error != null && mode.isBlank()) TraxosNotice(error!!, NoticeKind.ERROR)
         Text(
-            "Recent-app previews and screenshots are protected. App lock gates access; it does not encrypt the existing cash ledger. Gift secrets and security state use separate Android Keystore keys. Losing keys or data has no recovery shortcut.",
+            (if (app.traxos.finance.BuildConfig.DEBUG)
+                "Screenshots are enabled for development UI review. "
+            else "Recent-app previews and screenshots are protected. ") +
+                "App lock gates access; it does not encrypt the existing cash ledger. Gift secrets and security state use separate Android Keystore keys. Losing keys or data has no recovery shortcut.",
             style = MaterialTheme.typography.bodySmall,
         )
     }

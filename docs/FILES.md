@@ -1,5 +1,11 @@
 # Created files
 
+## 0.10.1 UI changes
+
+Also updated BrandedControlsUiTest and NavigationCustomizationUiTest to use concise dialog actions/stable confirmation tags.
+
+Updated Overlays (full-screen form container and concise dialog actions), GiftWalletScreens (compact wallet/full-width consolidated details/short action rows), Forms/CardDetailsScreen/TransferScreen labels, MainActivity debug capture flag, SecurityScreens/SettingsScreen accurate capture descriptions, version and release docs. Updated GiftWalletUiTest/GiftAppearanceTest label and width checks, plus CustomFormsUiTest debug FLAG_SECURE check. No financial/schema/brand changes.
+
 ## 0.10.0 changed files
 
 Created data/Recurring.kt, recurring/RecurringWork.kt, ui/RecurringPanel.kt, ui/CardClipboard.kt, schema10, RecurringTest/RecurringMigrationTest/RecurringPanelUiTest/CardClipboardTest and recurring release documentation/validation. Updated Application/MainActivity scheduler wiring, Database migration, Overlays/Forms/GiftWalletScreens/CardDetailsScreen frame/window/copy behavior, Controls/Navigation compact interaction contract, LedgerScreens/Reports/UiHierarchy/App/TransferScreen ownership and build metadata. Dashboard.kt, brand assets and splash resources unchanged.

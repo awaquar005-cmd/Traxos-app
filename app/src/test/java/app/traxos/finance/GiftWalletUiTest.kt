@@ -7,6 +7,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import app.traxos.finance.data.TraxosDatabase
 import app.traxos.finance.gifts.*
@@ -136,7 +137,15 @@ class GiftWalletUiTest {
             compose.onAllNodesWithText("Test card").fetchSemanticsNodes().isNotEmpty()
         }
         compose.onNodeWithText("MASKED-1234").assertDoesNotExist()
-        compose.onNodeWithText("Open card").performScrollTo().performClick()
+        compose.onNodeWithText("Open").performScrollTo().performClick()
+        assertEquals(
+            compose.onNodeWithTag("gift_detail").getUnclippedBoundsInRoot().let {
+                it.right - it.left - 24.dp
+            },
+            compose.onNodeWithTag("gift_detail_card").getUnclippedBoundsInRoot().let {
+                it.right - it.left
+            },
+        )
         compose.onNodeWithText("MASKED-1234").assertDoesNotExist()
         compose.onNodeWithText("Reveal").performScrollTo().performClick()
         compose.waitUntil(5000) {
@@ -144,14 +153,14 @@ class GiftWalletUiTest {
         }
         compose.onNodeWithText("Hide").performScrollTo().performClick()
         compose.onNodeWithText("MASKED-1234").assertDoesNotExist()
-        compose.onNodeWithText("Record redemption").performScrollTo().performClick()
+        compose.onNodeWithText("Redeem").performScrollTo().performClick()
         compose.onNodeWithTag("input_gift_redeem_amount").performTextReplacement("300")
-        compose.onNodeWithText("Confirm redemption").performScrollTo().performClick()
+        compose.onNodeWithText("Confirm").performScrollTo().performClick()
         compose.waitUntil(10000) {
             compose.onAllNodesWithTag("traxos_sheet").fetchSemanticsNodes().isEmpty()
         }
         assertEquals(70000L, runBlocking { db.gifts().card(c.id)!!.remainingMinor })
-        compose.onNodeWithText("Undo last redemption").performScrollTo().performClick()
+        compose.onNodeWithText("Undo").performScrollTo().performClick()
         compose.onNodeWithTag("dialog_confirm").performClick()
         compose.waitUntil(10000) {
             compose.onAllNodesWithTag("traxos_dialog").fetchSemanticsNodes().isEmpty()

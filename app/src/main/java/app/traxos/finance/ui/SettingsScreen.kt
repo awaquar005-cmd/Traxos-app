@@ -202,7 +202,7 @@ internal fun SettingsDetailScreen(
                 "Personal records stay on this phone. The app has no internet permission, cloud AI, advertising or analytics upload. Imported content is untrusted: links and OTPs are ignored."
             )
             Text(
-                "Gift secrets and Smart Add suggestions are encrypted with separate Android Keystore keys. Security state is encrypted; the existing bank/cash ledger and metadata are app-private but not encrypted. App lock gates access and protects recent previews; it is not full database encryption."
+                "Gift secrets and Smart Add suggestions are encrypted with separate Android Keystore keys. Security state is encrypted; the existing bank/cash ledger and metadata are app-private but not encrypted. App lock gates access; it is not full database encryption. Screenshot protection is disabled in development builds for UI review."
             )
             Text(
                 "No portable backup or PIN reset is available. Uninstalling, clearing data or losing keys can lose records or access. No online profile, email change or photo upload is implemented."

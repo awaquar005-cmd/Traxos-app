@@ -88,7 +88,8 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         receiveGiftIntent(intent)
         enableEdgeToEdge()
-        window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        if (BuildConfig.DEBUG) window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        else window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         val app = application as TraxosApplication
         val repository = app.repository
         security =

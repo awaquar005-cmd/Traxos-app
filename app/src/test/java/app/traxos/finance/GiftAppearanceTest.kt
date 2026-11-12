@@ -137,10 +137,10 @@ class GiftAppearanceTest {
     @Config(qualifiers = "w320dp-h720dp-mdpi")
     fun narrowLargeFontWalletKeepsActionsReachable() {
         render("DARK", 2f)
-        compose.onNodeWithText("Add card").assertIsDisplayed()
-        compose.onNodeWithText("Smart import").assertIsDisplayed()
-        compose.onNodeWithTag("gift_wallet").performScrollToNode(hasText("Gift wallet settings"))
-        compose.onNodeWithText("Gift wallet settings").assertIsDisplayed()
+        compose.onNodeWithText("Add").assertIsDisplayed()
+        compose.onNodeWithText("Import").assertIsDisplayed()
+        compose.onNodeWithTag("gift_wallet").performScrollToNode(hasText("Settings"))
+        compose.onNodeWithText("Settings").assertIsDisplayed()
     }
 
     private fun save(name: String) {

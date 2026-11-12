@@ -45,6 +45,13 @@ class CustomFormsUiTest {
         }
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             awaitHome()
+            scenario.onActivity {
+                assertEquals(
+                    0,
+                    it.window.attributes.flags and
+                        android.view.WindowManager.LayoutParams.FLAG_SECURE,
+                )
+            }
             compose.onNodeWithTag("center_action").performClick()
             compose.waitUntil(5000) {
                 compose.onAllNodesWithTag("input_amount").fetchSemanticsNodes().isNotEmpty()

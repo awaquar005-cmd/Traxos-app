@@ -67,7 +67,7 @@ class NavigationCustomizationUiTest {
             compose.onNodeWithText("Cancel").performClick()
             compose.onNodeWithTag("traxos_dialog").assertDoesNotExist()
             compose.onNodeWithText("Restore default navigation").performClick()
-            compose.onNodeWithText("Restore defaults").performClick()
+            compose.onNodeWithTag("dialog_confirm").performClick()
             awaitLayout(NavigationLayout.defaults)
             assertEquals(
                 "TRANSACTIONS",

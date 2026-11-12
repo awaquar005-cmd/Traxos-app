@@ -279,7 +279,7 @@ internal fun CardDetailsScreen(
                     !busy && !loading,
                     busy,
                 ) {
-                    Text("Save card details")
+                    Text("Save")
                 }
             }
         }
