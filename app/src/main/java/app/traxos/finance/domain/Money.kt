@@ -50,8 +50,11 @@ object Money {
     fun effect(type: String, amount: Long): Long {
         require(amount in 1..MAX_MINOR)
         return when (type) {
-            "EXPENSE" -> -amount
-            "INCOME" -> amount
+            "EXPENSE",
+            "PAYMENT_OUT" -> -amount
+            "INCOME",
+            "REFUND",
+            "PAYMENT_IN" -> amount
             else -> error("Unsupported ledger type")
         }
     }

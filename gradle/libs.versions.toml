@@ -6,7 +6,6 @@ compose = "2025.04.01"
 room = "2.7.1"
 lifecycle = "2.9.0"
 work = "2.10.1"
-mlkit-text = "16.0.1"
 mlkit-barcode = "17.3.0"
 [libraries]
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose" }
@@ -34,14 +33,11 @@ robolectric = { module = "org.robolectric:robolectric", version = "4.14.1" }
 android-test-core = { module = "androidx.test:core", version = "1.6.1" }
 work-runtime = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
 work-testing = { module = "androidx.work:work-testing", version.ref = "work" }
-mlkit-text = { module = "com.google.mlkit:text-recognition", version.ref = "mlkit-text" }
 mlkit-barcode = { module = "com.google.mlkit:barcode-scanning", version.ref = "mlkit-barcode" }
 exif = { module = "androidx.exifinterface:exifinterface", version = "1.4.1" }
 biometric = { module = "androidx.biometric:biometric", version = "1.1.0" }
 fragment = { module = "androidx.fragment:fragment-ktx", version = "1.8.6" }
 appcompat = { module = "androidx.appcompat:appcompat", version = "1.7.1" }
-android-test-runner = { module = "androidx.test:runner", version = "1.6.2" }
-android-test-ext = { module = "androidx.test.ext:junit", version = "1.2.1" }
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

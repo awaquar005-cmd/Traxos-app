@@ -12,12 +12,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.traxos.finance.security.*
 import javax.crypto.Cipher
@@ -33,6 +36,37 @@ internal fun SecurityGate(vm: LockViewModel, content: @Composable () -> Unit) {
     val locked by vm.locked.collectAsState()
     val shield by vm.shielded.collectAsState()
     val fatal by vm.fatal.collectAsState()
+    val episode by vm.episode.collectAsState()
+    val prefs by vm.preferences.collectAsState()
+    val owner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    val lifecycleState by owner.lifecycle.currentStateFlow.collectAsState()
+    val context = LocalContext.current
+    val prompt = LocalDevicePrompt.current
+    LaunchedEffect(
+        ready,
+        locked,
+        shield,
+        fatal,
+        episode,
+        prefs.deviceAuth,
+        prefs.remainingMillis == 0L,
+        lifecycleState,
+    ) {
+        if (
+            lifecycleState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED) &&
+                vm.claimAutomaticDevicePrompt()
+        )
+            vm.requestDevice(context, false, show = prompt)
+    }
+    val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
+    var wasLocked by remember { mutableStateOf(locked) }
+    LaunchedEffect(locked) {
+        if (wasLocked && !locked)
+            haptics.performHapticFeedback(
+                androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove
+            )
+        wasLocked = locked
+    }
     var rendered by remember { mutableStateOf(false) }
     if (ready && !locked && !fatal) rendered = true
     val hidden = !ready || locked || shield || fatal
@@ -91,74 +125,156 @@ private fun LockScreen(vm: LockViewModel) {
     val prompt = LocalDevicePrompt.current
     val prefs by vm.preferences.collectAsState()
     val busy by vm.busy.collectAsState()
+    val promptPending by vm.promptPending.collectAsState()
     val error by vm.error.collectAsState()
     val fatal by vm.fatal.collectAsState()
     var pin by remember { mutableStateOf("") }
+    val owner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+    DisposableEffect(owner) {
+        val observer =
+            androidx.lifecycle.LifecycleEventObserver { _, event ->
+                if (event == androidx.lifecycle.Lifecycle.Event.ON_PAUSE) pin = ""
+            }
+        owner.lifecycle.addObserver(observer)
+        onDispose { owner.lifecycle.removeObserver(observer) }
+    }
+    LaunchedEffect(error) {
+        if (error == "Incorrect PIN")
+            haptic.performHapticFeedback(
+                androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress
+            )
+    }
     BackHandler { (context as? Activity)?.moveTaskToBack(true) }
+    var recovery by remember { mutableStateOf(false) }
+    if (recovery)
+        TraxosSheet("Recovery information", { recovery = false }, scrollable = true) {
+            Text(
+                "There is no reset that bypasses your lock. Enabled device authentication can unlock; changing or disabling the PIN still requires the current PIN. Do not clear app data.",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
     Column(
-        Modifier.fillMaxWidth()
-            .widthIn(max = 440.dp)
+        Modifier.widthIn(max = 440.dp)
+            .fillMaxSize()
             .statusBarsPadding()
             .navigationBarsPadding()
             .imePadding()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp)
-            .testTag("app_lock"),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+            .testTag("app_lock")
     ) {
-        BrandMark()
-        Text("TRAXOS", style = MaterialTheme.typography.labelLarge)
-        Text(
-            if (fatal) "Security needs attention" else "Unlock your space",
-            style = MaterialTheme.typography.headlineSmall,
-        )
-        if (error != null) TraxosNotice(error!!, NoticeKind.ERROR)
-        if (fatal)
-            TraxosButton(vm::reload, Modifier.fillMaxWidth(), !busy, tone = ButtonTone.SECONDARY) {
-                Text("Retry security check")
-            }
-        else {
-            TraxosInput(
-                "Traxos PIN",
-                pin,
-                { pin = it.filter { c -> c in '0'..'9' }.take(12) },
-                secret = true,
-                number = true,
-                enabled = !busy,
-                id = "unlock_pin",
-            )
-            if (prefs.remainingMillis > 0)
-                Text(
-                    "Try again in ${(prefs.remainingMillis+999)/1000} seconds",
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            TraxosButton(
-                {
-                    val value = pin
-                    pin = ""
-                    vm.unlock(value)
-                },
-                Modifier.fillMaxWidth().testTag("unlock_submit"),
-                !busy && pin.length >= 6 && prefs.remainingMillis == 0L,
-                busy,
+        Column(
+            Modifier.weight(1f)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Text("Unlock")
-            }
-            if (prefs.deviceAuth)
-                TraxosButton(
-                    { vm.requestDevice(context, false, show = prompt) },
-                    Modifier.fillMaxWidth(),
-                    !busy,
-                    tone = ButtonTone.SECONDARY,
-                ) {
-                    Text("Use fingerprint / face / device lock")
+                LockBrand()
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        "TRAXOS",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Text(
+                        if (fatal) "Security needs attention" else "Unlock",
+                        style = MaterialTheme.typography.titleLarge,
+                    )
                 }
-            Text(
-                "Forgot PIN? There is no reset that bypasses your lock. Enabled device authentication can unlock; changing or disabling the PIN still requires your current PIN. Do not clear app data.",
-                style = MaterialTheme.typography.bodySmall,
-            )
+                TraxosIconButton({ (context as? Activity)?.moveTaskToBack(true) }) {
+                    Icon(TraxosIcons.back, "Back to phone")
+                }
+            }
+            if (error != null) TraxosNotice(error!!, NoticeKind.ERROR)
+            if (!fatal) {
+                TraxosInput(
+                    "Traxos PIN",
+                    pin,
+                    { pin = it.filter { c -> c in '0'..'9' }.take(12) },
+                    secret = true,
+                    number = true,
+                    enabled = !busy && !promptPending,
+                    id = "unlock_pin",
+                )
+                if (
+                    WindowInsets.ime.getBottom(androidx.compose.ui.platform.LocalDensity.current) ==
+                        0
+                )
+                    PinPad(!busy && !promptPending && prefs.remainingMillis == 0L) { key ->
+                        pin =
+                            when (key) {
+                                "Clear" -> ""
+                                "⌫" -> pin.dropLast(1)
+                                else -> (pin + key).take(12)
+                            }
+                    }
+                if (prefs.remainingMillis > 0)
+                    Text(
+                        "Try again in ${(prefs.remainingMillis+999)/1000} seconds",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                TraxosTextButton({ recovery = true }) { Text("Recovery information") }
+            }
         }
-        TraxosTextButton({ (context as? Activity)?.moveTaskToBack(true) }) { Text("Back to phone") }
+        Surface(color = MaterialTheme.colorScheme.background) {
+            Column(
+                Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                if (fatal)
+                    TraxosButton(
+                        vm::reload,
+                        Modifier.fillMaxWidth(),
+                        !busy,
+                        tone = ButtonTone.SECONDARY,
+                    ) {
+                        Text("Retry security check")
+                    }
+                else
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        TraxosButton(
+                            {
+                                val value = pin
+                                pin = ""
+                                vm.unlock(value)
+                            },
+                            Modifier.weight(1f).testTag("unlock_submit"),
+                            !busy &&
+                                !promptPending &&
+                                pin.length >= 6 &&
+                                prefs.remainingMillis == 0L,
+                            busy,
+                        ) {
+                            Text(if (busy) "Checking…" else "Unlock")
+                        }
+                        if (prefs.deviceAuth)
+                            TraxosButton(
+                                { vm.requestDevice(context, false, show = prompt) },
+                                Modifier.weight(1f).testTag("unlock_device_retry"),
+                                !busy && !promptPending,
+                                tone = ButtonTone.SECONDARY,
+                            ) {
+                                Text(
+                                    "Retry device",
+                                    modifier =
+                                        Modifier.semantics {
+                                            contentDescription =
+                                                "Retry fingerprint, face or device authentication"
+                                        },
+                                )
+                            }
+                    }
+            }
+        }
     }
 }
 
@@ -350,5 +466,79 @@ internal fun SecuritySettingsScreen(vm: LockViewModel) {
             "Recent-app previews and screenshots are protected. App lock gates access; it does not encrypt the existing cash ledger. Gift secrets and security state use separate Android Keystore keys. Losing keys or data has no recovery shortcut.",
             style = MaterialTheme.typography.bodySmall,
         )
+    }
+}
+
+/**
+ * Short entrance only; no artificial loading hold and Android reduced-motion setting is honored.
+ */
+@Composable
+private fun LockBrand() {
+    var entered by remember {
+        mutableStateOf(!android.animation.ValueAnimator.areAnimatorsEnabled())
+    }
+    val scale by
+        androidx.compose.animation.core.animateFloatAsState(
+            if (entered) 1f else .94f,
+            animationSpec = androidx.compose.animation.core.tween(180),
+            label = "Traxos mark entrance",
+        )
+    LaunchedEffect(Unit) { entered = true }
+    Box(
+        Modifier.size(44.dp)
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = .09f), Radius.control),
+        contentAlignment = Alignment.Center,
+    ) {
+        BrandMark(
+            Modifier.graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            },
+            tint = MaterialTheme.colorScheme.primary,
+        )
+    }
+}
+
+@Composable
+private fun PinPad(enabled: Boolean, onChange: (String) -> Unit) {
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        listOf(
+                listOf("1", "2", "3"),
+                listOf("4", "5", "6"),
+                listOf("7", "8", "9"),
+                listOf("Clear", "0", "⌫"),
+            )
+            .forEach { row ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    row.forEach { key ->
+                        TraxosButton(
+                            {
+                                haptic.performHapticFeedback(
+                                    androidx.compose.ui.hapticfeedback.HapticFeedbackType
+                                        .TextHandleMove
+                                )
+                                onChange(key)
+                            },
+                            Modifier.weight(1f).testTag("pin_key_$key"),
+                            enabled,
+                            tone = ButtonTone.SECONDARY,
+                            contentPadding = PaddingValues(vertical = 8.dp, horizontal = 4.dp),
+                        ) {
+                            Text(
+                                key,
+                                style =
+                                    if (key.length == 1) MaterialTheme.typography.titleLarge
+                                    else MaterialTheme.typography.labelMedium,
+                                modifier =
+                                    Modifier.semantics {
+                                        contentDescription =
+                                            if (key == "⌫") "Delete last digit" else key
+                                    },
+                            )
+                        }
+                    }
+                }
+            }
     }
 }

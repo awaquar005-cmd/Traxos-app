@@ -1,0 +1,8 @@
+<resources>
+ <style name="Theme.Traxos.Starting" parent="Theme.Traxos">
+  <item name="android:windowSplashScreenBackground">@color/traxos_splash_background</item>
+  <item name="android:windowSplashScreenAnimatedIcon">@drawable/traxos_splash_animated</item>
+  <item name="android:windowSplashScreenAnimationDuration">180</item>
+  <item name="android:windowLightStatusBar">false</item><item name="android:statusBarColor">@color/traxos_splash_background</item>
+ </style>
+</resources>

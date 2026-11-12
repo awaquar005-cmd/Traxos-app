@@ -76,7 +76,7 @@ class SmartInboxUiTest {
         }
         assertEquals(0L, runBlocking { db.ledger().recordCount() })
         compose.onNodeWithTag("selector_Account").performScrollTo().performClick()
-        compose.onNodeWithTag("choice_Test bank").performClick()
+        compose.onNodeWithTag("choice_Test bank · INR").performClick()
         compose.onNodeWithTag("selector_Category").performScrollTo().performClick()
         compose.onNodeWithTag("choice_Other expense").performClick()
         val approve =

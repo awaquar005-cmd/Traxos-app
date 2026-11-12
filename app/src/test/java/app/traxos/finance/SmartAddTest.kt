@@ -152,4 +152,45 @@ class SmartAddTest {
         assertEquals("PENDING", repo.dao.get(s.id)!!.status)
         assertTrue(gifts.dao.all().isEmpty())
     }
+
+    @Test
+    fun cardPurchasesRequireCardAccountsAndEquivalentReferencesDeduplicate() = runBlocking {
+        val ledger = LedgerRepository(db)
+        val day = LocalDate.now()
+        ledger.saveAccount(UUID.randomUUID().toString(), "bank", "Bank", "BANK", "INR", 10000)
+        ledger.saveAccount(UUID.randomUUID().toString(), "card", "Card", "CREDIT_CARD", "INR", 0)
+        val (s, _) =
+            repo.offer(
+                "Your credit card XX4821 spent INR 100 at TEST STORE on $day Ref DEMO123456"
+            )!!
+        val d = repo.read(s)
+        try {
+            repo.approve(s.id, d.copy(cardRequired = false), "bank", "food")
+            fail("Never post a card purchase to bank")
+        } catch (_: IllegalArgumentException) {}
+        repo.approve(s.id, d, "card", "food")
+        assertEquals(
+            -10000L,
+            ledger.dao.accounts().first().first { it.account.id == "card" }.balanceMinor,
+        )
+        assertEquals(
+            10000L,
+            ledger.dao.accounts().first().first { it.account.id == "bank" }.balanceMinor,
+        )
+        assertFalse(
+            repo.offer("Credit card spent INR 100 at TEST STORE on $day Ref DEMO123456")!!.second
+        )
+        assertEquals(1L, ledger.dao.recordCount())
+    }
+
+    @Test
+    fun discountCodesAreScopedToMerchantAndRemainReviewed() = runBlocking {
+        val a = repo.offer("Merchant: Test A\nCoupon code: DEMO1234")!!
+        val b = repo.offer("Merchant: Test B\nCoupon code: DEMO1234")!!
+        assertTrue(a.second)
+        assertTrue(b.second)
+        assertNotEquals(a.first.id, b.first.id)
+        assertFalse(repo.offer("Merchant: Test A\nCoupon code: DEMO1234")!!.second)
+        assertEquals(0, db.gifts().all().size)
+    }
 }

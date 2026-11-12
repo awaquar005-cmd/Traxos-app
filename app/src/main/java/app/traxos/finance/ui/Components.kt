@@ -34,7 +34,7 @@ import app.traxos.finance.domain.Money
 
 object Radius {
     val card = RoundedCornerShape(16.dp)
-    val control = RoundedCornerShape(12.dp)
+    val control = RoundedCornerShape(10.dp)
     val small = RoundedCornerShape(8.dp)
 }
 
@@ -64,6 +64,96 @@ object TraxosIcons {
             }
             .build()
 
+    val tag =
+        line("Category") {
+            moveTo(3f, 3f)
+            lineTo(12f, 3f)
+            lineTo(21f, 12f)
+            lineTo(12f, 21f)
+            lineTo(3f, 12f)
+            close()
+            moveTo(7f, 7f)
+            lineTo(8f, 7f)
+        }
+    val food =
+        line("Food") {
+            moveTo(5f, 3f)
+            verticalLineTo(10f)
+            curveTo(5f, 14f, 11f, 14f, 11f, 10f)
+            verticalLineTo(3f)
+            moveTo(8f, 3f)
+            verticalLineTo(21f)
+            moveTo(18f, 3f)
+            verticalLineTo(21f)
+            moveTo(18f, 3f)
+            curveTo(13f, 4f, 13f, 11f, 18f, 12f)
+        }
+    val travel =
+        line("Transport") {
+            moveTo(5f, 4f)
+            horizontalLineTo(19f)
+            verticalLineTo(19f)
+            horizontalLineTo(5f)
+            close()
+            moveTo(5f, 12f)
+            horizontalLineTo(19f)
+            moveTo(8f, 19f)
+            verticalLineTo(22f)
+            moveTo(16f, 19f)
+            verticalLineTo(22f)
+            moveTo(8f, 16f)
+            horizontalLineTo(9f)
+            moveTo(15f, 16f)
+            horizontalLineTo(16f)
+        }
+    val work =
+        line("Work") {
+            moveTo(3f, 7f)
+            horizontalLineTo(21f)
+            verticalLineTo(20f)
+            horizontalLineTo(3f)
+            close()
+            moveTo(8f, 7f)
+            verticalLineTo(3f)
+            horizontalLineTo(16f)
+            verticalLineTo(7f)
+            moveTo(3f, 12f)
+            lineTo(12f, 15f)
+            lineTo(21f, 12f)
+        }
+    val gift =
+        line("Gift") {
+            moveTo(3f, 8f)
+            horizontalLineTo(21f)
+            verticalLineTo(12f)
+            horizontalLineTo(3f)
+            close()
+            moveTo(5f, 12f)
+            verticalLineTo(21f)
+            horizontalLineTo(19f)
+            verticalLineTo(12f)
+            moveTo(12f, 8f)
+            verticalLineTo(21f)
+            moveTo(12f, 8f)
+            curveTo(0f, 8f, 6f, -2f, 12f, 8f)
+            curveTo(18f, -2f, 24f, 8f, 12f, 8f)
+        }
+    val health =
+        line("Health") {
+            moveTo(9f, 3f)
+            horizontalLineTo(15f)
+            verticalLineTo(9f)
+            horizontalLineTo(21f)
+            verticalLineTo(15f)
+            horizontalLineTo(15f)
+            verticalLineTo(21f)
+            horizontalLineTo(9f)
+            verticalLineTo(15f)
+            horizontalLineTo(3f)
+            verticalLineTo(9f)
+            horizontalLineTo(9f)
+            close()
+        }
     val home =
         line("Home") {
             moveTo(3f, 10f)

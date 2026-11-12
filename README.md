@@ -4,17 +4,15 @@ Offline-first Kotlin/Jetpack Compose personal finance application. Development m
 
 ## Download for phone testing
 
-**0.5.0-smart-security adds improved gift image review, an encrypted Smart Add inbox, optional offline app locking and organized Settings while preserving existing finance/UI features. Install as an update over the existing app; do not uninstall or clear storage.**
+**[Download TRAXOS0.6.0 Personal APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.6.0-personal.apk)**. Install as **Update**; do not uninstall or clear storage. Your records, app PIN, gift secrets and navigation preferences are preserved by the signed update and explicit Room migration.
 
-[Download the test APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.5.0-smart-security.apk) · [APK folder and installation help](downloads/README.md).
+[SMS-free Play build](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.6.0-play.apk) · [Installation help/checksums](downloads/README.md) · [Current guide and limitations](docs/UX_SMART_ENTRY.md) · [Actual tests/lint/previews](docs/validation/ux-refinement/README.md).
 
-The repository is available at https://github.com/awaquar005-cmd/Traxos-app. `/workspace/...` paths in development records refer to the cloud workspace, not your laptop. Use the GitHub link to download.
+OCR is removed; QR/barcodes, manual/text gift entry, reminders and redemption remain. Custom categories/accounts, inline creation, saved entry options, compact forms, automatic biometric prompting, a branded PIN/splash, compact menus and Settings fresh-entry navigation are implemented. Credit-card charges/refunds/paired payments use signed debt and do not count credit limits or repayments as income/expense.
 
-Gift Wallet: manual cards/vouchers, encrypted codes/PINs/notes/images, reviewed text/share imports, bundled offline OCR and QR/barcode photo scanning, exact redemption/history/Undo/refunds and local expiry reminders. Gift Cards and More are optional navigation destinations; your default layout and independent center shortcut are kept. Codes are masked until Reveal; financial gift value stays separate from bank/cash accounting. [Wallet usage, accounting and security limits](docs/GIFT_WALLET.md).
+Personal SMS: Settings → Smart Tracking → Incoming financial SMS → disclosure → Android permission. Only future incoming eligible messages create encrypted review suggestions; approval is required. Android/installer restrictions can deny access even for sideloaded apps; share/paste is always available. Play excludes SMS permissions and receiver code. Neither build reads historical SMS or uploads financial data. App lock does not encrypt the ledger; no portable recovery/backup exists yet. Actual native biometrics/SMS/phone acceptance is pending.
 
-All four screen slots support changing, reordering and reset in Settings → Appearance & Navigation → Navigation Customization. Existing dashboard, transactions, account forms, Undo, theme/masking and local persistence are retained. Explicit Room migrations preserve shipped records/preferences. [Gift wallet host previews and validation](docs/validation/gift-wallet/README.md).
-
-[Current smart import/security guide, recovery limits and actual validation](docs/SMART_SECURITY.md). Native OCR accuracy and physical biometric/device acceptance remain unmeasured; the standard APK does not request SMS access.
+The repository is https://github.com/awaquar005-cmd/Traxos-app. `/workspace/...` paths refer to the cloud workspace, not your laptop; use the download link.
 
 ## Structure
 
@@ -23,7 +21,7 @@ All four screen slots support changing, reordering and reset in Settings → App
 - `ui`: branded Compose themes/components, navigation, Home, Transactions, Accounts, Settings and lifecycle ViewModels.
 - `security`: encrypted PIN configuration, throttling, app gate and native biometric challenge.
 - `smart`: local classification, encrypted review inbox, atomic approval and policy-gated receive-only adapter.
-- `gifts`: gift rules/parser, encrypted payloads, Room/repository, transient ViewModel, bundled detection and WorkManager reminders.
+- `gifts`: gift rules/parser, encrypted payloads, Room/repository, transient ViewModel, independent bundled barcode detection (no OCR) and WorkManager reminders.
 - `app/src/test`: money, Room/repository, migration, crypto envelope, WorkManager and native Compose host tests (no emulator).
 - `app/schemas`: generated Room schema history after a successful KSP build. Commit every schema; require tested forward migration for changes.
 - `assets/brand`: transparent provisional five-square SVG and provenance note; native VectorDrawable is in app resources.
@@ -43,9 +41,9 @@ Linux/macOS:
 
 ```sh
 cd /workspace/apk-development  # replace with your checkout path on your laptop
-./gradlew --no-daemon :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
+./gradlew --no-daemon :app:assemblePersonalDebug :app:testPersonalDebugUnitTest :app:lintPersonalDebug
 adb devices
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb install -r app/build/outputs/apk/personal/debug/app-personal-debug.apk
 adb shell am start -n app.traxos.finance/.MainActivity
 ```
 
@@ -53,16 +51,16 @@ Windows: use `gradlew.bat` instead of `./gradlew`. Enable Developer options → 
 
 This cloud workspace keeps tools under `/workspace/tools`. Its Gradle cache is `/workspace/tools/gradle-home`; use `GRADLE_USER_HOME=/workspace/tools/gradle-home` if the default home is read-only. Cloud proxy/CA settings belong in that local Gradle user configuration, not in the repository. A normal laptop should not copy cloud proxy settings.
 
-Gradle heap: 1.5 GB, two workers, parallel project builds off, in-process Kotlin, single 512 MB test fork, no persistent daemon requested. Run one build at a time and close heavy apps; dependency downloads require internet for the first build. Normal app navigation and bundled recognition have no network dependency; the merged APK has no internet permission. Bundled models increase the universal APK to approximately 74 MiB so first-use detection works offline.
+Gradle heap: 1.5 GB, two workers, parallel project builds off, in-process Kotlin, single 512 MB test fork, no persistent daemon requested. Run one build at a time and close heavy apps; dependency downloads require internet for the first build. Normal navigation and bundled QR/barcode scanning need no network; neither APK has internet permission. Removing OCR reduced each universal APK to approximately 34.8 MiB.
 
 ## Development boundaries
 
-Build status: `assembleDebug`, `testDebugUnitTest` (78 tests) and `lintDebug` passed. Lint has 16 dependency/tool-version update notices, no errors. Physical-phone acceptance is pending.
+Both debug variants build and pass lint with zero errors. Personal: **128 host tests passed**, 20 lint warnings (19 version advisories and one KTX style suggestion). Play: **126 host tests passed**, 19 version advisories. No failures/errors/skips. Physical-phone acceptance remains pending; these are host results.
 
-Implemented source covers cash/bank accounts, expense/income CRUD, soft-delete snackbar Undo, SQL month totals, per-currency balances, paged/debounced search, local theme preferences, persisted form fields and operation identity. Read [PROGRESS](docs/PROGRESS.md) for what actually compiled or ran; written code is not equivalent to verified behavior.
+Implemented scope includes existing finance/gift features, custom entry catalogs and inline creation, basic card liability/repayment accounting, encrypted reviewed Smart Add, offline PIN/native biometric app locking and customizable navigation. [PROGRESS](docs/PROGRESS.md) records actual validation and remaining work.
 
-No cloud, app PIN, biometrics, encrypted whole database, portable backup, credit cards, transfers, recurring schedules, goals, groups or billing are claimed implemented. Gift codes/PINs/notes/attachments are encrypted with device-bound Keystore keys; merchant/balance/date metadata and the existing ledger remain unencrypted app-private Room. Backups are off; losing/clearing this device loses records. App-private Room is not encrypted. Full production security and recovery must land before public release. WorkManager now runs real local gift expiry reminders; it does not claim cloud synchronization.
+Cloud sync, portable backup/export, whole-database encryption, general transfers, card statement/interest automation, recurring schedules, goals, groups and billing remain future work. Gift secrets, Smart Add payloads and PIN security state use separate device-bound encryption; ledger and metadata remain app-private plaintext. There is no portable recovery or PIN-reset bypass. WorkManager runs real local gift expiry reminders, not cloud synchronization.
 
 ## Roadmap
 
-M2 complete offline finance → M3 security and encrypted portable recovery → M4 smart entry/recurrence/reminders → M5 optional encrypted user-owned Drive backup/shared groups → M6 commercial entitlement/update/admin controls → M7 full device, policy and performance hardening. Next: complete the gift wallet physical-device checklist before another feature; then plan the encrypted recovery foundation.
+Next: complete the [physical acceptance checklist](docs/DEVICE_QA.md), including upgrade preservation, biometrics/credentials, installer-restricted SMS and accessibility. Fix measured issues before another feature. Encrypted portable recovery remains a separate future milestone; the full V3 roadmap is not complete.

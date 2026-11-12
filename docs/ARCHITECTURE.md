@@ -1,5 +1,7 @@
 # Architecture
 
+Current implementation is 0.6.0: see [the current guide](UX_SMART_ENTRY.md) and the 0.6 section below. Earlier milestone sections document the evolution and are not current completion claims.
+
 ## Boundary and dependency direction
 
 One Gradle app module to fit an 8 GB laptop; Kotlin packages isolate domain, data and UI. Compose → lifecycle ViewModel → repository → Room DAO. Manual constructor DI in Application; no global UI database access. Room Flow is the only finance read source. Navigation Compose owns destinations; SavedStateHandle owns form/operation identity and search state. No internet permission or cloud SDK in M1.
@@ -65,3 +67,8 @@ WorkManager daily/startup/resume/mutation reconciliation schedules unique per-ca
 ## Smart import/security update — schema5
 
 See [current design](SMART_SECURITY.md#database-and-architecture). New encrypted Smart Add repository composes existing financial repositories transactionally. A fail-closed Keystore/PBKDF2 security store gates Compose before first unlock; opaque locked-state shielding preserves forms and suppresses modal windows. FragmentActivity bridges native biometric prompts. Structured Settings use reactive per-column or transactional preference updates. Instant navigation transitions are preserved.
+
+
+## 0.6.0 — catalog, card ledger, SMS flavors and app entry
+
+Schema6 extends accounts with icon/color, categories with archive/icon/color/revision, transactions with optional merchant/link IDs and an indexed payment link, and adds indexed unique saved entry labels. Stable IDs and journaled mutations preserve history. Card balances are signed liabilities; paired PAYMENT_OUT/PAYMENT_IN mutations and deletion/Undo commit atomically, excluded from ordinary summaries; explicit REFUND reduces expense. Inline editors reuse repository contracts and retain parent forms. Personal-only sources own Telephony decoding/receive permission UI; consent is checked before PDU decoding and again by ingestion. Play has separate settings code and no receiver. Automatic native auth uses a ViewModel lease plus resumed lifecycle/pending guards. Settings enters a fresh utility branch and never saves/restores its nested branch as a tab. Root content colors and shared normal/pressed button palettes are semantic/contrast-tested. Native splash uses existing mark; no startup delay. See [current guide](UX_SMART_ENTRY.md).

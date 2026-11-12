@@ -18,7 +18,38 @@ class LockViewModel(val store: LockStore, private val clock: LockClock = Android
     val error = MutableStateFlow<String?>(null)
     val fatal = MutableStateFlow(false)
     val busy = MutableStateFlow(false)
+    val episode = MutableStateFlow(0L)
+    val promptPending = MutableStateFlow(false)
+    private var automaticPromptClaimed = false
     private var backgroundAt: Long? = null
+
+    private fun lockNow() {
+        if (!locked.value) {
+            locked.value = true
+            episode.value++
+            automaticPromptClaimed = false
+        }
+    }
+
+    /** A ViewModel-owned lease survives rotation/cancellation and is reset only for a new lock. */
+    fun claimAutomaticDevicePrompt(): Boolean {
+        if (
+            !ready.value ||
+                !locked.value ||
+                shielded.value ||
+                fatal.value ||
+                busy.value ||
+                !preferences.value.enabled ||
+                !preferences.value.deviceAuth ||
+                preferences.value.remainingMillis > 0 ||
+                promptPending.value ||
+                automaticPromptClaimed
+        )
+            return false
+        automaticPromptClaimed = true
+        return true
+    }
+
     private var timeoutJob: Job? = null
     private var expectedCipher: Cipher? = null
     private var challenge: ByteArray? = null
@@ -82,7 +113,7 @@ class LockViewModel(val store: LockStore, private val clock: LockClock = Android
                 preferences.value.enabled &&
                 clock.elapsed() - at >= preferences.value.timeoutSeconds * 1000L
         )
-            locked.value = true
+            lockNow()
         backgroundAt = null
         shielded.value = false
     }
@@ -91,13 +122,13 @@ class LockViewModel(val store: LockStore, private val clock: LockClock = Android
         shielded.value = true
         backgroundAt = clock.elapsed()
         if (preferences.value.enabled) {
-            if (preferences.value.timeoutSeconds == 0) locked.value = true
+            if (preferences.value.timeoutSeconds == 0) lockNow()
             else {
                 timeoutJob?.cancel()
                 timeoutJob =
                     viewModelScope.launch {
                         delay(preferences.value.timeoutSeconds * 1000L)
-                        locked.value = true
+                        lockNow()
                     }
             }
         }
@@ -165,19 +196,32 @@ class LockViewModel(val store: LockStore, private val clock: LockClock = Android
         enabling: Boolean,
         currentPin: String = "",
         show: (Cipher) -> Unit,
-    ) = action {
-        require(DeviceAuthentication.available(context)) {
-            "No eligible strong biometric or supported device credential is enrolled. Use your Traxos PIN or phone security settings."
+    ) {
+        if (promptPending.value) return
+        action {
+            require(DeviceAuthentication.available(context)) {
+                "No eligible strong biometric or supported device credential is enrolled. Use your Traxos PIN or phone security settings."
+            }
+            if (enabling) store.requireAccepted(store.verify(currentPin))
+            else require(preferences.value.enabled && preferences.value.deviceAuth)
+            expectedCipher = withContext(Dispatchers.IO) { DeviceAuthentication.prepare(enabling) }
+            challenge = ByteArray(32).also { SecureRandom().nextBytes(it) }
+            enablingDevice = enabling
+            promptPending.value = true
+            try {
+                show(expectedCipher!!)
+            } catch (e: Exception) {
+                promptPending.value = false
+                expectedCipher = null
+                challenge?.fill(0)
+                challenge = null
+                throw e
+            }
         }
-        if (enabling) store.requireAccepted(store.verify(currentPin))
-        else require(preferences.value.enabled && preferences.value.deviceAuth)
-        expectedCipher = withContext(Dispatchers.IO) { DeviceAuthentication.prepare(enabling) }
-        challenge = ByteArray(32).also { SecureRandom().nextBytes(it) }
-        enablingDevice = enabling
-        show(expectedCipher!!)
     }
 
     fun deviceFailed(cancelled: Boolean) {
+        promptPending.value = false
         expectedCipher = null
         challenge?.fill(0)
         challenge = null
@@ -189,6 +233,7 @@ class LockViewModel(val store: LockStore, private val clock: LockClock = Android
     }
 
     fun completeDevice(cipher: Cipher?) = action {
+        promptPending.value = false
         val expected = expectedCipher
         val bytes = challenge
         require(expected != null && cipher === expected && bytes != null) {

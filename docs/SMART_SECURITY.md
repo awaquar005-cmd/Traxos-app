@@ -1,5 +1,8 @@
 # Smart Import, Security & Settings — 0.5.0
 
+> Historical0.5 guide. Superseded by [0.6 current guide](UX_SMART_ENTRY.md): OCR/harness removed, personal/play SMS flavors and newer lock/navigation behavior. Do not run the old OCR harness instructions on this branch.
+
+
 ## Working features
 
 - Gift images use full-resolution camera capture or gallery/share content URIs, EXIF rotation/mirroring, bounded decoding, overlapping tall-image OCR tiles and geometric label/value reading order. Bundled ML Kit runs locally; no network permission or image upload. A bounded contrast retry is heuristic, not a measured accuracy guarantee. Crop/rotate/rescan is available when extraction fails.

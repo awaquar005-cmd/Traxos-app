@@ -13,7 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
-import app.traxos.finance.gifts.GiftImageImport
+import app.traxos.finance.gifts.BarcodeImageImport
 
 /** Fixed ratio crops plus explicit edge entry remain accessible without precision drag gestures. */
 @Composable
@@ -125,7 +125,7 @@ internal fun GiftCropSheet(
             {
                 try {
                     val crop =
-                        GiftImageImport.crop(
+                        BarcodeImageImport.crop(
                             preview,
                             left.toFloat() / 100,
                             top.toFloat() / 100,

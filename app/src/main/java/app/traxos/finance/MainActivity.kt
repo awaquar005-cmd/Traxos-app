@@ -30,6 +30,11 @@ class MainActivity : FragmentActivity() {
         if (::security.isInitialized) security.foreground()
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (::security.isInitialized) security.foreground()
+    }
+
     override fun onPause() {
         if (::security.isInitialized) security.shield()
         super.onPause()
@@ -78,6 +83,7 @@ class MainActivity : FragmentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        setTheme(R.style.Theme_Traxos)
         super.onCreate(savedInstanceState)
         receiveGiftIntent(intent)
         enableEdgeToEdge()

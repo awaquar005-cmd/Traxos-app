@@ -55,9 +55,9 @@ internal fun GiftImportScreen(
         vm.action {
             val effective = vm.repository.dao.settings().first() ?: GiftSettings()
             require(effective.imageDetection) {
-                "Enable image detection in Gift wallet settings first"
+                "Enable QR/barcode scanning in Gift wallet settings first"
             }
-            val result = GiftImageImport.detect(bitmap, true)
+            val result = BarcodeImageImport.detect(bitmap)
             present(result.extraction, result.image, !automatic || effective.autoReview)
             cropOpen = false
         }
@@ -66,15 +66,15 @@ internal fun GiftImportScreen(
         vm.action {
             val effective = vm.repository.dao.settings().first() ?: GiftSettings()
             require(effective.imageDetection) {
-                "Enable image detection in Gift wallet settings first"
+                "Enable QR/barcode scanning in Gift wallet settings first"
             }
-            val bitmap = GiftImageImport.load(context, uri)
+            val bitmap = BarcodeImageImport.load(context, uri)
             sourceBitmap = bitmap
             if (uri.authority == "${context.packageName}.capture") {
                 cameraPath?.let { java.io.File(it).delete() }
                 cameraPath = null
             }
-            val result = GiftImageImport.detect(bitmap, true)
+            val result = BarcodeImageImport.detect(bitmap)
             present(result.extraction, result.image, !automatic || effective.autoReview)
         }
     }
@@ -100,7 +100,7 @@ internal fun GiftImportScreen(
         GiftCropSheet(sourceBitmap!!, busy, { if (!busy) cropOpen = false }) { bitmap ->
             vm.action {
                 try {
-                    val result = GiftImageImport.detect(bitmap, true)
+                    val result = BarcodeImageImport.detect(bitmap)
                     present(result.extraction, result.image)
                     cropOpen = false
                 } finally {
@@ -266,7 +266,7 @@ internal fun GiftImportScreen(
     ) {
         Text("Bring a gift into your wallet", style = MaterialTheme.typography.headlineSmall)
         Text(
-            "Paste or share a message, scan a barcode, or select a screenshot. Everything is processed on this phone. Nothing is saved until you review and tap Save.",
+            "Paste or share a message, or scan a QR/barcode. Everything is processed on this phone. Nothing is saved until you review and tap Save.",
             style = MaterialTheme.typography.bodyMedium,
         )
         if (resultReady && !detected)
@@ -310,7 +310,7 @@ internal fun GiftImportScreen(
             !busy && settings.imageDetection,
             tone = ButtonTone.SECONDARY,
         ) {
-            Text("Import screenshot · Offline OCR")
+            Text("Choose QR / barcode image")
         }
         TraxosButton(
             {
@@ -341,7 +341,7 @@ internal fun GiftImportScreen(
             !busy && settings.imageDetection,
             tone = ButtonTone.SECONDARY,
         ) {
-            Text("Scan photo · OCR / QR / barcode")
+            Text("Scan QR / barcode photo")
         }
         if (sourceBitmap != null)
             TraxosButton(
@@ -355,7 +355,7 @@ internal fun GiftImportScreen(
         if (busy) TraxosNotice("Reading on this phone…", NoticeKind.PROGRESS)
         if (error != null) TraxosNotice(error!!, NoticeKind.ERROR)
         Text(
-            "Camera scanning uses a full-resolution photo. Rotation is corrected from image metadata; crop/rotate and rescan if text is faint or outside the card. Latin-script OCR is bundled. No SMS, camera or photo-library permission is requested by Traxos; no links are opened.",
+            "Only QR/barcode values are read from photos. Printed text is not scanned. No camera or photo-library permission is requested by Traxos; links are never opened.",
             style = MaterialTheme.typography.bodySmall,
         )
         TraxosTextButton(back) { Text("Back to wallet") }
@@ -455,14 +455,14 @@ internal fun GiftSettingsScreen(vm: GiftViewModel) {
             GiftToggle("Detect shared / pasted text", prefs.textDetection, !busy) {
                 vm.changeSettings { current -> current.copy(textDetection = it) }
             }
-            GiftToggle("Offline image / barcode detection", prefs.imageDetection, !busy) {
+            GiftToggle("QR / barcode scanning", prefs.imageDetection, !busy) {
                 vm.changeSettings { current -> current.copy(imageDetection = it) }
             }
             GiftToggle("Open import confirmation automatically", prefs.autoReview, !busy) {
                 vm.changeSettings { current -> current.copy(autoReview = it) }
             }
             Text(
-                "Turning this off leaves shared-item results waiting for Review. Every mode requires confirmation and Save; unconfirmed cards are never stored. Direct SMS reading is unavailable: no SMS permission is requested.",
+                "Turning this off leaves shared-item results waiting for Review. Every mode requires confirmation and Save; unconfirmed cards are never stored. Incoming SMS suggestions depend on your installed build and consent in Smart Tracking settings.",
                 style = MaterialTheme.typography.bodySmall,
             )
             TraxosSelector(

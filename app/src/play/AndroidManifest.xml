@@ -1,0 +1,7 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+ <!-- Hardware stays optional, including for the defensive permission-removal directives. -->
+ <uses-feature android:name="android.hardware.telephony" android:required="false"/>
+ <uses-permission android:name="android.permission.RECEIVE_SMS" tools:node="remove"/>
+ <uses-permission android:name="android.permission.READ_SMS" tools:node="remove"/>
+ <uses-permission android:name="android.permission.SEND_SMS" tools:node="remove"/>
+</manifest>

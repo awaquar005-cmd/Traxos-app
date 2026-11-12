@@ -62,6 +62,7 @@ class CustomFormsUiTest {
             compose.onNodeWithTag("date_selector").performScrollTo().performClick()
             compose.onNodeWithText("Yesterday").performClick()
             compose.onNodeWithText("Use date").performClick()
+            compose.onNodeWithTag("transaction_details").performScrollTo().performClick()
             compose
                 .onNodeWithTag("input_note")
                 .performScrollTo()
@@ -118,7 +119,8 @@ class CustomFormsUiTest {
             compose.waitUntil(5000) {
                 compose.onAllNodesWithTag("input_account_name").fetchSemanticsNodes().isNotEmpty()
             }
-            compose.onNodeWithText("Bank").performClick()
+            compose.onNodeWithTag("selector_Account type").performClick()
+            compose.onNodeWithTag("choice_Bank").performClick()
             compose.onNodeWithTag("input_account_name").performTextInput("New wallet")
             compose.onNodeWithTag("selector_Currency").performScrollTo().performClick()
             compose.onNodeWithTag("traxos_menu").assertExists()

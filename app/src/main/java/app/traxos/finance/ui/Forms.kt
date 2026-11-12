@@ -100,12 +100,32 @@ internal fun FormDestination(
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             if (loading) repeat(3) { SkeletonBlock(Modifier.fillMaxWidth().height(60.dp)) }
-            else if (fields.isNotEmpty()) {
-                if (account) AccountFormFields(fields, vm.isNew, !busy, vm::set)
-                else
+            else if (!fields["linkId"].isNullOrBlank()) {
+                TraxosNotice(
+                    "Paired card payment. Delete / Undo changes both accounts together. To correct the amount, delete and record a new payment.",
+                    NoticeKind.INFO,
+                )
+                Text(fields["amount"].orEmpty(), style = MaterialTheme.typography.titleLarge)
+            } else if (fields.isNotEmpty()) {
+                if (account) {
+                    AccountFormFields(fields, vm.isNew, !busy, vm::set)
+                    if (!vm.isNew && fields["type"] == "CREDIT_CARD")
+                        TraxosButton(
+                            {
+                                nav.navigate(
+                                    "card_payment/${nav.currentBackStackEntry?.arguments?.getString("id")}"
+                                )
+                            },
+                            Modifier.fillMaxWidth(),
+                            !busy,
+                            tone = ButtonTone.SECONDARY,
+                        ) {
+                            Text("Pay card")
+                        }
+                } else
                     when (reads) {
                         ReadState.Loading ->
                             repeat(3) { SkeletonBlock(Modifier.fillMaxWidth().height(60.dp)) }
@@ -125,6 +145,7 @@ internal fun FormDestination(
                                 vm::set,
                                 preferences ?: Preferences(),
                                 vm::default,
+                                main.repository,
                             ) {
                                 nav.navigate("account/new") { launchSingleTop = true }
                             }
@@ -158,7 +179,7 @@ internal fun FormDestination(
                         vm.save()
                     },
                     Modifier.fillMaxWidth().testTag("form_save"),
-                    enabled = ready,
+                    enabled = ready && fields["linkId"].isNullOrBlank(),
                     busy = busy,
                 ) {
                     Text(
@@ -184,9 +205,11 @@ private fun TransactionFormFields(
     set: (String, String) -> Unit,
     preferences: Preferences,
     initial: (String, String) -> Unit,
+    repository: LedgerRepository,
     addAccount: () -> Unit,
 ) {
     val accounts = state.accounts.filter { !it.account.archived || it.account.id == f["accountId"] }
+    val categoryType = if (f["type"] == "REFUND") "EXPENSE" else f["type"]
     LaunchedEffect(accounts.map { it.account.id }, f["type"]) {
         if (f["accountId"].isNullOrEmpty() && accounts.isNotEmpty()) {
             val recent =
@@ -205,16 +228,34 @@ private fun TransactionFormFields(
             val category =
                 preferences.defaultExpenseCategoryId.takeIf { id ->
                     f["type"] == "EXPENSE" &&
-                        state.categories.any { it.id == id && it.type == "EXPENSE" }
+                        state.categories.any { it.id == id && it.type == "EXPENSE" && !it.archived }
                 }
-                    ?: state.recent.firstOrNull { it.record.type == f["type"] }?.record?.categoryId
-                    ?: state.categories.firstOrNull { it.type == f["type"] }?.id
+                    ?: state.recent
+                        .firstOrNull {
+                            it.record.type == f["type"] &&
+                                state.categories.any { c ->
+                                    c.id == it.record.categoryId && !c.archived
+                                }
+                        }
+                        ?.record
+                        ?.categoryId
+                    ?: state.categories.firstOrNull { it.type == categoryType && !it.archived }?.id
             if (category != null) initial("categoryId", category)
         }
     }
     val account = accounts.firstOrNull { it.account.id == f["accountId"] }?.account
+    LaunchedEffect(account?.id, account?.type) {
+        if (
+            (account?.type == "CREDIT_CARD" && f["type"] == "INCOME") ||
+                (account?.type != "CREDIT_CARD" && f["type"] == "REFUND")
+        ) {
+            set("type", "EXPENSE")
+            set("categoryId", "")
+        }
+    }
     TraxosSegment(
-        listOf("EXPENSE" to "Expense", "INCOME" to "Income"),
+        if (account?.type == "CREDIT_CARD") listOf("EXPENSE" to "Purchase", "REFUND" to "Refund")
+        else listOf("EXPENSE" to "Expense", "INCOME" to "Income"),
         f["type"].orEmpty(),
         enabled,
     ) {
@@ -235,49 +276,60 @@ private fun TransactionFormFields(
             Text("Create account")
         }
     }
-    TraxosSelector(
-        "Account",
-        f["accountId"].orEmpty(),
-        accounts.map {
-            it.account.id to
-                (it.account.name +
-                    " · " +
-                    it.account.currency +
-                    if (it.account.archived) " · Archived" else "")
-        },
-        enabled,
-    ) {
-        set("accountId", it)
-    }
-    TraxosSelector(
-        "Category",
+    AccountPicker(repository, f["accountId"].orEmpty(), accounts, enabled) { set("accountId", it) }
+    CategoryPicker(
+        repository,
         f["categoryId"].orEmpty(),
-        state.categories.filter { it.type == f["type"] }.map { it.id to it.name },
+        state.categories,
+        f["type"].orEmpty(),
         enabled,
     ) {
         set("categoryId", it)
     }
+    if (account?.type == "CREDIT_CARD")
+        Text(
+            "Purchases increase debt. Refunds reduce expense and debt; repayments belong in Pay card.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     TraxosDateField("Transaction date", f["day"].orEmpty(), enabled) { set("day", it) }
-    TraxosInput(
-        "Note (optional)",
-        f["note"].orEmpty(),
-        { set("note", it.take(500)) },
-        enabled = enabled,
-        placeholder = "What was this for?",
-        multiline = true,
-        id = "note",
-    )
+    var details by rememberSaveable { mutableStateOf(!isNew || !f["note"].isNullOrBlank()) }
+    TraxosTextButton({ details = !details }, Modifier.testTag("transaction_details"), enabled) {
+        Text(if (details) "Less details" else "More details")
+    }
+    if (details) {
+        val labels by repository.dao.labels().collectAsStateWithLifecycle(emptyList())
+        SavedLabelPicker(repository, "MERCHANT") { set("merchantId", it.id) }
+        labels.firstOrNull { it.id == f["merchantId"] }?.let { Text("Merchant: ${it.name}") }
+        if (!f["merchantId"].isNullOrBlank())
+            TraxosTextButton({ set("merchantId", "") }) { Text("Clear merchant") }
+        SavedLabelPicker(repository, "DESCRIPTION") { set("note", it.name) }
+        TraxosInput(
+            "Note (optional)",
+            f["note"].orEmpty(),
+            { set("note", it.take(500)) },
+            enabled = enabled,
+            placeholder = "What was this for?",
+            multiline = true,
+            id = "note",
+        )
+    }
 }
 
 @Composable
-private fun AccountFormFields(
+internal fun AccountFormFields(
     f: Map<String, String>,
     isNew: Boolean,
     enabled: Boolean,
     set: (String, String) -> Unit,
 ) {
     if (isNew)
-        TraxosSegment(listOf("CASH" to "Cash", "BANK" to "Bank"), f["type"].orEmpty(), enabled) {
+        TraxosSelector(
+            "Account type",
+            f["type"].orEmpty(),
+            LedgerRepository.accountTypes.map { it to accountTypeLabel(it) },
+            enabled,
+        ) {
             set("type", it)
         }
     TraxosInput(
@@ -299,14 +351,24 @@ private fun AccountFormFields(
             set("currency", it)
         }
         TraxosInput(
-            "Known opening balance",
+            if (f["type"] == "CREDIT_CARD") "Opening amount owed" else "Known opening balance",
             f["opening"].orEmpty(),
             { set("opening", it.take(24)) },
             enabled = enabled,
             number = true,
             id = "opening_amount",
         )
-        TraxosDateField("Opening date", f["day"].orEmpty(), enabled) { set("day", it) }
+        if (f["type"] == "CREDIT_CARD")
+            Text(
+                "Enter outstanding debt, never available credit. Use Pay card for repayments.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        var details by rememberSaveable { mutableStateOf(false) }
+        TraxosTextButton({ details = !details }, enabled = enabled) {
+            Text(if (details) "Less details" else "More details")
+        }
+        if (details) TraxosDateField("Opening date", f["day"].orEmpty(), enabled) { set("day", it) }
         Text(
             "Use your known balance as of this date. Zero is an explicit starting balance.",
             style = MaterialTheme.typography.bodySmall,
@@ -314,7 +376,10 @@ private fun AccountFormFields(
         )
     } else {
         TraxosCard {
-            Text("${f["type"]} · ${f["currency"]}", style = MaterialTheme.typography.labelLarge)
+            Text(
+                "${accountTypeLabel(f["type"].orEmpty())} · ${f["currency"]}",
+                style = MaterialTheme.typography.labelLarge,
+            )
             Text(
                 "Opened ${f["day"]}",
                 style = MaterialTheme.typography.bodySmall,
@@ -342,5 +407,27 @@ private fun AccountFormFields(
                 "Archived accounts keep all history and balances, and block new entries. Save to apply your changes.",
                 NoticeKind.WARNING,
             )
+    }
+    var styleOpen by rememberSaveable { mutableStateOf(false) }
+    TraxosTextButton({ styleOpen = !styleOpen }, enabled = enabled) {
+        Text(if (styleOpen) "Hide icon and color" else "Icon and color")
+    }
+    if (styleOpen) {
+        TraxosSelector(
+            "Icon",
+            f["icon"] ?: "wallet",
+            LedgerRepository.icons.map { it to it },
+            enabled,
+        ) {
+            set("icon", it)
+        }
+        TraxosSelector(
+            "Color",
+            f["color"] ?: "BLUE",
+            LedgerRepository.colors.map { it to it },
+            enabled,
+        ) {
+            set("color", it)
+        }
     }
 }

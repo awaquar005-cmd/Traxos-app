@@ -296,6 +296,7 @@ internal fun TraxosSelector(
     options: List<Pair<String, String>>,
     enabled: Boolean = true,
     sheet: Boolean = true,
+    onCreate: (() -> Unit)? = null,
     onSelect: (String) -> Unit,
 ) {
     val keyboard = LocalSoftwareKeyboardController.current
@@ -316,7 +317,7 @@ internal fun TraxosSelector(
                 open = true
             },
             Modifier.fillMaxWidth().testTag("selector_$label"),
-            enabled && options.isNotEmpty(),
+            enabled && (options.isNotEmpty() || onCreate != null),
             tone = ButtonTone.SECONDARY,
         ) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -329,7 +330,7 @@ internal fun TraxosSelector(
             }
             Icon(TraxosIcons.arrow, null, Modifier.size(18.dp))
         }
-        if (open && !sheet)
+        if (open && !sheet && LocalAppInteractionAllowed.current)
             Popup(
                 popupPositionProvider = FittingPopup(with(density) { 8.dp.roundToPx() }),
                 onDismissRequest = { open = false },
@@ -355,6 +356,16 @@ internal fun TraxosSelector(
     }
     if (open && sheet)
         TraxosSheet(label, { open = false }) {
+            if (onCreate != null)
+                TraxosTextButton(
+                    {
+                        open = false
+                        onCreate()
+                    },
+                    Modifier.fillMaxWidth().testTag("add_new_$label"),
+                ) {
+                    Text("+ Add new")
+                }
             LazyColumn(Modifier.weight(1f, fill = false)) {
                 items(options, key = { it.first }) { (id, name) ->
                     TraxosChoiceRow(name, id == selected) {
@@ -490,12 +501,12 @@ internal fun TraxosActionMenu(options: List<Pair<String, String>>, onSelect: (St
                 properties = PopupProperties(focusable = true),
             ) {
                 Surface(
-                    shape = Radius.control,
+                    shape = Radius.small,
                     color = MaterialTheme.colorScheme.surfaceContainerLowest,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                    modifier = Modifier.width(220.dp).testTag("traxos_menu"),
+                    shadowElevation = 4.dp,
+                    modifier = Modifier.width(208.dp).testTag("traxos_menu"),
                 ) {
-                    Column(Modifier.padding(8.dp)) {
+                    Column(Modifier.padding(4.dp)) {
                         options.forEach { (id, label) ->
                             TraxosTextButton(
                                 {
@@ -504,7 +515,30 @@ internal fun TraxosActionMenu(options: List<Pair<String, String>>, onSelect: (St
                                 },
                                 Modifier.fillMaxWidth(),
                             ) {
-                                Text(label)
+                                Row(
+                                    Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                ) {
+                                    Icon(
+                                        when (id) {
+                                            "add" -> TraxosIcons.plus
+                                            "settings" -> TraxosIcons.settings
+                                            else -> TraxosIcons.ledger
+                                        },
+                                        null,
+                                        Modifier.size(18.dp),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                    Text(
+                                        label,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.weight(1f),
+                                        maxLines = 2,
+                                        overflow =
+                                            androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                    )
+                                }
                             }
                         }
                     }

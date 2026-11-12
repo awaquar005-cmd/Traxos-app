@@ -14,15 +14,14 @@ import app.traxos.finance.BuildConfig
 import app.traxos.finance.MainActivity
 import app.traxos.finance.R
 import app.traxos.finance.TraxosApplication
-import app.traxos.finance.gifts.ImportTextSafety
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 
-/** Compiled but not registered in the standard APK. No historical READ_SMS access exists. */
+/** Personal flavor only. System SMS broadcasts, never historical inbox access. */
 class FinancialSmsReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (
-            !BuildConfig.SMS_POLICY_APPROVED ||
+            !BuildConfig.SMS_ENABLED ||
                 intent.action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION ||
                 ContextCompat.checkSelfPermission(context, Manifest.permission.RECEIVE_SMS) !=
                     PackageManager.PERMISSION_GRANTED
@@ -32,32 +31,40 @@ class FinancialSmsReceiver : BroadcastReceiver() {
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             try {
                 val app = context.applicationContext as TraxosApplication
-                val prefs = app.database.ledger().preferences().first() ?: return@launch
+                val consent = app.database.ledger().preferences().first() ?: return@launch
                 if (
                     !SmsAccess.allowed(
-                        BuildConfig.SMS_POLICY_APPROVED,
-                        prefs.smsOptIn,
+                        BuildConfig.SMS_ENABLED,
+                        consent.smsOptIn,
                         ContextCompat.checkSelfPermission(
                             context,
                             Manifest.permission.RECEIVE_SMS,
                         ) == PackageManager.PERMISSION_GRANTED,
-                        prefs.smartEnabled,
+                        consent.smartEnabled,
                     )
                 )
                     return@launch
+                // Check consent before decoding PDUs; ingestion rechecks it before
+                // parsing/persistence.
                 val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
                 val sender = messages.firstOrNull()?.originatingAddress.orEmpty()
-                // Long numeric senders/personal numbers and nonfinancial content are ignored, never
-                // stored.
-                if (
-                    sender.startsWith("+") ||
-                        (sender.all(Char::isDigit) && sender.length >= 10) ||
-                        sender.length !in 3..20
-                )
-                    return@launch
                 val body = messages.joinToString("") { it.messageBody.orEmpty() }
-                if (ImportTextSafety.isOtp(body)) return@launch
-                val offered = app.smart.offer(body) ?: return@launch
+                val receivedDay =
+                    messages.firstOrNull()?.timestampMillis?.let {
+                        java.time.Instant.ofEpochMilli(it)
+                            .atZone(java.time.ZoneId.systemDefault())
+                            .toLocalDate()
+                            .toString()
+                    }
+                val offered =
+                    SmsIngestion(app.repository, app.smart) {
+                            ContextCompat.checkSelfPermission(
+                                context,
+                                Manifest.permission.RECEIVE_SMS,
+                            ) == PackageManager.PERMISSION_GRANTED
+                        }
+                        .receive(sender, body, receivedDay) ?: return@launch
+                val prefs = app.database.ledger().preferences().first() ?: return@launch
                 if (
                     offered.second &&
                         offered.first.status == "PENDING" &&

@@ -104,14 +104,28 @@ fun TraxosApp(vm: MainViewModel) {
     }
     val mainNav: (String) -> Unit = { target ->
         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-        if (nav.currentDestination?.route != target) {
-            if (
-                target == "settings" &&
-                    (nav.currentDestination?.route == "navigation_settings" ||
-                        nav.currentDestination?.route == "settings/{section}")
-            )
-                nav.popBackStack("settings", false)
-            else
+        val current = nav.currentDestination?.route.orEmpty()
+        val inSettings =
+            current == "settings" ||
+                current.startsWith("settings/") ||
+                current == "navigation_settings" ||
+                current == "categories" ||
+                current.startsWith("labels/")
+        if (target == "settings") {
+            if (current != "settings") {
+                if (!inSettings || !nav.popBackStack("settings", false)) {
+                    nav.clearBackStack("settings")
+                    // Settings is a fresh utility branch on top of the current main page.
+                    nav.navigate("settings") {
+                        launchSingleTop = true
+                        restoreState = false
+                    }
+                }
+            }
+        } else {
+            // Never save nested Settings as a tab stack: it must not restore Profile later.
+            if (inSettings) nav.popBackStack("settings", true)
+            if (nav.currentDestination?.route != target)
                 nav.navigate(target) {
                     popUpTo(nav.graph.startDestinationId) { saveState = true }
                     launchSingleTop = true
@@ -172,11 +186,17 @@ fun TraxosApp(vm: MainViewModel) {
                                 "gift/{id}" -> "Gift card"
                                 "more" -> "More"
                                 "smart" -> "Smart Add"
+                                "categories" -> "Categories"
+                                "labels/{kind}" -> "Saved entry options"
+                                "card_payment/{id}" -> "Pay card"
                                 else -> "Dashboard"
                             },
                             back =
                                 if (
-                                    route == "settings" ||
+                                    route == "categories" ||
+                                        route.startsWith("labels/") ||
+                                        route.startsWith("card_payment/") ||
+                                        route == "settings" ||
                                         route.startsWith("settings/") ||
                                         route == "navigation_settings" ||
                                         route.startsWith("gift")
@@ -284,7 +304,10 @@ fun TraxosApp(vm: MainViewModel) {
             composable("settings") {
                 RoutePage("settings") {
                     SettingsScreen(vm) { section ->
-                        nav.navigate("settings/$section") { launchSingleTop = true }
+                        nav.navigate("settings/$section") {
+                            popUpTo("settings")
+                            launchSingleTop = true
+                        }
                     }
                 }
             }
@@ -296,7 +319,13 @@ fun TraxosApp(vm: MainViewModel) {
                         gifts,
                         { nav.navigate("navigation_settings") { launchSingleTop = true } },
                         { mainNav("accounts") },
-                        { nav.navigate("settings/data") { launchSingleTop = true } },
+                        {
+                            nav.navigate("settings/data") {
+                                popUpTo("settings")
+                                launchSingleTop = true
+                            }
+                        },
+                        { destination -> nav.navigate(destination) { launchSingleTop = true } },
                     )
                 }
             }
@@ -374,6 +403,21 @@ fun TraxosApp(vm: MainViewModel) {
                         },
                         { nav.popBackStack() },
                     )
+                }
+            }
+            composable("categories") {
+                RoutePage("categories") { CatalogScreen(vm.repository, "CATEGORY") }
+            }
+            composable("labels/{kind}") { e ->
+                RoutePage("labels") {
+                    CatalogScreen(vm.repository, e.arguments?.getString("kind") ?: "MERCHANT")
+                }
+            }
+            composable("card_payment/{id}") { e ->
+                RoutePage("card_payment") {
+                    CardPaymentScreen(vm.repository, e.arguments?.getString("id").orEmpty()) {
+                        nav.popBackStack()
+                    }
                 }
             }
             composable("transaction/{id}") {

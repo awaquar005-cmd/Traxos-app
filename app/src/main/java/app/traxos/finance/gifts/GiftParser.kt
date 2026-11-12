@@ -5,7 +5,7 @@ import java.time.format.ResolverStyle
 import java.util.Locale
 
 /**
- * No URL resolution, no network, no inferred balances. Scores describe context, not OCR accuracy.
+ * No URL resolution, no network, no inferred balances. Scores describe message context only.
  */
 object ImportTextSafety {
     private val links =

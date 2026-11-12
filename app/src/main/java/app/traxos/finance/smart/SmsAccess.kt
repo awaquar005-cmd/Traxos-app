@@ -2,9 +2,9 @@ package app.traxos.finance.smart
 
 object SmsAccess {
     fun allowed(
-        policyApproved: Boolean,
+        buildEnabled: Boolean,
         consent: Boolean,
         permissionGranted: Boolean,
         smartEnabled: Boolean,
-    ) = policyApproved && consent && permissionGranted && smartEnabled
+    ) = buildEnabled && consent && permissionGranted && smartEnabled
 }

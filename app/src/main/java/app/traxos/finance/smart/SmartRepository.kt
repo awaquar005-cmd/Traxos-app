@@ -25,6 +25,7 @@ class SmartRepository(
         JSONObject()
             .apply {
                 put("giftKind", d.giftKind)
+                put("cardRequired", d.cardRequired)
                 put("v", 1)
                 put("kind", d.kind)
                 put("merchant", d.merchant)
@@ -66,24 +67,34 @@ class SmartRepository(
                 j.getString("warning"),
                 j.getString("text"),
                 j.optString("giftKind", "STORED_VALUE"),
+                j.optBoolean("cardRequired", false),
             )
         }
 
-    suspend fun offer(text: String): Pair<SmartSuggestion, Boolean>? =
+    suspend fun offer(text: String, receivedDay: String? = null): Pair<SmartSuggestion, Boolean>? =
         withContext(Dispatchers.IO) {
             gate.withLock {
-                val d = SmartParser.parse(text) ?: return@withLock null
+                val d = SmartParser.parse(text, receivedDay) ?: return@withLock null
                 if (dao.count() > 0) cipher.verifyExisting()
                 val identity =
                     when {
                         d.kind == "GIFT" && d.code.isNotBlank() ->
-                            "gift:${GiftRules.normalize(d.code)}"
+                            "gift:${if(d.giftKind=="DISCOUNT") GiftRules.normalize(d.merchant)+":" else ""}${GiftRules.normalize(d.code)}"
                         d.reference.isNotBlank() ->
-                            "payment:${d.reference}:${d.accountHint}:${d.type}:${d.amount}:${d.currency}"
+                            "payment:${d.reference}:${d.type}:${d.amount}:${d.currency}"
                         else -> d.originalText.lowercase().replace(Regex("\\s+"), " ").trim()
                     }
                 val token = cipher.fingerprint(identity)
                 db.withTransaction {
+                    if (d.reference.isNotBlank()) {
+                        val legacy =
+                            cipher.fingerprint(
+                                "payment:${d.reference}:${d.accountHint}:${d.type}:${d.amount}:${d.currency}"
+                            )
+                        dao.duplicate(legacy)?.let {
+                            return@withTransaction it to false
+                        }
+                    }
                     dao.duplicate(token)?.let {
                         return@withTransaction it to false
                     }
@@ -149,6 +160,13 @@ class SmartRepository(
                                 requireNotNull(db.ledger().account(accountId)) {
                                     "Choose an account"
                                 }
+                            val source = read(original)
+                            require(
+                                !source.cardRequired ||
+                                    (account.type == "CREDIT_CARD" && d.type == "EXPENSE")
+                            ) {
+                                "This is a credit card purchase. Select its credit card account and Expense."
+                            }
                             require(account.currency == d.currency) {
                                 "Account currency must match this message"
                             }

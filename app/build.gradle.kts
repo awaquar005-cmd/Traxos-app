@@ -5,8 +5,6 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
-val smsPolicyApproved=providers.gradleProperty("traxosSmsPolicyApproved").map {it=="true"}.getOrElse(false)
-// Enable only after documented Google Play exception approval; runtime consent is still required.
 android {
     namespace = "app.traxos.finance"
     compileSdk = 36
@@ -14,13 +12,21 @@ android {
     defaultConfig {
         applicationId = "app.traxos.finance"
         minSdk = 26
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         targetSdk = 36
-        buildConfigField("boolean","SMS_POLICY_APPROVED",smsPolicyApproved.toString())
-        versionCode = 6
-        versionName = "0.5.0-smart-security"
+        versionCode = 7
+        versionName = "0.6.0-smart-entry"
     }
-    if(smsPolicyApproved) sourceSets.getByName("debug").manifest.srcFile("src/smsApproved/AndroidManifest.xml")
+    flavorDimensions += "distribution"
+    productFlavors {
+        create("personal") {
+            dimension = "distribution"
+            buildConfigField("boolean", "SMS_ENABLED", "true")
+        }
+        create("play") {
+            dimension = "distribution"
+            buildConfigField("boolean", "SMS_ENABLED", "false")
+        }
+    }
     sourceSets.getByName("test").resources.srcDir("schemas")
     buildFeatures {
         compose = true
@@ -75,11 +81,7 @@ dependencies {
     implementation(libs.fragment)
     implementation(libs.appcompat)
     implementation(libs.exif)
-    implementation(libs.mlkit.text)
     implementation(libs.mlkit.barcode)
-    androidTestImplementation(libs.android.test.runner)
-    androidTestImplementation(libs.android.test.ext)
-    androidTestImplementation(libs.coroutines)
     testImplementation(libs.work.testing)
     testImplementation(libs.compose.test)
     testImplementation(libs.coroutines.test)

@@ -108,4 +108,36 @@ class SecurityUiTest {
         }
         assertTrue(runBlocking { vm.store.status().enabled })
     }
+
+    @Test
+    fun lockSuppressesOpenDropdownWindows() {
+        val vm = model(true)
+        compose.setContent {
+            TraxosTheme("DARK") {
+                SecurityGate(vm) {
+                    TraxosSelector(
+                        "Private choices",
+                        "A",
+                        listOf("A" to "Private A", "B" to "Private B"),
+                        sheet = false,
+                    ) {}
+                }
+            }
+        }
+        compose.waitUntil(10000) {
+            compose.onAllNodesWithTag("input_unlock_pin").fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithTag("input_unlock_pin").performTextInput("123456")
+        compose.onNodeWithTag("unlock_submit").performClick()
+        compose.waitUntil(10000) {
+            compose.onAllNodesWithTag("selector_Private choices").fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithTag("selector_Private choices").performClick()
+        compose.onNodeWithTag("traxos_menu").assertExists()
+        compose.runOnIdle { vm.background() }
+        compose.waitUntil(10000) {
+            compose.onAllNodesWithTag("traxos_menu").fetchSemanticsNodes().isEmpty()
+        }
+        compose.onNodeWithTag("app_lock").assertExists()
+    }
 }

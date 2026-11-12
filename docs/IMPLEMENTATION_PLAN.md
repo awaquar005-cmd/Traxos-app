@@ -2009,3 +2009,8 @@ Acceptance: tests for malformed/duplicate imports, unknown balance, discount exc
 ## 0.5.0 staged refinement status
 
 OCR/forms → Smart Add → app lock → structured Settings were implemented and host-validated in order. No transfers/debts/groups/cloud modules added. Host verification is complete as recorded in validation/smart-security; real OCR corpus and phone acceptance are outstanding and block claims of production security/OCR accuracy. Existing full V3 inventory remains below/above unchanged. Next: measured phone acceptance and repair, then separately scoped recovery/backup design.
+
+
+## 0.6.0 user-directed scope and status
+
+The latest user request overrides planned image OCR: removed, with manual/SMS text and independent QR/barcodes retained. Custom categories, Wallet/basic Credit Card accounts and reusable entry options are now implemented with history-safe migration and inline creation. Card payments are the paired accounting needed for the requested liability support; general transfers/statements/interest/debts/groups/cloud are not implemented. Personal-only permission-gated SMS suggestions, once-per-lock biometric request, native splash/custom keypad, compact controls, Settings state isolation and dark contrast are host-validated; physical acceptance remains open. Follow [current guide and QA](UX_SMART_ENTRY.md) before another milestone. The full original V3 requirement inventory remains a roadmap, not a completion claim.

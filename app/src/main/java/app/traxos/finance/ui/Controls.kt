@@ -46,6 +46,33 @@ enum class NoticeKind {
     INFO,
 }
 
+internal data class ButtonPalette(val foreground: Color, val background: Color, val pressed: Color)
+
+internal fun buttonPalette(tone: ButtonTone, colors: ColorScheme): ButtonPalette {
+    val foreground =
+        when (tone) {
+            ButtonTone.PRIMARY,
+            ButtonTone.DESTRUCTIVE -> Color.White
+            ButtonTone.GHOST -> colors.primary
+            else -> colors.onSurface
+        }
+    val base =
+        when (tone) {
+            ButtonTone.PRIMARY -> Ink.cobalt
+            ButtonTone.DESTRUCTIVE -> Ink.coral
+            ButtonTone.SECONDARY -> colors.surfaceContainerLowest
+            ButtonTone.GHOST -> Color.Transparent
+        }
+    val pressed =
+        when (tone) {
+            ButtonTone.GHOST -> colors.primary.copy(alpha = .08f)
+            ButtonTone.PRIMARY,
+            ButtonTone.DESTRUCTIVE -> androidx.compose.ui.graphics.lerp(base, Color.Black, .12f)
+            ButtonTone.SECONDARY -> androidx.compose.ui.graphics.lerp(base, colors.onSurface, .06f)
+        }
+    return ButtonPalette(foreground, base, pressed)
+}
+
 @Composable
 internal fun TraxosButton(
     onClick: () -> Unit,
@@ -54,42 +81,21 @@ internal fun TraxosButton(
     busy: Boolean = false,
     tone: ButtonTone = ButtonTone.PRIMARY,
     shape: Shape = Radius.control,
-    contentPadding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+    contentPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
     content: @Composable RowScope.() -> Unit,
 ) {
     val source = remember { MutableInteractionSource() }
     val pressed by source.collectIsPressedAsState()
-    val foreground =
-        when (tone) {
-            ButtonTone.PRIMARY,
-            ButtonTone.DESTRUCTIVE -> Color.White
-            ButtonTone.GHOST -> MaterialTheme.colorScheme.primary
-            else -> MaterialTheme.colorScheme.onSurface
-        }
-    val base =
-        when (tone) {
-            ButtonTone.PRIMARY -> Ink.cobalt
-            ButtonTone.DESTRUCTIVE -> Ink.coral
-            ButtonTone.SECONDARY -> MaterialTheme.colorScheme.surfaceContainerLowest
-            ButtonTone.GHOST -> Color.Transparent
-        }
-    val background =
-        if (pressed)
-            (if (tone == ButtonTone.GHOST) MaterialTheme.colorScheme.primary.copy(alpha = .08f)
-            else base.copy(alpha = .8f))
-        else base
+    val palette = buttonPalette(tone, MaterialTheme.colorScheme)
+    val foreground = palette.foreground
+    val background = if (pressed) palette.pressed else palette.background
     CompositionLocalProvider(LocalContentColor provides foreground) {
         Row(
             modifier
                 .heightIn(min = 48.dp)
-                .alpha(if (enabled) 1f else .45f)
+                .alpha(if (enabled) 1f else .65f)
                 .clip(shape)
                 .background(background)
-                .then(
-                    if (tone == ButtonTone.SECONDARY)
-                        Modifier.border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
-                    else Modifier
-                )
                 .clickable(
                     interactionSource = source,
                     indication = null,
@@ -146,7 +152,7 @@ internal fun TraxosIconButton(
                 if (pressed) MaterialTheme.colorScheme.primary.copy(alpha = .10f)
                 else Color.Transparent
             )
-            .alpha(if (enabled) 1f else .4f)
+            .alpha(if (enabled) 1f else .65f)
             .clickable(source, null, enabled, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -351,8 +357,7 @@ internal fun TraxosAmountInput(
                             Text(
                                 "0.00",
                                 style = MaterialTheme.typography.headlineMedium,
-                                color =
-                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .55f),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         field()
                     }
@@ -401,7 +406,7 @@ internal fun TraxosChoiceRow(
             label,
             Modifier.weight(1f),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (enabled) 1f else .45f),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (enabled) 1f else .65f),
         )
     }
 }
@@ -417,7 +422,7 @@ internal fun TraxosSwitch(
     Box(
         modifier
             .sizeIn(minWidth = 54.dp, minHeight = 48.dp)
-            .alpha(if (enabled) 1f else .45f)
+            .alpha(if (enabled) 1f else .65f)
             .toggleable(checked, enabled, role = Role.Switch, onValueChange = onCheckedChange)
             .semantics { contentDescription = label },
         contentAlignment = Alignment.Center,
@@ -483,7 +488,7 @@ internal fun TraxosCheckbox(
         Text(
             label,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (enabled) 1f else .45f),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (enabled) 1f else .65f),
         )
     }
 }

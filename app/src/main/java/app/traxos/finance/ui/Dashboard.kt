@@ -147,7 +147,7 @@ internal fun HomeScreen(
                 )
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     MetricCard("Inflow", summaries, true, hidden, Modifier.weight(1f))
-                    MetricCard("Outflow", summaries, false, hidden, Modifier.weight(1f))
+                    MetricCard("Net outflow", summaries, false, hidden, Modifier.weight(1f))
                 }
                 Surface(
                     shape = Radius.control,
@@ -217,10 +217,10 @@ internal fun HomeScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Icon(
-                                        TraxosIcons.wallet,
+                                        catalogIcon(a.account.icon),
                                         null,
                                         Modifier.size(20.dp),
-                                        tint = MaterialTheme.colorScheme.primary,
+                                        tint = catalogColor(a.account.color),
                                     )
                                     Spacer(Modifier.weight(1f))
                                     Text(
@@ -237,8 +237,9 @@ internal fun HomeScreen(
                                 )
                                 MoneyText(a.balanceMinor, a.account.currency, hidden = hidden)
                                 Text(
-                                    if (a.account.type == "CASH") "Cash account"
-                                    else "Bank account",
+                                    accountTypeLabel(a.account.type) +
+                                        if (a.account.type == "CREDIT_CARD") " · Debt included"
+                                        else " account",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )

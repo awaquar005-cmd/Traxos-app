@@ -53,6 +53,16 @@ internal fun SmartInboxScreen(
             vm::close,
             scrollable = true,
         ) {
+            var sourceVisible by remember(selected?.id) { mutableStateOf(false) }
+            TraxosTextButton({ sourceVisible = !sourceVisible }, enabled = !busy) {
+                Text(if (sourceVisible) "Hide message" else "View message · may contain codes")
+            }
+            if (sourceVisible)
+                Text(
+                    draft.originalText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             if (draft.warning.isNotBlank()) TraxosNotice(draft.warning, NoticeKind.WARNING)
             Text(
                 "Only your approval creates a record. Defaults are suggestions; check every field.",
@@ -64,6 +74,19 @@ internal fun SmartInboxScreen(
                 { v -> vm.update { it.copy(merchant = v, note = v) } },
                 enabled = !busy,
             )
+            SavedLabelPicker(vm.ledger, "MERCHANT") { label ->
+                vm.update { it.copy(merchant = label.name, note = label.name) }
+            }
+            if (draft.accountHint.isNotBlank())
+                Text(
+                    "Account hint: •••• ${draft.accountHint}",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            if (draft.cardRequired)
+                TraxosNotice(
+                    "Credit card purchase: select the matching card account, never a cash account.",
+                    NoticeKind.INFO,
+                )
             if (draft.kind == "GIFT") {
                 TraxosInput(
                     "Gift card code",
@@ -124,31 +147,24 @@ internal fun SmartInboxScreen(
             }
             if (draft.kind == "TRANSACTION") {
                 TraxosSegment(
-                    listOf("EXPENSE" to "Expense", "INCOME" to "Income"),
+                    if (draft.cardRequired) listOf("EXPENSE" to "Purchase")
+                    else listOf("EXPENSE" to "Expense", "INCOME" to "Income"),
                     draft.type,
                     !busy,
                 ) { v ->
                     category = ""
                     vm.update { it.copy(type = v) }
                 }
-                TraxosSelector(
-                    "Account",
+                AccountPicker(
+                    vm.ledger,
                     account,
-                    accounts
-                        .filter { !it.account.archived && it.account.currency == draft.currency }
-                        .map { it.account.id to it.account.name },
+                    accounts.filter { !draft.cardRequired || it.account.type == "CREDIT_CARD" },
                     !busy,
+                    currency = draft.currency,
                 ) {
                     account = it
                 }
-                TraxosSelector(
-                    "Category",
-                    category,
-                    categories.filter { it.type == draft.type }.map { it.id to it.name },
-                    !busy,
-                ) {
-                    category = it
-                }
+                CategoryPicker(vm.ledger, category, categories, draft.type, !busy) { category = it }
                 TraxosDateField("Date (today if absent)", draft.day, !busy) { v ->
                     vm.update { it.copy(day = v) }
                 }

@@ -271,10 +271,15 @@ class FormViewModel(
                                     .let {
                                         hashMapOf(
                                             "name" to it.name,
+                                            "icon" to it.icon,
+                                            "color" to it.color,
                                             "type" to it.type,
                                             "currency" to it.currency,
                                             "opening" to
-                                                Money.editable(it.openingMinor, it.currency),
+                                                Money.editable(
+                                                    kotlin.math.abs(it.openingMinor),
+                                                    it.currency,
+                                                ),
                                             "archived" to it.archived.toString(),
                                             "revision" to it.revision.toString(),
                                             "day" to LocalDate.ofEpochDay(it.openingDate).toString(),
@@ -306,6 +311,8 @@ class FormViewModel(
                                             "note" to r.note,
                                             "accountId" to r.accountId,
                                             "categoryId" to r.categoryId,
+                                            "merchantId" to r.merchantId.orEmpty(),
+                                            "linkId" to r.linkId.orEmpty(),
                                             "revision" to r.revision.toString(),
                                         )
                                     }
@@ -355,6 +362,8 @@ class FormViewModel(
                         revision,
                         f["archived"].toBoolean(),
                         LocalDate.parse(f["day"]).toEpochDay(),
+                        f["icon"] ?: "wallet",
+                        f["color"] ?: "BLUE",
                     )
                 else {
                     val account =
@@ -371,6 +380,7 @@ class FormViewModel(
                         LocalDate.parse(f["day"]).toEpochDay(),
                         f["note"].orEmpty(),
                         revision,
+                        f["merchantId"]?.takeIf { it.isNotBlank() },
                     )
                 }
                 saved["dirty"] = false

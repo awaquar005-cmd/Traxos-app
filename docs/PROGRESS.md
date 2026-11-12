@@ -1,10 +1,25 @@
 # Progress
 
+## UX, smart entry and security —0.6.0-smart-entry (code 7)
+
+**BUILT AND HOST VALIDATION PASSED.** OCR/model/settings/harness removed; independent QR/barcodes and saved gift attachments retained. Custom income/expense categories and Cash/Bank/Wallet/Credit Card accounts have icons/colors, duplicate validation, archive/history-safe edits and inline creation. Saved merchant/description management, compact optional details, once-per-lock native biometric prompting, a fixed-footer branded PIN keypad/native splash, fresh Settings back stack, compact menus and semantic dark/pressed-state contrast are implemented.
+
+Credit cards use signed debt, explicit expense/refund effects and atomic paired repayment/delete/Undo without duplicate expenses; available credit is never an asset. Schema 5→6 preserves ledger, encrypted gifts/inbox, journal and preferences; the complete forward chain remains. Personal/play flavors isolate SMS code and permissions. Personal requests incoming RECEIVE_SMS after disclosure/consent where OS/installer permits; Play excludes receiver/ingestion and SMS permissions. All suggestions require editable approval. OTPs, unrelated conversations, failed/pending/requested payments and scanned URLs do not become ordinary financial entries.
+
+Validation: assemblePersonalDebug/assemblePlayDebug and both lint tasks passed. **Personal: 128 tests / Play: 126 tests; zero failures/errors/skips. Zero lint errors; personal: 20 warnings (19 version advisories + 1 UseKtx suggestion), Play: 19 version advisories.** Shared tests are run in both variants, not counted as distinct new tests. Signature matches 0.5.0; 16 KiB ZIP/64-bit ELF alignment verified. Actual compiled Play APK contains no SMS receiver/ingestion classes, and neither variant contains the text recognition class. [Evidence and synthetic host previews](validation/ux-refinement/README.md).
+
+APKs: `downloads/TRAXOS-0.6.0-personal.apk` (36,490,717 bytes), `downloads/TRAXOS-0.6.0-play.apk` (36,468,433 bytes); also `/workspace/releases/`. Install as Update, never uninstall/clear storage. [Current behavior, commands and security boundaries](UX_SMART_ENTRY.md).
+
+Physical acceptance remains pending: native biometric/device credential/enrollment and preview behavior, real SMS broadcasts and installer-specific restricted permission, barcode camera quality, OS process death, keyboard/TalkBack/200% fonts/OEM background behavior. No emulator or physical phone was used. Host crypto tests replace only hardware key provisioning with JCE test keys. Ledger/metadata remain app-private plaintext; app lock/device-bound encrypted secrets have no portable recovery. Next task is phone acceptance and fixing measured issues before another feature.
+
+Earlier sections are historical snapshots; their OCR/SMS/lock limitations describe older releases.
+
+
 ## Smart import/security/settings — 0.5.0-smart-security (code 6)
 
 Implemented staged OCR/compact-entry fixes, unified encrypted Smart Add review inbox, offline PIN/native biometric lock and categorized functional Settings. Existing ledger/gift/navigation functionality retained with explicit Room4→5 migration and per-setting atomic updates. See [implementation, security/recovery limits and policy](SMART_SECURITY.md).
 
-**assembleDebug and assembleDebugAndroidTest passed; 113 host tests passed with zero failures/errors/skips; lint passed with zero errors and21 dependency/tool update advisories.** Upgrade signature matches0.4;16KiB ZIP/64-bit ELF alignment passed. Standard APK is78,647,907bytes. Final build/test/lint evidence is recorded in [validation/smart-security](validation/smart-security/README.md). APK: `downloads/TRAXOS-0.5.0-smart-security.apk`; install as Update, never uninstall/clear data. This remains a development release. No native OCR accuracy, physical-device or commercial-readiness claim. Standard APK has no SMS access; manual share/paste works. Real failing Amazon image, hardware biometrics/Keystore, native OCR/camera/system notifications/process death and full accessibility acceptance remain pending. Existing ledger/metadata are not encrypted; app lock and device-bound secret encryption have no portable recovery.
+**assembleDebug and assembleDebugAndroidTest passed; 113 host tests passed with zero failures/errors/skips; lint passed with zero errors and21 dependency/tool update advisories.** Upgrade signature matches0.4; 16 KiB ZIP/64-bit ELF alignment passed. Standard APK is78,647,907bytes. Final build/test/lint evidence is recorded in [validation/smart-security](validation/smart-security/README.md). APK: `downloads/TRAXOS-0.5.0-smart-security.apk`; install as Update, never uninstall/clear data. This remains a development release. No native OCR accuracy, physical-device or commercial-readiness claim. Standard APK has no SMS access; manual share/paste works. Real failing Amazon image, hardware biometrics/Keystore, native OCR/camera/system notifications/process death and full accessibility acceptance remain pending. Existing ledger/metadata are not encrypted; app lock and device-bound secret encryption have no portable recovery.
 
 Next task: physical acceptance and genuine redacted image measurement, not another finance module. Earlier sections below are historical snapshots; statements such as “no app lock” describe those older releases.
 

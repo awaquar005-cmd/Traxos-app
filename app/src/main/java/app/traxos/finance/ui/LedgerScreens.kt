@@ -41,17 +41,16 @@ internal fun RecordItem(row: RecordRow, hidden: Boolean = false, click: () -> Un
                 ) {
                     Box(Modifier.size(36.dp), contentAlignment = Alignment.Center) {
                         Icon(
-                            if (row.record.type == "INCOME") TraxosIcons.income
-                            else TraxosIcons.expense,
+                            catalogIcon(row.categoryIcon),
                             null,
                             Modifier.size(19.dp),
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = catalogColor(row.categoryColor),
                         )
                     }
                 }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Text(
-                        row.record.note.ifBlank { row.categoryName },
+                        row.merchantName ?: row.record.note.ifBlank { row.categoryName },
                         style = MaterialTheme.typography.titleMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -69,7 +68,10 @@ internal fun RecordItem(row: RecordRow, hidden: Boolean = false, click: () -> Un
                         MoneyText(
                             row.record.amountMinor,
                             row.currency,
-                            prefix = if (row.record.type == "INCOME") "+ " else "− ",
+                            prefix =
+                                if (row.record.type in listOf("INCOME", "REFUND", "PAYMENT_IN"))
+                                    "+ "
+                                else "− ",
                             hidden = hidden,
                         )
                     }
@@ -78,14 +80,22 @@ internal fun RecordItem(row: RecordRow, hidden: Boolean = false, click: () -> Un
                 MoneyText(
                     row.record.amountMinor,
                     row.currency,
-                    prefix = if (row.record.type == "INCOME") "+ " else "− ",
+                    prefix =
+                        if (row.record.type in listOf("INCOME", "REFUND", "PAYMENT_IN")) "+ "
+                        else "− ",
                     hidden = hidden,
                 )
             Text(
                 LocalDate.ofEpochDay(row.record.day)
                     .format(DateTimeFormatter.ofPattern("d MMM yyyy")) +
                     " · " +
-                    if (row.record.type == "INCOME") "Income" else "Expense",
+                    when (row.record.type) {
+                        "INCOME" -> "Income"
+                        "REFUND" -> "Card refund"
+                        "PAYMENT_IN",
+                        "PAYMENT_OUT" -> "Card payment"
+                        else -> "Expense"
+                    },
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -198,10 +208,10 @@ internal fun AccountsScreen(
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         Icon(
-                            TraxosIcons.wallet,
+                            catalogIcon(a.account.icon),
                             null,
                             Modifier.size(22.dp),
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = catalogColor(a.account.color),
                         )
                         Text(
                             a.account.name,
@@ -216,10 +226,21 @@ internal fun AccountsScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    MoneyText(a.balanceMinor, a.account.currency, hidden = hidden)
+                    if (a.account.type == "CREDIT_CARD")
+                        Text(
+                            if (a.balanceMinor < 0) "Amount owed" else "Credit balance",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    MoneyText(
+                        if (a.account.type == "CREDIT_CARD") kotlin.math.abs(a.balanceMinor)
+                        else a.balanceMinor,
+                        a.account.currency,
+                        hidden = hidden,
+                    )
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            (if (a.account.type == "CASH") "Cash" else "Bank") +
+                            accountTypeLabel(a.account.type) +
                                 if (a.account.archived) " · Archived" else " · Active",
                             Modifier.weight(1f),
                             style = MaterialTheme.typography.labelMedium,

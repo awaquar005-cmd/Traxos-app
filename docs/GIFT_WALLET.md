@@ -61,3 +61,8 @@ Actual hardware Keystore, first-use offline OCR/camera quality, system notificat
 ## 0.5.0 update
 
 See [smart import guide](SMART_SECURITY.md). Gift entry is compact with More details. Camera OCR now uses full-resolution capture and corrected EXIF/tiled processing, contextual candidates and crop/rescan. Settings moved into categories. App lock is now optional; metadata/ledger remain plaintext and portable recovery is unavailable. Earlier0.4 notes below are historical, including prior limitations.
+
+
+## 0.6.0 superseding update
+
+OCR and its native fixture harness are removed. Independent QR/barcode image capture, encrypted attachments, manual/shared/pasted/SMS gift suggestions, expiry/reminder/redemption/Undo remain. Current settings/build/entry behavior is in [UX_SMART_ENTRY.md](UX_SMART_ENTRY.md). Earlier OCR instructions describe historical0.4/0.5 builds and do not apply to current sources.

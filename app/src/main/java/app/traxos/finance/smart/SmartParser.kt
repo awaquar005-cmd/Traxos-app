@@ -21,6 +21,7 @@ data class SmartDraft(
     val warning: String = "",
     val originalText: String = "",
     val giftKind: String = "STORED_VALUE",
+    val cardRequired: Boolean = false,
 ) {
     fun gift() =
         GiftExtraction(
@@ -42,9 +43,10 @@ object SmartParser {
             "(?i)\\b(?:gift\\s*(?:card|voucher)|voucher|claim code|promo code|coupon code|redemption code)\\b"
         )
     private val bankContext = Regex("(?i)\\b(?:bank|a/c|acct?|account|upi|card|imps|neft|rtgs)\\b")
-    private val direction = Regex("(?i)\\b(?:debited|credited|paid|spent|received|withdrawn)\\b")
+    private val direction =
+        Regex("(?i)\\b(?:debited|credited|paid|spent|received|withdrawn|deposited|deducted)\\b")
 
-    fun parse(raw: String): SmartDraft? {
+    fun parse(raw: String, receivedDay: String? = null): SmartDraft? {
         val text = ImportTextSafety.clean(raw)
         if (text.isBlank()) return null
         if (giftContext.containsMatchIn(text)) {
@@ -63,21 +65,30 @@ object SmartParser {
                 giftKind = e.giftKind,
             )
         }
-        if (!bankContext.containsMatchIn(text) || !direction.containsMatchIn(text)) return null
+        val confirmation =
+            Regex(
+                "(?i)\\b(?:payment|purchase|txn|transaction)\\b[\\s\\S]{0,140}\\b(?:successful|successfully|completed)\\b|\\b(?:successful|completed)\\b[\\s\\S]{0,80}\\b(?:payment|purchase|txn)\\b"
+            )
+        if (
+            !bankContext.containsMatchIn(text) ||
+                (!direction.containsMatchIn(text) && !confirmation.containsMatchIn(text))
+        )
+            return null
         val blocked =
             when {
+                Regex("(?i)\\b(?:failed|declined|unsuccessful|pending|request(?:ed)?)\\b")
+                    .containsMatchIn(text) ->
+                    "This is not a confirmed completed payment. Review it manually; no ordinary expense or income will be posted."
                 Regex(
                         "(?i)credit\\s*card.*(?:bill|payment|settle)|(?:bill|payment).*credit\\s*card|payment.*towards.*card"
                     )
                     .containsMatchIn(text) ->
-                    "Card settlement is not an expense. Paired card accounts are not available; no record will be posted."
+                    "Card settlement is not an expense. Use Pay card from the card account to record both sides; no ordinary expense will be posted."
                 Regex("(?i)\\b(?:own account|self transfer|transfer(?:red)?|neft|imps|rtgs)\\b")
                     .containsMatchIn(text) ->
                     "This may be a transfer. Paired-account transfers are not implemented; no expense or income will be posted."
                 Regex("(?i)\\b(?:refund|reversal|reversed|cashback)\\b").containsMatchIn(text) ->
                     "Refunds/reversals must be matched to their original purchase; they are not earned income. No record will be posted."
-                Regex("(?i)credit\\s*card").containsMatchIn(text) ->
-                    "Credit card activity requires a credit card account; no cash expense will be posted."
                 else -> ""
             }
         val values =
@@ -116,8 +127,8 @@ object SmartParser {
         val best =
             values.firstOrNull()?.takeIf { values.size == 1 || it.third - values[1].third >= 15 }
         val incoming =
-            Regex("(?i)\\bcredited\\b|received.*(?:from|by)").containsMatchIn(text) &&
-                !Regex("(?i)\\bdebited\\b|\\bspent\\b").containsMatchIn(text)
+            Regex("(?i)\\b(?:credited|received|deposited)\\b").containsMatchIn(text) &&
+                !Regex("(?i)\\b(?:debited|spent|paid|withdrawn|deducted)\\b").containsMatchIn(text)
         val merchant =
             Regex(
                     "(?i)\\b(?:at|to|from)\\s+([A-Za-z][A-Za-z0-9 &'._-]{1,60}?)(?=\\s+(?:on|ref|upi|a/c|acct|account|for|via)|[.;\\n]|$)"
@@ -136,15 +147,20 @@ object SmartParser {
                 ?.get(1)
                 .orEmpty()
         val account =
-            Regex("(?i)(?:a/c|acct?|account)\\s*[:.-]?\\s*[xX*]*(\\d{3,6})\\b")
+            Regex("(?i)(?:a/c|acct?|account|card)\\s*[:.-]?\\s*[xX*]*(\\d{3,6})\\b")
                 .find(text)
                 ?.groupValues
                 ?.get(1)
                 .orEmpty()
         val date =
-            Regex("\\b\\d{4}-\\d{2}-\\d{2}\\b").find(text)?.value?.takeIf {
-                runCatching { LocalDate.parse(it) }.isSuccess
-            }
+            messageDate(text)
+                ?: receivedDay?.takeIf { value ->
+                    runCatching {
+                            val day = LocalDate.parse(value)
+                            !day.isAfter(LocalDate.now()) && day.year >= 1980
+                        }
+                        .getOrDefault(false)
+                }
         return SmartDraft(
             if (blocked.isBlank()) "TRANSACTION" else "REVIEW_ONLY",
             merchant,
@@ -162,6 +178,32 @@ object SmartParser {
                     else "Check account, category, date and amount before approving"
                 },
             originalText = text,
+            cardRequired = Regex("(?i)credit\\s*card").containsMatchIn(text),
         )
+    }
+
+    private fun messageDate(text: String): String? {
+        val iso = Regex("\\b\\d{4}-\\d{2}-\\d{2}\\b").find(text)?.value
+        if (iso != null) return runCatching { LocalDate.parse(iso).toString() }.getOrNull()
+        val named = Regex("(?i)\\b(\\d{1,2})[- /]([A-Za-z]{3,9})[- /](\\d{2}|\\d{4})\\b").find(text)
+        if (named != null)
+            return runCatching {
+                    val month =
+                        java.time.Month.values().first {
+                            it.name.startsWith(named.groupValues[2].take(3), true)
+                        }
+                    val y = named.groupValues[3].toInt().let { if (it < 100) 2000 + it else it }
+                    LocalDate.of(y, month, named.groupValues[1].toInt()).toString()
+                }
+                .getOrNull()
+        val numeric =
+            Regex("\\b(\\d{1,2})[-/](\\d{1,2})[-/](\\d{2}|\\d{4})\\b").find(text) ?: return null
+        val a = numeric.groupValues[1].toInt()
+        val c = numeric.groupValues[2].toInt()
+        if (a <= 12 && c <= 12 && a != c) return null
+        val day = if (a > 12) a else c
+        val month = if (a > 12) c else a
+        val y = numeric.groupValues[3].toInt().let { if (it < 100) 2000 + it else it }
+        return runCatching { LocalDate.of(y, month, day).toString() }.getOrNull()
     }
 }

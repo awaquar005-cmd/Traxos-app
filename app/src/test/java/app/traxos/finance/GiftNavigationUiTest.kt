@@ -39,11 +39,11 @@ class GiftNavigationUiTest {
         listOf(
                 android.Manifest.permission.INTERNET,
                 android.Manifest.permission.READ_SMS,
-                android.Manifest.permission.RECEIVE_SMS,
                 android.Manifest.permission.CAMERA,
                 android.Manifest.permission.READ_MEDIA_IMAGES,
             )
             .forEach { assertFalse(it in permissions) }
+        assertEquals(BuildConfig.SMS_ENABLED, "android.permission.RECEIVE_SMS" in permissions)
         runBlocking {
             app.repository.setNavigationSlots(listOf("gifts", "home", "accounts", "more"))
             app.repository.setCenterAction("ACCOUNTS")

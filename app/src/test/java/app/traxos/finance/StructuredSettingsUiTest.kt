@@ -32,9 +32,10 @@ class StructuredSettingsUiTest {
     fun compactCategoriesProfileAndCurrencyPersistAcrossActivityRestart() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             compose.waitUntil(15000) {
-                compose.onAllNodesWithTag("nav_settings").fetchSemanticsNodes().isNotEmpty()
+                compose.onAllNodes(hasTestTag("center_action") and isEnabled()).fetchSemanticsNodes().isNotEmpty()
             }
             compose.onNodeWithTag("nav_settings").performClick()
+            compose.waitUntil(10000) {compose.onAllNodesWithTag("setting_Profile").fetchSemanticsNodes().isNotEmpty()}
             compose.onNodeWithTag("setting_Profile").performScrollTo().performClick()
             compose.onNodeWithTag("input_profile_name").performTextInput("Local name")
             compose.onNodeWithText("Save display name").performScrollTo().performClick()

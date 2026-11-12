@@ -24,7 +24,6 @@ import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.traxos.finance.BuildConfig
-import app.traxos.finance.data.Preferences
 import app.traxos.finance.domain.Money
 import app.traxos.finance.gifts.*
 
@@ -63,7 +62,7 @@ internal fun SettingsScreen(vm: MainViewModel, openSection: (String) -> Unit) {
                         prefs!!.displayName.ifBlank { "Local profile · No connected account" }
                     "security" -> "PIN, device unlock and visibility"
                     "appearance" -> "Theme, screen slots and center shortcut"
-                    "smart" -> "Message suggestions and offline image imports"
+                    "smart" -> "SMS, shared text and QR/barcodes"
                     "notifications" -> "Gift expiry and suggestion alerts"
                     "data" -> "Default currency, account choices and local data"
                     else -> "Version ${BuildConfig.VERSION_NAME}, feedback and privacy"
@@ -109,7 +108,7 @@ internal fun SettingsRow(title: String, summary: String, onClick: () -> Unit) {
 }
 
 @Composable
-private fun SettingsToggle(
+internal fun SettingsToggle(
     title: String,
     summary: String,
     checked: Boolean,
@@ -141,6 +140,7 @@ internal fun SettingsDetailScreen(
     openNavigation: () -> Unit,
     openAccounts: () -> Unit,
     openData: () -> Unit,
+    openCatalog: (String) -> Unit = {},
 ) {
     val p by vm.preferences.collectAsStateWithLifecycle()
     val busy by vm.busy.collectAsStateWithLifecycle()
@@ -264,8 +264,8 @@ internal fun SettingsDetailScreen(
                     gifts.changeSettings { current -> current.copy(textDetection = it) }
                 }
                 SettingsToggle(
-                    "Offline image recognition",
-                    "Bundled ML Kit OCR and barcode scanning",
+                    "QR / barcode scanning",
+                    "Offline QR/barcode values only; no text recognition",
                     giftPrefs.imageDetection,
                     !giftBusy,
                 ) {
@@ -326,7 +326,7 @@ internal fun SettingsDetailScreen(
                 ) {
                     Text("Save reminder intervals")
                 }
-                if (BuildConfig.SMS_POLICY_APPROVED)
+                if (BuildConfig.SMS_ENABLED)
                     SettingsToggle(
                         "Transaction suggestion alerts",
                         "Generic Review notification; never posts a transaction",
@@ -337,12 +337,23 @@ internal fun SettingsDetailScreen(
                     }
                 else
                     Text(
-                        "Automatic SMS suggestion alerts are unavailable in this standard build. Shared/pasted suggestions are reviewed inside Smart Add.",
+                        "Automatic SMS suggestion alerts are unavailable in this Play build. Shared/pasted suggestions are reviewed inside Smart Add.",
                         style = MaterialTheme.typography.bodySmall,
                     )
                 NotificationPermissionRow()
             }
             "data" -> {
+                SettingsRow(
+                    "Categories",
+                    "Create, rename, style or archive",
+                    { openCatalog("categories") },
+                )
+                SettingsRow("Merchants", "Saved merchant names", { openCatalog("labels/MERCHANT") })
+                SettingsRow(
+                    "Descriptions",
+                    "Frequently used transaction notes",
+                    { openCatalog("labels/DESCRIPTION") },
+                )
                 TraxosSelector(
                     "Default currency",
                     prefs.defaultCurrency,
@@ -357,32 +368,35 @@ internal fun SettingsDetailScreen(
                 )
                 val ready = read as? ReadState.Ready
                 if (ready != null) {
-                    TraxosSelector(
-                        "Default transaction account",
+                    AccountPicker(
+                        vm.repository,
                         prefs.defaultAccountId,
-                        listOf("" to "Recent or first active account") +
-                            ready.accounts
-                                .filter { !it.account.archived }
-                                .map { it.account.id to it.account.name },
+                        ready.accounts,
                         !busy,
+                        "Default transaction account",
                     ) {
                         vm.defaultAccount(it)
                     }
-                    TraxosSelector(
-                        "Default expense category",
+                    TraxosTextButton({ vm.defaultAccount("") }, enabled = !busy) {
+                        Text("Use recent account")
+                    }
+                    CategoryPicker(
+                        vm.repository,
                         prefs.defaultExpenseCategoryId,
-                        listOf("" to "Recent or first expense category") +
-                            ready.categories
-                                .filter { it.type == "EXPENSE" }
-                                .map { it.id to it.name },
+                        ready.categories,
+                        "EXPENSE",
                         !busy,
+                        "Default expense category",
                     ) {
                         vm.defaultCategory(it)
+                    }
+                    TraxosTextButton({ vm.defaultCategory("") }, enabled = !busy) {
+                        Text("Use recent expense category")
                     }
                 }
                 SettingsRow(
                     "Manage financial accounts",
-                    "Cash/bank accounts and balances",
+                    "Cash, bank, wallet and card balances",
                     openAccounts,
                 )
                 Text(
@@ -397,7 +411,7 @@ internal fun SettingsDetailScreen(
                     style = MaterialTheme.typography.titleLarge,
                 )
                 Text(
-                    "Build ${BuildConfig.VERSION_CODE} · Native Android · Offline first",
+                    "Build ${BuildConfig.VERSION_CODE} · ${BuildConfig.FLAVOR} · Offline first",
                     style = MaterialTheme.typography.bodySmall,
                 )
                 SettingsRow(
@@ -426,63 +440,6 @@ internal fun SettingsDetailScreen(
         if (giftError != null) TraxosNotice(giftError!!, NoticeKind.ERROR)
         if (busy || giftBusy)
             Text("Saving preference…", style = MaterialTheme.typography.labelSmall)
-    }
-}
-
-@Composable
-private fun SmsSettings(prefs: Preferences, vm: MainViewModel, busy: Boolean) {
-    val context = LocalContext.current
-    var disclosure by remember { mutableStateOf(false) }
-    var granted by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(context, Manifest.permission.RECEIVE_SMS) ==
-                PackageManager.PERMISSION_GRANTED
-        )
-    }
-    val owner = androidx.lifecycle.compose.LocalLifecycleOwner.current
-    DisposableEffect(owner) {
-        val observer =
-            androidx.lifecycle.LifecycleEventObserver { _, event ->
-                if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME)
-                    granted =
-                        ContextCompat.checkSelfPermission(
-                            context,
-                            Manifest.permission.RECEIVE_SMS,
-                        ) == PackageManager.PERMISSION_GRANTED
-            }
-        owner.lifecycle.addObserver(observer)
-        onDispose { owner.lifecycle.removeObserver(observer) }
-    }
-    val permission =
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { allowed ->
-            granted = allowed
-            vm.smsOptIn(allowed)
-        }
-    if (!BuildConfig.SMS_POLICY_APPROVED) {
-        Text(
-            "Automatic SMS detection is unavailable until the publisher has Google Play approval for this use. This APK requests no SMS permission. Share/paste works offline.",
-            style = MaterialTheme.typography.bodySmall,
-        )
-        return
-    }
-    if (disclosure)
-        TraxosDialog(
-            "Allow incoming financial SMS?",
-            "With your Android permission, Traxos will inspect incoming financial messages locally and keep encrypted suggestions for review. Personal conversations, OTPs and links are ignored. No historical SMS is read, nothing is uploaded, and no wallet or transaction entry is created automatically.",
-            "Continue",
-            {
-                disclosure = false
-                permission.launch(Manifest.permission.RECEIVE_SMS)
-            },
-            { disclosure = false },
-        )
-    SettingsToggle(
-        "Incoming financial SMS",
-        "Review encrypted suggestions; access stops if permission is revoked",
-        prefs.smsOptIn && granted,
-        !busy,
-    ) {
-        if (it) disclosure = true else vm.smsOptIn(false)
     }
 }
 

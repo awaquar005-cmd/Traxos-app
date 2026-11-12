@@ -92,4 +92,37 @@ class LockSessionTest {
         withTimeout(10000) { vm.locked.first { !it } }
         assertFalse(vm.locked.value)
     }
+
+    @Test
+    fun automaticPromptLeaseSurvivesRotationCancellationAndQuickResume() = runBlocking {
+        val clock = TestLockClock()
+        val store = LockStore(dir, TestLockCipher(), clock)
+        store.setPin("", "123456", "123456")
+        store.deviceAuth(true)
+        store.timeout(30)
+        val vm = LockViewModel(store, clock)
+        models.put("lease", vm)
+        withTimeout(10000) { vm.ready.first { it } }
+        assertTrue(vm.claimAutomaticDevicePrompt())
+        assertFalse(vm.claimAutomaticDevicePrompt()) // same VM after rotation/recomposition
+        vm.deviceFailed(true)
+        vm.shield()
+        vm.foreground() // system prompt/permission dialog return
+        assertFalse(vm.claimAutomaticDevicePrompt())
+        assertTrue(vm.locked.value)
+        vm.unlock("123456")
+        withTimeout(10000) { vm.locked.first { !it } }
+        withTimeout(10000) { vm.busy.first { !it } }
+        vm.background()
+        clock.monotonic += 1000
+        vm.foreground()
+        assertFalse(vm.locked.value)
+        assertFalse(vm.claimAutomaticDevicePrompt())
+        vm.background()
+        clock.monotonic += 31000
+        vm.foreground()
+        assertTrue(vm.locked.value)
+        assertTrue(vm.claimAutomaticDevicePrompt())
+        assertFalse(vm.claimAutomaticDevicePrompt())
+    }
 }

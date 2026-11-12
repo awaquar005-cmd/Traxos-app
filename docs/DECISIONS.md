@@ -45,3 +45,8 @@ WorkManager handles offline deferrable reminders at local 09:00; Android may del
 ## 0.5.0 decisions
 
 Keep offline bundled ML Kit, bounded EXIF-aware image processing and generic context parsing; never fetch extracted URLs. Use mandatory review and atomic inbox approval. Default SMS access stays absent pending policy review; approved builds are receive-only/consent gated. Use standard PBKDF2 and Keystore AES-GCM plus native BiometricPrompt, fail closed on lost security state; no reset bypass. App lock is not ledger encryption. See [tradeoffs/recovery/validation](SMART_SECURITY.md).
+
+
+## 0.6.0 decisions
+
+Remove OCR entirely at the user’s request while retaining independent offline barcodes and encrypted attachments. Keep legacy gift preference column for barcode compatibility instead of destructive migration. Use catalog IDs/archival and duplicate validation, with immutable account kind/currency/opening semantics. Support basic card purchase/refund/repayment ledger correctness, not invented credit-limit/statement values. Separate personal/play source sets and manifests, rather than treating consent as Play policy approval or leaving a disabled receiver in Play. RECEIVE_SMS remains installer-restricted; no bypass/default-handler workaround. Keep native security prompt trusted, with one automatic request per lock episode and an explicit retry after cancellation. Fixed Unlock footer handles small screens/IME; no delayed welcome screen. [Details and evidence](UX_SMART_ENTRY.md).

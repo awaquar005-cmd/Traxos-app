@@ -4,6 +4,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -28,6 +29,7 @@ private val Light =
         background = Color(0xFFF1F4F9),
         surface = Color(0xFFF1F4F9),
         onSurface = Color(0xFF111B2F),
+        onBackground = Color(0xFF111B2F),
         surfaceContainer = Color(0xFFE9EEF5),
         surfaceContainerLowest = Color.White,
         onSurfaceVariant = Color(0xFF57647A),
@@ -42,6 +44,7 @@ private val Dark =
         background = Color(0xFF0C1423),
         surface = Color(0xFF0C1423),
         onSurface = Color(0xFFE3E9F4),
+        onBackground = Color(0xFFE3E9F4),
         surfaceContainer = Color(0xFF1A263B),
         surfaceContainerLowest = Color(0xFF152238),
         onSurfaceVariant = Color(0xFFABBAD1),
@@ -75,8 +78,9 @@ private val TraxosType =
 @Composable
 fun TraxosTheme(mode: String, content: @Composable () -> Unit) {
     val dark = mode == "DARK" || (mode == "SYSTEM" && isSystemInDarkTheme())
+    val colors = if (dark) Dark else Light
     MaterialTheme(
-        colorScheme = if (dark) Dark else Light,
+        colorScheme = colors,
         typography = TraxosType,
         shapes =
             Shapes(
@@ -84,6 +88,8 @@ fun TraxosTheme(mode: String, content: @Composable () -> Unit) {
                 medium = RoundedCornerShape(12.dp),
                 large = RoundedCornerShape(16.dp),
             ),
-        content = content,
+        content = {
+            CompositionLocalProvider(LocalContentColor provides colors.onSurface) { content() }
+        },
     )
 }

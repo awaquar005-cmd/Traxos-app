@@ -20,10 +20,30 @@ data class Account(
     val archived: Boolean = false,
     val revision: Long = 1,
     val profileId: String = "local",
+    @ColumnInfo(defaultValue = "'wallet'") val icon: String = "wallet",
+    @ColumnInfo(defaultValue = "'BLUE'") val color: String = "BLUE",
 )
 
 @Entity(tableName = "categories")
-data class Category(@PrimaryKey val id: String, val name: String, val type: String)
+data class Category(
+    @PrimaryKey val id: String,
+    val name: String,
+    val type: String,
+    @ColumnInfo(defaultValue = "0") val archived: Boolean = false,
+    @ColumnInfo(defaultValue = "'tag'") val icon: String = "tag",
+    @ColumnInfo(defaultValue = "'BLUE'") val color: String = "BLUE",
+    @ColumnInfo(defaultValue = "1") val revision: Long = 1,
+)
+
+@Entity(tableName = "entry_labels", indices = [Index(value = ["kind", "nameKey"], unique = true)])
+data class EntryLabel(
+    @PrimaryKey val id: String,
+    val name: String,
+    val nameKey: String,
+    val kind: String,
+    val archived: Boolean = false,
+    val revision: Long = 1,
+)
 
 @Entity(
     tableName = "transactions",
@@ -47,6 +67,7 @@ data class Category(@PrimaryKey val id: String, val name: String, val type: Stri
             Index(value = ["profileId", "day", "id"]),
             Index(value = ["accountId", "day"]),
             Index(value = ["categoryId", "day"]),
+            Index("linkId"),
         ],
 )
 data class LedgerRecord(
@@ -61,6 +82,8 @@ data class LedgerRecord(
     val revision: Long = 1,
     val deleted: Boolean = false,
     val profileId: String = "local",
+    @ColumnInfo(defaultValue = "NULL") val merchantId: String? = null,
+    @ColumnInfo(defaultValue = "NULL") val linkId: String? = null,
 )
 
 @Entity(tableName = "preferences")
@@ -106,6 +129,9 @@ data class RecordRow(
     val accountName: String,
     val categoryName: String,
     val currency: String,
+    val merchantName: String? = null,
+    val categoryIcon: String = "tag",
+    val categoryColor: String = "BLUE",
 )
 
 data class Summary(val currency: String, val expenseMinor: Long, val incomeMinor: Long)
@@ -113,9 +139,25 @@ data class Summary(val currency: String, val expenseMinor: Long, val incomeMinor
 @Dao
 interface LedgerDao {
     @Query(
-        "SELECT a.*, a.openingMinor + COALESCE(SUM(CASE WHEN t.deleted = 0 THEN CASE WHEN t.type = 'INCOME' THEN t.amountMinor ELSE -t.amountMinor END ELSE 0 END),0) AS balanceMinor FROM accounts a LEFT JOIN transactions t ON a.id = t.accountId WHERE a.profileId = 'local' GROUP BY a.id ORDER BY a.archived, a.name COLLATE NOCASE"
+        "SELECT a.*, a.openingMinor + COALESCE(SUM(CASE WHEN t.deleted = 0 THEN CASE WHEN t.type IN ('INCOME','REFUND','PAYMENT_IN') THEN t.amountMinor ELSE -t.amountMinor END ELSE 0 END),0) AS balanceMinor FROM accounts a LEFT JOIN transactions t ON a.id = t.accountId WHERE a.profileId = 'local' GROUP BY a.id ORDER BY a.archived, a.name COLLATE NOCASE"
     )
     fun accounts(): Flow<List<AccountBalance>>
+
+    @Query("SELECT * FROM entry_labels ORDER BY name COLLATE NOCASE")
+    fun labels(): Flow<List<EntryLabel>>
+
+    @Query("SELECT * FROM entry_labels WHERE id=:id") suspend fun label(id: String): EntryLabel?
+
+    @Insert suspend fun insertLabel(value: EntryLabel)
+
+    @Update suspend fun updateLabel(value: EntryLabel)
+
+    @Insert suspend fun insertCategory(value: Category)
+
+    @Update suspend fun updateCategory(value: Category)
+
+    @Query("SELECT * FROM transactions WHERE linkId=:link")
+    suspend fun linked(link: String): List<LedgerRecord>
 
     @Query("SELECT * FROM categories ORDER BY name") fun categories(): Flow<List<Category>>
 
@@ -138,17 +180,17 @@ interface LedgerDao {
     @Query("SELECT COUNT(*) FROM outbox_operations") suspend fun operationCount(): Long
 
     @Query(
-        "SELECT t.*, a.name AS accountName, c.name AS categoryName, a.currency FROM transactions t JOIN accounts a ON a.id = t.accountId JOIN categories c ON c.id = t.categoryId WHERE t.deleted = 0 AND t.profileId = 'local' ORDER BY t.day DESC, t.id DESC LIMIT 6"
+        "SELECT t.*, a.name AS accountName, c.name AS categoryName, a.currency, m.name AS merchantName, c.icon AS categoryIcon, c.color AS categoryColor FROM transactions t JOIN accounts a ON a.id = t.accountId JOIN categories c ON c.id = t.categoryId LEFT JOIN entry_labels m ON m.id = t.merchantId WHERE t.deleted = 0 AND t.profileId = 'local' ORDER BY t.day DESC, t.id DESC LIMIT 6"
     )
     fun recent(): Flow<List<RecordRow>>
 
     @Query(
-        "SELECT t.*, a.name AS accountName, c.name AS categoryName, a.currency FROM transactions t JOIN accounts a ON a.id = t.accountId JOIN categories c ON c.id = t.categoryId WHERE t.deleted = 0 AND t.profileId = 'local' AND (t.note LIKE '%' || :search || '%' ESCAPE '\\' OR c.name LIKE '%' || :search || '%' ESCAPE '\\' OR a.name LIKE '%' || :search || '%' ESCAPE '\\') ORDER BY t.day DESC, t.id DESC"
+        "SELECT t.*, a.name AS accountName, c.name AS categoryName, a.currency, m.name AS merchantName, c.icon AS categoryIcon, c.color AS categoryColor FROM transactions t JOIN accounts a ON a.id = t.accountId JOIN categories c ON c.id = t.categoryId LEFT JOIN entry_labels m ON m.id = t.merchantId WHERE t.deleted = 0 AND t.profileId = 'local' AND (t.note LIKE '%' || :search || '%' ESCAPE '\\' OR c.name LIKE '%' || :search || '%' ESCAPE '\\' OR a.name LIKE '%' || :search || '%' ESCAPE '\\' OR m.name LIKE '%' || :search || '%' ESCAPE '\\') ORDER BY t.day DESC, t.id DESC"
     )
     fun page(search: String): PagingSource<Int, RecordRow>
 
     @Query(
-        "SELECT a.currency, COALESCE(SUM(CASE WHEN t.type = 'EXPENSE' THEN t.amountMinor ELSE 0 END),0) AS expenseMinor, COALESCE(SUM(CASE WHEN t.type = 'INCOME' THEN t.amountMinor ELSE 0 END),0) AS incomeMinor FROM transactions t JOIN accounts a ON a.id = t.accountId WHERE t.deleted = 0 AND t.profileId = 'local' AND t.day >= :start AND t.day < :end GROUP BY a.currency"
+        "SELECT a.currency, COALESCE(SUM(CASE WHEN t.type = 'EXPENSE' THEN t.amountMinor WHEN t.type = 'REFUND' THEN -t.amountMinor ELSE 0 END),0) AS expenseMinor, COALESCE(SUM(CASE WHEN t.type = 'INCOME' THEN t.amountMinor ELSE 0 END),0) AS incomeMinor FROM transactions t JOIN accounts a ON a.id = t.accountId WHERE t.deleted = 0 AND t.profileId = 'local' AND t.day >= :start AND t.day < :end GROUP BY a.currency"
     )
     fun summary(start: Long, end: Long): Flow<List<Summary>>
 
@@ -219,8 +261,9 @@ interface LedgerDao {
             GiftSettings::class,
             GiftNotification::class,
             SmartSuggestion::class,
+            EntryLabel::class,
         ],
-    version = 5,
+    version = 6,
     exportSchema = true,
 )
 abstract class TraxosDatabase : RoomDatabase() {
@@ -315,9 +358,46 @@ abstract class TraxosDatabase : RoomDatabase() {
                 }
             }
 
+        val MIGRATION_5_6 =
+            object : Migration(5, 6) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "ALTER TABLE accounts ADD COLUMN icon TEXT NOT NULL DEFAULT 'wallet'"
+                    )
+                    db.execSQL("ALTER TABLE accounts ADD COLUMN color TEXT NOT NULL DEFAULT 'BLUE'")
+                    db.execSQL(
+                        "ALTER TABLE categories ADD COLUMN archived INTEGER NOT NULL DEFAULT 0"
+                    )
+                    db.execSQL("ALTER TABLE categories ADD COLUMN icon TEXT NOT NULL DEFAULT 'tag'")
+                    db.execSQL(
+                        "ALTER TABLE categories ADD COLUMN color TEXT NOT NULL DEFAULT 'BLUE'"
+                    )
+                    db.execSQL(
+                        "ALTER TABLE categories ADD COLUMN revision INTEGER NOT NULL DEFAULT 1"
+                    )
+                    db.execSQL("ALTER TABLE transactions ADD COLUMN merchantId TEXT DEFAULT NULL")
+                    db.execSQL("ALTER TABLE transactions ADD COLUMN linkId TEXT DEFAULT NULL")
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_transactions_linkId ON transactions(linkId)"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS entry_labels (id TEXT NOT NULL, name TEXT NOT NULL, nameKey TEXT NOT NULL, kind TEXT NOT NULL, archived INTEGER NOT NULL, revision INTEGER NOT NULL, PRIMARY KEY(id))"
+                    )
+                    db.execSQL(
+                        "CREATE UNIQUE INDEX IF NOT EXISTS index_entry_labels_kind_nameKey ON entry_labels(kind,nameKey)"
+                    )
+                }
+            }
+
         fun open(context: Context, name: String = "traxos.db"): TraxosDatabase =
             Room.databaseBuilder(context, TraxosDatabase::class.java, name)
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                .addMigrations(
+                    MIGRATION_1_2,
+                    MIGRATION_2_3,
+                    MIGRATION_3_4,
+                    MIGRATION_4_5,
+                    MIGRATION_5_6,
+                )
                 .addCallback(
                     object : Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {

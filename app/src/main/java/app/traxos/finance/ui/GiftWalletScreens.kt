@@ -290,7 +290,7 @@ internal fun GiftFormScreen(
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TraxosButton(scan, Modifier.weight(1f), !busy, tone = ButtonTone.SECONDARY) {
-                    Text("Scan image")
+                    Text("Scan QR / barcode")
                 }
                 TraxosButton(
                     {
@@ -363,6 +363,14 @@ internal fun GiftFormScreen(
             }
             if (details)
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    val ledger =
+                        remember(vm.repository) {
+                            app.traxos.finance.data.LedgerRepository(vm.repository.db)
+                        }
+                    SavedLabelPicker(ledger, "MERCHANT") { merchant ->
+                        vm.update { it.copy(merchant = merchant.name) }
+                    }
+
                     TraxosInput(
                         "Card name",
                         d.name,
@@ -485,7 +493,7 @@ private fun GiftAttachment(vm: GiftViewModel, d: GiftDraft, busy: Boolean) {
         rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
             if (uri != null)
                 vm.action {
-                    val bitmap = GiftImageImport.load(context, uri)
+                    val bitmap = BarcodeImageImport.load(context, uri)
                     try {
                         val bytes =
                             java.io.ByteArrayOutputStream().use {
