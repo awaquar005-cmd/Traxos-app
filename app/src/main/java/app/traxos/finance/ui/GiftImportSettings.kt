@@ -41,7 +41,10 @@ internal fun GiftImportScreen(
     var extracted by remember { mutableStateOf(GiftExtraction()) }
     var image by remember { mutableStateOf<ByteArray?>(null) }
     fun present(result: GiftExtraction, attachment: ByteArray? = null, openReview: Boolean = true) {
-        extracted = result
+        extracted =
+            result.copy(
+                currency = result.currency.ifBlank { globalPrefs?.defaultCurrency ?: "INR" }
+            )
         image = attachment
         resultReady = true
         detected = openReview
@@ -495,32 +498,5 @@ private fun GiftToggle(
     ) {
         Text(label, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
         TraxosSwitch(checked, onChange, enabled = enabled)
-    }
-}
-
-@Composable
-internal fun MoreScreen(navigate: (String) -> Unit) {
-    Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Text("Your Traxos tools", style = MaterialTheme.typography.headlineSmall)
-        listOf(
-                "home" to "Home",
-                "transactions" to "Transactions",
-                "accounts" to "Accounts",
-                "gifts" to "Gift Cards",
-                "smart" to "Smart Add",
-                "settings" to "Settings",
-            )
-            .forEach { (id, label) ->
-                TraxosButton(
-                    { navigate(id) },
-                    Modifier.fillMaxWidth(),
-                    tone = ButtonTone.SECONDARY,
-                ) {
-                    Text(label)
-                }
-            }
     }
 }

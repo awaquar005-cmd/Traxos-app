@@ -1,0 +1,726 @@
+{
+  "version": "0.7.0-ui-review",
+  "versionCode": 8,
+  "build": "passed",
+  "variants": {
+    "personal": {
+      "testTotals": {
+        "tests": 140,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "suites": [
+        {
+          "name": "app.traxos.finance.AccentMigrationTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.BrandedControlsUiTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.CatalogAccountingTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.CatalogInlineUiTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.CatalogMigrationTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.CustomFormsUiTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.FormViewModelTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.GiftAppearanceTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.GiftContextParserTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.GiftImagePreparationTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.GiftMigrationTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.GiftNavigationUiTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.GiftReminderWorkerTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.GiftRepositoryTest",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.GiftRulesTest",
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.GiftWalletUiTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.HomeStartupTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.LedgerRepositoryTest",
+          "tests": 15,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.LoadingUiTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.LockLayoutUiTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.LockSessionTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.LockStoreTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.MoneyTest",
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.NavigationCustomizationUiTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.NavigationLayoutTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.NavigationPreferencesTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.NavigationUiTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.PreferenceIsolationTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.PreferencesMigrationTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.SavedLedgerLaunchTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.SecurityUiTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.SettingsReentryUiTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.SmartAddTest",
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.SmartInboxUiTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.SmartMigrationTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.SmartParserTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.SmsIngestionTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.StructuredSettingsUiTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.ThemeContrastTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.TransferAndImportTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.UiAppearanceTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.UiReviewTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ],
+      "lint": {
+        "errors": 0,
+        "warnings": 20,
+        "categories": {
+          "AndroidGradlePluginVersion": 2,
+          "GradleDependency": 17,
+          "UseKtx": 1
+        }
+      },
+      "apk": {
+        "path": "downloads/TRAXOS-0.7.0-personal.apk",
+        "sourceOutput": "app/build/outputs/apk/personal/debug/app-personal-debug.apk",
+        "bytes": 35776261,
+        "sha256": "518ce4bf5d2971bec839264dfee075dfe1aec9e8eacf74bfd2c623a251bd5e2a",
+        "certificateSha256": "9df8f47a6aefa51f5b1b61dfb1a3aea3ea159757e39024821a0c9ffea4990f54",
+        "sameSigningIdentityAsPrevious": true,
+        "zip16KiBAligned": true,
+        "elf64BitLoadAlignments": {
+          "lib/arm64-v8a/libandroidx.graphics.path.so": [
+            16384,
+            16384,
+            16384
+          ],
+          "lib/arm64-v8a/libbarhopper_v3.so": [
+            16384,
+            16384,
+            16384
+          ],
+          "lib/x86_64/libandroidx.graphics.path.so": [
+            16384,
+            16384,
+            16384
+          ],
+          "lib/x86_64/libbarhopper_v3.so": [
+            16384,
+            16384,
+            16384
+          ]
+        }
+      },
+      "permissions": [
+        "android.permission.RECEIVE_SMS",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.WAKE_LOCK",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "app.traxos.finance.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+      ],
+      "smsReceiverPresent": true,
+      "smsClassesExcluded": false,
+      "allContentProvidersNonExported": true,
+      "ocrTextRecognitionClassExcluded": true
+    },
+    "play": {
+      "testTotals": {
+        "tests": 138,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "suites": [
+        {
+          "name": "app.traxos.finance.AccentMigrationTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.BrandedControlsUiTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.CatalogAccountingTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.CatalogInlineUiTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.CatalogMigrationTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.CustomFormsUiTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.FormViewModelTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.GiftAppearanceTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.GiftContextParserTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.GiftImagePreparationTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.GiftMigrationTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.GiftNavigationUiTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.GiftReminderWorkerTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.GiftRepositoryTest",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.GiftRulesTest",
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.GiftWalletUiTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.HomeStartupTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.LedgerRepositoryTest",
+          "tests": 15,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.LoadingUiTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.LockLayoutUiTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.LockSessionTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.LockStoreTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.MoneyTest",
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.NavigationCustomizationUiTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.NavigationLayoutTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.NavigationPreferencesTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.NavigationUiTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.PreferenceIsolationTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.PreferencesMigrationTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.SavedLedgerLaunchTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.SecurityUiTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.SettingsReentryUiTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.SmartAddTest",
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.SmartInboxUiTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.SmartMigrationTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.SmartParserTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.StructuredSettingsUiTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.ThemeContrastTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.TransferAndImportTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.UiAppearanceTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "app.traxos.finance.UiReviewTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ],
+      "lint": {
+        "errors": 0,
+        "warnings": 19,
+        "categories": {
+          "AndroidGradlePluginVersion": 2,
+          "GradleDependency": 17
+        }
+      },
+      "apk": {
+        "path": "downloads/TRAXOS-0.7.0-play.apk",
+        "sourceOutput": "app/build/outputs/apk/play/debug/app-play-debug.apk",
+        "bytes": 35753952,
+        "sha256": "3243454bbb2fb167099ff4ca089984d451797a1f17a3f2d4dfe75285ef61592c",
+        "certificateSha256": "9df8f47a6aefa51f5b1b61dfb1a3aea3ea159757e39024821a0c9ffea4990f54",
+        "sameSigningIdentityAsPrevious": true,
+        "zip16KiBAligned": true,
+        "elf64BitLoadAlignments": {
+          "lib/arm64-v8a/libandroidx.graphics.path.so": [
+            16384,
+            16384,
+            16384
+          ],
+          "lib/arm64-v8a/libbarhopper_v3.so": [
+            16384,
+            16384,
+            16384
+          ],
+          "lib/x86_64/libandroidx.graphics.path.so": [
+            16384,
+            16384,
+            16384
+          ],
+          "lib/x86_64/libbarhopper_v3.so": [
+            16384,
+            16384,
+            16384
+          ]
+        }
+      },
+      "permissions": [
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.WAKE_LOCK",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "app.traxos.finance.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+      ],
+      "smsReceiverPresent": false,
+      "smsClassesExcluded": true,
+      "allContentProvidersNonExported": true,
+      "ocrTextRecognitionClassExcluded": true
+    }
+  },
+  "database": {
+    "schema": 7,
+    "shippedV6UpgradeAndRestartTested": true,
+    "allNonPreferenceEntitiesIdenticalToV6": true
+  },
+  "previewPages": 100,
+  "previewWrites": "no repository/service dependencies; root navigation test verifies no ledger records written",
+  "physicalDeviceTested": false,
+  "emulatorUsed": false,
+  "hardwareSecurity": "host crypto replaces hardware provisioning with JCE test keys; native device acceptance remains pending",
+  "previews": "synthetic host renders, not physical-phone screenshots",
+  "ocr": "remains removed; independent barcode scanning retained"
+}

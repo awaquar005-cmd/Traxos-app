@@ -22,9 +22,10 @@ class ThemeContrastTest {
     @Test
     fun rootTextLabelsAndBrandButtonsMeetNormalTextContrastInBothThemes() {
         var mode by mutableStateOf("LIGHT")
+        var accent by mutableStateOf("COBALT")
         var checks = listOf<Pair<Color, Color>>()
         compose.setContent {
-            TraxosTheme(mode) {
+            TraxosTheme(mode, accent) {
                 val c = MaterialTheme.colorScheme
                 // No Surface wrapper: this catches a black default LocalContentColor in a dark
                 // root.
@@ -48,15 +49,18 @@ class ThemeContrastTest {
                 Text("Readable Traxos")
             }
         }
-        for (theme in listOf("LIGHT", "DARK")) {
-            compose.runOnIdle { mode = theme }
+        for (option in accentOptions) for (theme in listOf("LIGHT", "DARK")) {
+            compose.runOnIdle {
+                mode = theme
+                accent = option.id
+            }
             compose.waitForIdle()
             compose.runOnIdle {
                 checks.forEach { (fg, bg) ->
                     val ratio =
                         (maxOf(fg.luminance(), bg.luminance()) + .05f) /
                             (minOf(fg.luminance(), bg.luminance()) + .05f)
-                    assertTrue("$theme contrast $ratio must reach4.5", ratio >= 4.5f)
+                    assertTrue("${option.id} $theme contrast $ratio must reach4.5", ratio >= 4.5f)
                 }
             }
         }

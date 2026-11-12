@@ -145,6 +145,37 @@ internal fun SmartInboxScreen(
                     vm.update { it.copy(currency = v) }
                 }
             }
+            if (draft.kind == "TRANSFER") {
+                TraxosNotice(
+                    "Between your own accounts · not income or an expense. Select both sides; card bills use Pay card.",
+                    NoticeKind.INFO,
+                )
+                AccountPicker(
+                    vm.ledger,
+                    account,
+                    accounts,
+                    !busy,
+                    "From account",
+                    draft.currency,
+                    false,
+                ) {
+                    account = it
+                }
+                AccountPicker(
+                    vm.ledger,
+                    category,
+                    accounts.filter { it.account.id != account },
+                    !busy,
+                    "To account",
+                    draft.currency,
+                    false,
+                ) {
+                    category = it
+                }
+                TraxosDateField("Transfer date", draft.day, !busy) { v ->
+                    vm.update { it.copy(day = v) }
+                }
+            }
             if (draft.kind == "TRANSACTION") {
                 TraxosSegment(
                     if (draft.cardRequired) listOf("EXPENSE" to "Purchase")
@@ -184,7 +215,11 @@ internal fun SmartInboxScreen(
                         !busy,
                         busy,
                     ) {
-                        Text(if (draft.kind == "GIFT") "Add gift card" else "Add transaction")
+                        Text(
+                            if (draft.kind == "GIFT") "Add gift card"
+                            else if (draft.kind == "TRANSFER") "Record transfer"
+                            else "Add transaction"
+                        )
                     }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TraxosTextButton({ vm.reject(false) }, enabled = !busy) { Text("Reject") }

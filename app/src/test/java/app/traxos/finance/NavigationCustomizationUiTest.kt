@@ -43,6 +43,9 @@ class NavigationCustomizationUiTest {
             compose.onNodeWithTag("nav_settings").performClick()
             compose.onNodeWithText("Appearance & Navigation").performScrollTo().performClick()
             compose.onNodeWithText("Customize navigation").performScrollTo().performClick()
+            compose.onNodeWithText("Arrange your everyday tools").assertExists()
+            compose.waitForIdle()
+            scenario.onActivity { captureHostPreview(it, "navigation-light.png") }
             compose
                 .onNodeWithContentDescription("Move slot 4 earlier")
                 .performScrollTo()

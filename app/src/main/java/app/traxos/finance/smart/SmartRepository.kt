@@ -80,6 +80,8 @@ class SmartRepository(
                     when {
                         d.kind == "GIFT" && d.code.isNotBlank() ->
                             "gift:${if(d.giftKind=="DISCOUNT") GiftRules.normalize(d.merchant)+":" else ""}${GiftRules.normalize(d.code)}"
+                        d.kind == "TRANSFER" && d.reference.isNotBlank() ->
+                            "transfer:${d.reference}:${d.amount}:${d.currency}"
                         d.reference.isNotBlank() ->
                             "payment:${d.reference}:${d.type}:${d.amount}:${d.currency}"
                         else -> d.originalText.lowercase().replace(Regex("\\s+"), " ").trim()
@@ -128,7 +130,7 @@ class SmartRepository(
     suspend fun approve(id: String, d: SmartDraft, accountId: String, categoryId: String): String =
         withContext(Dispatchers.IO) {
             gate.withLock {
-                require(d.kind in listOf("TRANSACTION", "GIFT")) {
+                require(d.kind in listOf("TRANSACTION", "GIFT", "TRANSFER")) {
                     "This message needs manual matching; no ordinary expense or income will be created"
                 }
                 val result =
@@ -180,16 +182,25 @@ class SmartRepository(
                             require(!date.isAfter(LocalDate.now())) {
                                 "Transaction date cannot be in the future"
                             }
-                            ledger.saveRecord(
-                                id,
-                                id,
-                                accountId,
-                                categoryId,
-                                d.type,
-                                Money.parse(d.amount, d.currency),
-                                date.toEpochDay(),
-                                d.note.take(500),
-                            )
+                            if (d.kind == "TRANSFER")
+                                ledger.transfer(
+                                    id,
+                                    accountId,
+                                    categoryId,
+                                    Money.parse(d.amount, d.currency),
+                                    date.toEpochDay(),
+                                )
+                            else
+                                ledger.saveRecord(
+                                    id,
+                                    id,
+                                    accountId,
+                                    categoryId,
+                                    d.type,
+                                    Money.parse(d.amount, d.currency),
+                                    date.toEpochDay(),
+                                    d.note.take(500),
+                                )
                         }
                         require(dao.status(id, "APPROVED") == 1)
                         id

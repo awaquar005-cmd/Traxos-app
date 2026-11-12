@@ -109,7 +109,7 @@ class SmartAddTest {
             )) {
             val (s, _) = repo.offer(text)!!
             val d = repo.read(s)
-            assertEquals("REVIEW_ONLY", d.kind)
+            assertEquals(if(text.contains("self transfer")) "TRANSFER" else "REVIEW_ONLY", d.kind)
             try {
                 repo.approve(s.id, d.copy(kind = "TRANSACTION"), "bank", "other-expense")
                 fail("blocked payment posted")

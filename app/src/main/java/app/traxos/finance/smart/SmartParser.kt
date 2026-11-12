@@ -74,6 +74,9 @@ object SmartParser {
                 (!direction.containsMatchIn(text) && !confirmation.containsMatchIn(text))
         )
             return null
+        val ownTransfer =
+            Regex("(?i)\\b(?:self[ -]transfer|own accounts?|between (?:my|your) accounts?)\\b")
+                .containsMatchIn(text)
         val blocked =
             when {
                 Regex("(?i)\\b(?:failed|declined|unsuccessful|pending|request(?:ed)?)\\b")
@@ -86,7 +89,7 @@ object SmartParser {
                     "Card settlement is not an expense. Use Pay card from the card account to record both sides; no ordinary expense will be posted."
                 Regex("(?i)\\b(?:own account|self transfer|transfer(?:red)?|neft|imps|rtgs)\\b")
                     .containsMatchIn(text) ->
-                    "This may be a transfer. Paired-account transfers are not implemented; no expense or income will be posted."
+                    "This may be a transfer. Review both owned accounts in Transfer between accounts; no ordinary expense or income will be posted."
                 Regex("(?i)\\b(?:refund|reversal|reversed|cashback)\\b").containsMatchIn(text) ->
                     "Refunds/reversals must be matched to their original purchase; they are not earned income. No record will be posted."
                 else -> ""
@@ -162,7 +165,15 @@ object SmartParser {
                         .getOrDefault(false)
                 }
         return SmartDraft(
-            if (blocked.isBlank()) "TRANSACTION" else "REVIEW_ONLY",
+            if (
+                ownTransfer &&
+                    !Regex(
+                            "(?i)failed|declined|unsuccessful|pending|reversal|reversed|refund|cashback|request|credit\\s*card"
+                        )
+                        .containsMatchIn(text)
+            )
+                "TRANSFER"
+            else if (blocked.isBlank()) "TRANSACTION" else "REVIEW_ONLY",
             merchant,
             best?.first.orEmpty(),
             best?.second.orEmpty(),

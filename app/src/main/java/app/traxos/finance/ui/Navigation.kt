@@ -45,9 +45,9 @@ internal val screenRegistry =
         ScreenEntry("transactions", "Activity", TraxosIcons.ledger),
         ScreenEntry("accounts", "Accounts", TraxosIcons.wallet),
         ScreenEntry("settings", "Settings", TraxosIcons.settings),
-        ScreenEntry("gifts", "Gift Cards", TraxosIcons.wallet),
-        ScreenEntry("more", "More", TraxosIcons.ledger),
-        ScreenEntry("smart", "Smart Add", TraxosIcons.plus),
+        ScreenEntry("gifts", "Gift Cards", TraxosIcons.gift),
+        ScreenEntry("more", "More", TraxosIcons.tools),
+        ScreenEntry("smart", "Smart Add", TraxosIcons.spark),
     )
 
 internal fun screenLabel(id: String) =
@@ -60,28 +60,39 @@ internal fun TraxosBottomBar(
     navigate: (String) -> Unit,
     shortcutEnabled: Boolean = true,
     slots: List<String> = NavigationLayout.defaults,
+    systemInsets: Boolean = true,
     launchShortcut: () -> Unit,
 ) {
     Surface(color = MaterialTheme.colorScheme.surfaceContainerLowest) {
         Row(
             Modifier.fillMaxWidth()
-                .navigationBarsPadding()
+                .then(if (systemInsets) Modifier.navigationBarsPadding() else Modifier)
                 .padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             val entries =
                 NavigationLayout.validate(slots).map { id -> screenRegistry.first { it.id == id } }
             entries.take(2).forEach { item ->
-                NavItem(item.id, item.label, item.icon, route, navigate, Modifier.weight(1f))
+                NavItem(
+                    item.id,
+                    item.label,
+                    item.icon,
+                    route,
+                    navigate,
+                    Modifier.weight(1f),
+                    if (systemInsets) "" else "preview_",
+                )
             }
             Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 Surface(
                     onClick = launchShortcut,
                     enabled = shortcutEnabled,
                     shape = Radius.card,
-                    color = Ink.cobalt,
+                    color = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = Color.White,
-                    modifier = Modifier.size(48.dp).testTag("center_action"),
+                    modifier =
+                        Modifier.size(48.dp)
+                            .testTag(if (systemInsets) "center_action" else "preview_center_action"),
                 ) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Icon(shortcut.icon, "Shortcut: ${shortcut.label}", Modifier.size(23.dp))
@@ -89,7 +100,15 @@ internal fun TraxosBottomBar(
                 }
             }
             entries.drop(2).forEach { item ->
-                NavItem(item.id, item.label, item.icon, route, navigate, Modifier.weight(1f))
+                NavItem(
+                    item.id,
+                    item.label,
+                    item.icon,
+                    route,
+                    navigate,
+                    Modifier.weight(1f),
+                    if (systemInsets) "" else "preview_",
+                )
             }
         }
     }
@@ -103,12 +122,13 @@ private fun NavItem(
     route: String,
     navigate: (String) -> Unit,
     modifier: Modifier,
+    tagPrefix: String = "",
 ) {
     val selected = key == route
     Column(
         modifier
             .heightIn(min = 52.dp)
-            .testTag("nav_$key")
+            .testTag("${tagPrefix}nav_$key")
             .selectable(selected = selected, role = Role.Tab, onClick = { navigate(key) })
             .padding(vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,

@@ -52,6 +52,17 @@ private val Dark =
         error = Color(0xFFFFB4AB),
     )
 
+internal data class AccentOption(val id: String, val label: String, val color: Color)
+
+internal val accentOptions =
+    listOf(
+        AccentOption("COBALT", "Cobalt", Color(0xFF2549C4)),
+        AccentOption("NAVY", "Navy", Color(0xFF233C83)),
+        AccentOption("PETROL", "Petrol", Color(0xFF005F6B)),
+        AccentOption("GRAPHITE", "Graphite", Color(0xFF3F4B5B)),
+        AccentOption("FOREST", "Forest", Color(0xFF17613E)),
+    )
+
 // OS sans keeps Indic/emoji fallback without a font download or bundled font payload.
 private fun type(size: Int, line: Int, weight: FontWeight = FontWeight.Normal) =
     TextStyle(
@@ -76,9 +87,15 @@ private val TraxosType =
     )
 
 @Composable
-fun TraxosTheme(mode: String, content: @Composable () -> Unit) {
+fun TraxosTheme(mode: String, accent: String, content: @Composable () -> Unit) {
     val dark = mode == "DARK" || (mode == "SYSTEM" && isSystemInDarkTheme())
-    val colors = if (dark) Dark else Light
+    val ink = accentOptions.firstOrNull { it.id == accent }?.color ?: accentOptions.first().color
+    val colors =
+        (if (dark) Dark else Light).copy(
+            primary = if (dark) androidx.compose.ui.graphics.lerp(ink, Color.White, .65f) else ink,
+            primaryContainer = ink,
+            onPrimaryContainer = Color.White,
+        )
     MaterialTheme(
         colorScheme = colors,
         typography = TraxosType,
@@ -93,3 +110,7 @@ fun TraxosTheme(mode: String, content: @Composable () -> Unit) {
         },
     )
 }
+
+@Composable
+fun TraxosTheme(mode: String, content: @Composable () -> Unit) =
+    TraxosTheme(mode, "COBALT", content)

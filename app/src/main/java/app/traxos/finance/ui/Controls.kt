@@ -51,14 +51,14 @@ internal data class ButtonPalette(val foreground: Color, val background: Color, 
 internal fun buttonPalette(tone: ButtonTone, colors: ColorScheme): ButtonPalette {
     val foreground =
         when (tone) {
-            ButtonTone.PRIMARY,
+            ButtonTone.PRIMARY -> colors.onPrimaryContainer
             ButtonTone.DESTRUCTIVE -> Color.White
             ButtonTone.GHOST -> colors.primary
             else -> colors.onSurface
         }
     val base =
         when (tone) {
-            ButtonTone.PRIMARY -> Ink.cobalt
+            ButtonTone.PRIMARY -> colors.primaryContainer
             ButtonTone.DESTRUCTIVE -> Ink.coral
             ButtonTone.SECONDARY -> colors.surfaceContainerLowest
             ButtonTone.GHOST -> Color.Transparent
@@ -96,6 +96,11 @@ internal fun TraxosButton(
                 .alpha(if (enabled) 1f else .65f)
                 .clip(shape)
                 .background(background)
+                .then(
+                    if (tone == ButtonTone.SECONDARY)
+                        Modifier.border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
+                    else Modifier
+                )
                 .clickable(
                     interactionSource = source,
                     indication = null,
@@ -510,6 +515,7 @@ internal fun TraxosSegment(
         options.forEach { (id, label) ->
             Box(
                 Modifier.weight(1f)
+                    .testTag("choice_$label")
                     .heightIn(min = 48.dp)
                     .clip(Radius.small)
                     .background(

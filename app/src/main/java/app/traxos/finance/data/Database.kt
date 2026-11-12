@@ -101,6 +101,7 @@ data class Preferences(
     @ColumnInfo(defaultValue = "1") val smartEnabled: Boolean = true,
     @ColumnInfo(defaultValue = "0") val smsOptIn: Boolean = false,
     @ColumnInfo(defaultValue = "0") val suggestionNotifications: Boolean = false,
+    @ColumnInfo(defaultValue = "'COBALT'") val accent: String = "COBALT",
 )
 
 @Entity(
@@ -139,7 +140,7 @@ data class Summary(val currency: String, val expenseMinor: Long, val incomeMinor
 @Dao
 interface LedgerDao {
     @Query(
-        "SELECT a.*, a.openingMinor + COALESCE(SUM(CASE WHEN t.deleted = 0 THEN CASE WHEN t.type IN ('INCOME','REFUND','PAYMENT_IN') THEN t.amountMinor ELSE -t.amountMinor END ELSE 0 END),0) AS balanceMinor FROM accounts a LEFT JOIN transactions t ON a.id = t.accountId WHERE a.profileId = 'local' GROUP BY a.id ORDER BY a.archived, a.name COLLATE NOCASE"
+        "SELECT a.*, a.openingMinor + COALESCE(SUM(CASE WHEN t.deleted = 0 THEN CASE WHEN t.type IN ('INCOME','REFUND','PAYMENT_IN','TRANSFER_IN') THEN t.amountMinor ELSE -t.amountMinor END ELSE 0 END),0) AS balanceMinor FROM accounts a LEFT JOIN transactions t ON a.id = t.accountId WHERE a.profileId = 'local' GROUP BY a.id ORDER BY a.archived, a.name COLLATE NOCASE"
     )
     fun accounts(): Flow<List<AccountBalance>>
 
@@ -185,9 +186,9 @@ interface LedgerDao {
     fun recent(): Flow<List<RecordRow>>
 
     @Query(
-        "SELECT t.*, a.name AS accountName, c.name AS categoryName, a.currency, m.name AS merchantName, c.icon AS categoryIcon, c.color AS categoryColor FROM transactions t JOIN accounts a ON a.id = t.accountId JOIN categories c ON c.id = t.categoryId LEFT JOIN entry_labels m ON m.id = t.merchantId WHERE t.deleted = 0 AND t.profileId = 'local' AND (t.note LIKE '%' || :search || '%' ESCAPE '\\' OR c.name LIKE '%' || :search || '%' ESCAPE '\\' OR a.name LIKE '%' || :search || '%' ESCAPE '\\' OR m.name LIKE '%' || :search || '%' ESCAPE '\\') ORDER BY t.day DESC, t.id DESC"
+        "SELECT t.*, a.name AS accountName, c.name AS categoryName, a.currency, m.name AS merchantName, c.icon AS categoryIcon, c.color AS categoryColor FROM transactions t JOIN accounts a ON a.id = t.accountId JOIN categories c ON c.id = t.categoryId LEFT JOIN entry_labels m ON m.id = t.merchantId WHERE t.deleted = 0 AND t.profileId = 'local' AND (:filter='ALL' OR (:filter='EXPENSES' AND t.type IN ('EXPENSE','REFUND')) OR (:filter='INCOME' AND t.type='INCOME') OR (:filter='TRANSFERS' AND t.type IN ('TRANSFER_IN','TRANSFER_OUT')) OR (:filter='CARD_PAYMENTS' AND t.type IN ('PAYMENT_IN','PAYMENT_OUT'))) AND (t.note LIKE '%' || :search || '%' ESCAPE '\\' OR c.name LIKE '%' || :search || '%' ESCAPE '\\' OR a.name LIKE '%' || :search || '%' ESCAPE '\\' OR m.name LIKE '%' || :search || '%' ESCAPE '\\') ORDER BY t.day DESC, t.id DESC"
     )
-    fun page(search: String): PagingSource<Int, RecordRow>
+    fun page(search: String, filter: String = "ALL"): PagingSource<Int, RecordRow>
 
     @Query(
         "SELECT a.currency, COALESCE(SUM(CASE WHEN t.type = 'EXPENSE' THEN t.amountMinor WHEN t.type = 'REFUND' THEN -t.amountMinor ELSE 0 END),0) AS expenseMinor, COALESCE(SUM(CASE WHEN t.type = 'INCOME' THEN t.amountMinor ELSE 0 END),0) AS incomeMinor FROM transactions t JOIN accounts a ON a.id = t.accountId WHERE t.deleted = 0 AND t.profileId = 'local' AND t.day >= :start AND t.day < :end GROUP BY a.currency"
@@ -245,6 +246,8 @@ interface LedgerDao {
     @Query("UPDATE preferences SET suggestionNotifications=:value WHERE id=1")
     suspend fun suggestionNotices(value: Boolean)
 
+    @Query("UPDATE preferences SET accent=:value WHERE id=1") suspend fun accent(value: String)
+
     @Upsert suspend fun preferences(preferences: Preferences)
 }
 
@@ -263,7 +266,7 @@ interface LedgerDao {
             SmartSuggestion::class,
             EntryLabel::class,
         ],
-    version = 6,
+    version = 7,
     exportSchema = true,
 )
 abstract class TraxosDatabase : RoomDatabase() {
@@ -389,6 +392,15 @@ abstract class TraxosDatabase : RoomDatabase() {
                 }
             }
 
+        val MIGRATION_6_7 =
+            object : Migration(6, 7) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "ALTER TABLE preferences ADD COLUMN accent TEXT NOT NULL DEFAULT 'COBALT'"
+                    )
+                }
+            }
+
         fun open(context: Context, name: String = "traxos.db"): TraxosDatabase =
             Room.databaseBuilder(context, TraxosDatabase::class.java, name)
                 .addMigrations(
@@ -397,6 +409,7 @@ abstract class TraxosDatabase : RoomDatabase() {
                     MIGRATION_3_4,
                     MIGRATION_4_5,
                     MIGRATION_5_6,
+                    MIGRATION_6_7,
                 )
                 .addCallback(
                     object : Callback() {

@@ -50,3 +50,9 @@ Keep offline bundled ML Kit, bounded EXIF-aware image processing and generic con
 ## 0.6.0 decisions
 
 Remove OCR entirely at the user’s request while retaining independent offline barcodes and encrypted attachments. Keep legacy gift preference column for barcode compatibility instead of destructive migration. Use catalog IDs/archival and duplicate validation, with immutable account kind/currency/opening semantics. Support basic card purchase/refund/repayment ledger correctness, not invented credit-limit/statement values. Separate personal/play source sets and manifests, rather than treating consent as Play policy approval or leaving a disabled receiver in Play. RECEIVE_SMS remains installer-restricted; no bypass/default-handler workaround. Keep native security prompt trusted, with one automatic request per lock episode and an explicit retry after cancellation. Fixed Unlock footer handles small screens/IME; no delayed welcome screen. [Details and evidence](UX_SMART_ENTRY.md).
+
+## 0.7 — separate review UI from live functionality
+
+The latest user request authorizes sample UI for the complete V3 roadmap. An explicit isolated review gallery is safer and clearer than silently replacing the live app with fictitious financial data. Reuse branded controls and layout families across 100 linked page definitions, expose state variants, keep the sample boundary visible and avoid repositories/services in the preview. This is design-review coverage, not completion of the roadmap.
+
+Implement small requested real improvements: actual persisted appearance options, deterministic roots and exact owned transfers. Same-currency paired records preserve net worth and never alter income/spending totals; card repayment remains a distinct flow. Do not infer an own transfer from generic bank transfer wording. Retain removal of OCR per the prior explicit request. Keep existing vector provenance honest rather than claim a newly traced unavailable original.

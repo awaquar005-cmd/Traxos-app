@@ -1,5 +1,79 @@
 # Created files
 
+## 0.7.0 UI review release
+
+New reusable hierarchy/theme/accent/tool rows are in `UiHierarchy.kt`; `ReviewCatalog.kt` defines 100 isolated sample pages and `DesignReviewScreen.kt` renders their state/journey layouts. `TransferScreen.kt` is a real owned-transfer form. Root navigation, Settings/navigation editor, centered unlock, distinct icons/buttons, gift parsing, Smart Add, ledger filters and schema7 are updated in the existing source. Existing transparent brand assets are reused. Test fixtures contain synthetic values only. Validation PNGs in `docs/validation/ui-review/` are synthetic host renders.
+
+Files created or changed in this release:
+
+- `README.md`
+- `app/build.gradle.kts`
+- `app/schemas/app.traxos.finance.data.TraxosDatabase/7.json`
+- `app/src/main/java/app/traxos/finance/MainActivity.kt`
+- `app/src/main/java/app/traxos/finance/data/Database.kt`
+- `app/src/main/java/app/traxos/finance/data/LedgerRepository.kt`
+- `app/src/main/java/app/traxos/finance/domain/Money.kt`
+- `app/src/main/java/app/traxos/finance/gifts/BarcodeImageImport.kt`
+- `app/src/main/java/app/traxos/finance/gifts/GiftParser.kt`
+- `app/src/main/java/app/traxos/finance/smart/SmartParser.kt`
+- `app/src/main/java/app/traxos/finance/smart/SmartRepository.kt`
+- `app/src/main/java/app/traxos/finance/ui/App.kt`
+- `app/src/main/java/app/traxos/finance/ui/Components.kt`
+- `app/src/main/java/app/traxos/finance/ui/Controls.kt`
+- `app/src/main/java/app/traxos/finance/ui/DesignReviewScreen.kt`
+- `app/src/main/java/app/traxos/finance/ui/Forms.kt`
+- `app/src/main/java/app/traxos/finance/ui/GiftImportSettings.kt`
+- `app/src/main/java/app/traxos/finance/ui/LedgerScreens.kt`
+- `app/src/main/java/app/traxos/finance/ui/Navigation.kt`
+- `app/src/main/java/app/traxos/finance/ui/NavigationSettingsScreen.kt`
+- `app/src/main/java/app/traxos/finance/ui/ReviewCatalog.kt`
+- `app/src/main/java/app/traxos/finance/ui/SecurityScreens.kt`
+- `app/src/main/java/app/traxos/finance/ui/SettingsScreen.kt`
+- `app/src/main/java/app/traxos/finance/ui/SmartInboxScreen.kt`
+- `app/src/main/java/app/traxos/finance/ui/Theme.kt`
+- `app/src/main/java/app/traxos/finance/ui/TransferScreen.kt`
+- `app/src/main/java/app/traxos/finance/ui/UiHierarchy.kt`
+- `app/src/main/java/app/traxos/finance/ui/ViewModels.kt`
+- `app/src/test/java/app/traxos/finance/AccentMigrationTest.kt`
+- `app/src/test/java/app/traxos/finance/LockLayoutUiTest.kt`
+- `app/src/test/java/app/traxos/finance/NavigationCustomizationUiTest.kt`
+- `app/src/test/java/app/traxos/finance/SettingsReentryUiTest.kt`
+- `app/src/test/java/app/traxos/finance/SmartAddTest.kt`
+- `app/src/test/java/app/traxos/finance/ThemeContrastTest.kt`
+- `app/src/test/java/app/traxos/finance/TransferAndImportTest.kt`
+- `app/src/test/java/app/traxos/finance/UiAppearanceTest.kt`
+- `app/src/test/java/app/traxos/finance/UiReviewTest.kt`
+- `docs/ARCHITECTURE.md`
+- `docs/DECISIONS.md`
+- `docs/DEVICE_QA.md`
+- `docs/FILES.md`
+- `docs/IMPLEMENTATION_PLAN.md`
+- `docs/PROGRESS.md`
+- `docs/UI_REVIEW.md`
+- `docs/UI_REVIEW_COVERAGE.md`
+- `docs/UI_REVIEW_PLAN.md`
+- `docs/validation/ui-review/README.md`
+- `docs/validation/ui-review/build.log`
+- `docs/validation/ui-review/host-results.json`
+- `docs/validation/ui-review/targeted.log`
+- `downloads/README.md`
+- `downloads/SHA256SUMS.txt`
+- `downloads/TRAXOS-0.7.0-personal.apk`
+- `downloads/TRAXOS-0.7.0-play.apk`
+
+Validation PNGs created for this release:
+
+- `docs/validation/ui-review/dashboard-dark.png`
+- `docs/validation/ui-review/dashboard-light.png`
+- `docs/validation/ui-review/goal-form-preview-dark.png`
+- `docs/validation/ui-review/lock-centered-light.png`
+- `docs/validation/ui-review/lock-dark-large.png`
+- `docs/validation/ui-review/more-light.png`
+- `docs/validation/ui-review/navigation-light.png`
+- `docs/validation/ui-review/settings-dark.png`
+
+Historical inventory follows.
+
 All files below were created for Milestone 1 in the refreshed workspace. Implementation, status, limitations and commands are documented in README and PROGRESS. SDK/JDK/cache paths and ignored build products are outside this inventory.
 
 - `.gitattributes`

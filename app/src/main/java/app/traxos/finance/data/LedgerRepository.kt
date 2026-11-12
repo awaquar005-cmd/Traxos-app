@@ -195,13 +195,17 @@ class LedgerRepository(private val db: TraxosDatabase) {
             if (old.linkId != null)
                 require(
                     records.size == 2 &&
-                        records.map { it.type }.toSet() == setOf("PAYMENT_IN", "PAYMENT_OUT") &&
+                        records.map { it.type }.toSet() in
+                            listOf(
+                                setOf("PAYMENT_IN", "PAYMENT_OUT"),
+                                setOf("TRANSFER_IN", "TRANSFER_OUT"),
+                            ) &&
                         records.map { it.amountMinor }.distinct().size == 1
                 ) {
-                    "Paired payment is inconsistent; keep data and report this"
+                    "Paired movement is inconsistent; keep data and report this"
                 }
             require(records.all { it.deleted == old.deleted }) {
-                "Paired payment is inconsistent; keep data and report this"
+                "Paired movement is inconsistent; keep data and report this"
             }
             for (r in records) {
                 val changed = r.copy(deleted = deleted, revision = r.revision + 1)
@@ -358,6 +362,69 @@ class LedgerRepository(private val db: TraxosDatabase) {
             recordJournal(op, incoming, "CREATE", 0)
             recordJournal(pairedId(op), outgoing, "CREATE", 0)
         }
+
+    /** Owned-account movement, never income/spending. Both legs and journal commit together. */
+    suspend fun transfer(
+        op: String,
+        sourceId: String,
+        destinationId: String,
+        amount: Long,
+        day: Long,
+    ) =
+        mutate(op) {
+            require(sourceId != destinationId) { "Choose two different accounts" }
+            require(amount in 1..Money.MAX_MINOR)
+            LocalDate.ofEpochDay(day)
+            val rows = dao.accounts().first()
+            val source =
+                requireNotNull(rows.firstOrNull { it.account.id == sourceId }) {
+                    "Choose the source account"
+                }
+            val destination =
+                requireNotNull(rows.firstOrNull { it.account.id == destinationId }) {
+                    "Choose the receiving account"
+                }
+            require(
+                listOf(source, destination).all {
+                    !it.account.archived && it.account.type != "CREDIT_CARD"
+                }
+            ) {
+                "Use active cash, bank or wallet accounts. Card repayments use Pay card."
+            }
+            require(source.account.currency == destination.account.currency) {
+                "Transfer currency must match; conversion is not supported"
+            }
+            require(day >= maxOf(source.account.openingDate, destination.account.openingDate)) {
+                "Transfer cannot predate account opening"
+            }
+            require(source.balanceMinor >= amount) { "Transfer exceeds recorded source balance" }
+            require(dao.recordCount() + 2 <= Money.MAX_TRANSACTIONS)
+            val category =
+                requireNotNull(dao.categories().first().firstOrNull { it.type == "EXPENSE" })
+            val outgoing =
+                LedgerRecord(
+                    op,
+                    sourceId,
+                    category.id,
+                    "TRANSFER_OUT",
+                    amount,
+                    day,
+                    ZoneId.systemDefault().id,
+                    "Own-account transfer",
+                    linkId = op,
+                )
+            val incoming =
+                outgoing.copy(id = pairedId(op), accountId = destinationId, type = "TRANSFER_IN")
+            dao.insertRecord(outgoing)
+            dao.insertRecord(incoming)
+            recordJournal(op, outgoing, "CREATE", 0)
+            recordJournal(pairedId(op), incoming, "CREATE", 0)
+        }
+
+    suspend fun setAccent(value: String) {
+        require(value in listOf("COBALT", "NAVY", "PETROL", "GRAPHITE", "FOREST"))
+        dao.accent(value)
+    }
 
     suspend fun setCurrency(value: String) {
         require(value in Money.currencies)

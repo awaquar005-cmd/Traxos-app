@@ -4,9 +4,7 @@ import java.time.LocalDate
 import java.time.format.ResolverStyle
 import java.util.Locale
 
-/**
- * No URL resolution, no network, no inferred balances. Scores describe message context only.
- */
+/** No URL resolution, no network, no inferred balances. Scores describe message context only. */
 object ImportTextSafety {
     private val links =
         Regex(
@@ -59,6 +57,13 @@ object GiftParser {
         val candidates = mutableListOf<ImportCandidate>()
         val warnings = mutableListOf<String>()
         val isGift = gift.containsMatchIn(text)
+        val declaredCurrency =
+            Regex("(?im)^currency\\s*[:=]\\s*(INR|USD|EUR|JPY|KWD)\\b")
+                .find(text)
+                ?.groupValues
+                ?.get(1)
+                ?.uppercase(Locale.ROOT)
+                .orEmpty()
         val merchant =
             listOf(
                     "Amazon",
@@ -158,18 +163,17 @@ object GiftParser {
                         "INR",
                         "RS",
                         "RS." -> "INR"
-                        "USD" -> "USD"
+                        "USD",
+                        "$" -> "USD"
                         "EUR",
                         "€" -> "EUR"
-                        "JPY" -> "JPY"
+                        "JPY",
+                        "¥" -> "JPY"
                         "KWD" -> "KWD"
                         else -> ""
                     }
                 if (currency.isEmpty()) continue
-                var score = if (amountLabel.containsMatchIn(context)) 90 else if (isGift) 65 else 45
-                if (badContext.containsMatchIn(line)) score -= 60
-                if (Regex("(?i)\\b(?:off|discount|save|shipping|tax)\\b").containsMatchIn(line))
-                    score -= 40
+                val score = amountScore(line, prev, isGift, m.range.first, m.range.last + 1)
                 if (score >= 50)
                     candidates +=
                         ImportCandidate(
@@ -181,6 +185,54 @@ object GiftParser {
                                     if (amountLabel.containsMatchIn(line)) line else context
                                 ),
                         )
+            }
+            // Also accept currency suffixes and clearly labeled amounts without a currency.
+            val suffix = Regex("(?i)([0-9][0-9,]*(?:\\.[0-9]+)?)\\s*(INR|USD|EUR|JPY|KWD)\\b")
+            for (m in suffix.findAll(line)) {
+                if (
+                    validNumber.matches(m.groupValues[1]) &&
+                        amountScore(line, prev, isGift, m.range.first, m.range.last + 1) >= 50
+                )
+                    candidates +=
+                        ImportCandidate(
+                            "amount",
+                            m.groupValues[1].replace(",", "") +
+                                "|" +
+                                m.groupValues[2].uppercase(Locale.ROOT),
+                            amountScore(line, prev, isGift, m.range.first, m.range.last + 1),
+                            Regex("(?i)remaining|balance").containsMatchIn(line),
+                        )
+            }
+            if (
+                !currencyNumber.containsMatchIn(line) &&
+                    !suffix.containsMatchIn(line) &&
+                    isGift &&
+                    !badContext.containsMatchIn(line)
+            ) {
+                val labeledAmount =
+                    Regex(
+                            "(?i)(?:face value|card value|voucher value|value|amount|denomination|worth|remaining balance|balance)\\s*[:=]?\\s*([0-9][0-9,]*(?:\\.[0-9]+)?)(?![0-9.,])"
+                        )
+                        .find(line)
+                        ?: if (amountLabel.matches(prev))
+                            Regex("^([0-9][0-9,]*(?:\\.[0-9]+)?)$").find(line)
+                        else null
+                labeledAmount
+                    ?.groupValues
+                    ?.get(1)
+                    ?.takeIf { validNumber.matches(it) }
+                    ?.let {
+                        candidates +=
+                            ImportCandidate(
+                                "amount",
+                                it.replace(",", "") + "|" + declaredCurrency,
+                                80,
+                                Regex("(?i)remaining|balance").containsMatchIn(context),
+                            )
+                        if (declaredCurrency.isEmpty())
+                            warnings +=
+                                "No currency stated; review the suggested application currency"
+                    }
             }
             if (
                 Regex(
@@ -245,6 +297,38 @@ object GiftParser {
             else if (Regex("(?i)single[ -]use").containsMatchIn(text)) "SINGLE_USE"
             else "STORED_VALUE",
         )
+    }
+
+    private fun amountScore(
+        line: String,
+        previous: String,
+        isGift: Boolean,
+        start: Int,
+        end: Int,
+    ): Int {
+        val before = line.substring(0, start)
+        val nearby = before.takeLast(60)
+        var score =
+            if (
+                amountLabel.containsMatchIn(nearby) ||
+                    (before.isBlank() && amountLabel.containsMatchIn(previous))
+            )
+                90
+            else if (isGift) 65 else 45
+        val good = amountLabel.findAll(before).lastOrNull()?.range?.last ?: -1
+        val bad = badContext.findAll(before).lastOrNull()?.range?.last ?: -1
+        if (bad >= 0 && bad >= good) score -= 60
+        if (
+            Regex("(?i)(?:order|invoice)\\s*(?:total|amount|price)?\\s*[:=]?\\s*$")
+                .containsMatchIn(nearby)
+        )
+            score -= 60
+        if (
+            Regex("(?i)(?:shipping|tax|discount|save)\\s*[:=]?\\s*$").containsMatchIn(nearby) ||
+                Regex("(?i)^\\s*(?:off|discount)\\b").containsMatchIn(line.substring(end))
+        )
+            score -= 40
+        return score
     }
 
     private fun parseDate(value: String): Pair<String, Int>? {

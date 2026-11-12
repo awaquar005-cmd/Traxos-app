@@ -105,7 +105,7 @@ internal fun FormDestination(
             if (loading) repeat(3) { SkeletonBlock(Modifier.fillMaxWidth().height(60.dp)) }
             else if (!fields["linkId"].isNullOrBlank()) {
                 TraxosNotice(
-                    "Paired card payment. Delete / Undo changes both accounts together. To correct the amount, delete and record a new payment.",
+                    "Linked movement. Delete / Undo changes both accounts together. To correct the amount, delete and record a new movement.",
                     NoticeKind.INFO,
                 )
                 Text(fields["amount"].orEmpty(), style = MaterialTheme.typography.titleLarge)

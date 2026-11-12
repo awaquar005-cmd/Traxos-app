@@ -45,38 +45,66 @@ internal fun SettingsScreen(vm: MainViewModel, openSection: (String) -> Unit) {
         ScreenSkeleton("settings")
         return
     }
+    val busy by vm.busy.collectAsStateWithLifecycle()
+    val preference = prefs!!
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text(
-            "Your Traxos",
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(bottom = 8.dp),
-        )
-        settingSections.forEach { (id, label) ->
+        SettingsGroup("PROFILE") {
             SettingsRow(
-                label,
-                when (id) {
-                    "profile" ->
-                        prefs!!.displayName.ifBlank { "Local profile · No connected account" }
-                    "security" -> "PIN, device unlock and visibility"
-                    "appearance" -> "Theme, screen slots and center shortcut"
-                    "smart" -> "SMS, shared text and QR/barcodes"
-                    "notifications" -> "Gift expiry and suggestion alerts"
-                    "data" -> "Default currency, account choices and local data"
-                    else -> "Version ${BuildConfig.VERSION_NAME}, feedback and privacy"
-                },
+                "Profile",
+                preference.displayName.ifBlank { "Local profile · on this phone" },
             ) {
-                openSection(id)
+                openSection("profile")
             }
         }
-        Text(
-            "Local first · No cloud account required",
-            style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier.padding(top = 12.dp),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        SettingsGroup("CUSTOMIZATION") {
+            Text("Theme & display", style = MaterialTheme.typography.titleSmall)
+            ThemePicker(preference.theme, !busy, vm::theme)
+            AccentPicker(preference.accent, !busy, vm::accent)
+            SettingsRow("Bottom navigation", "Preview, reorder and choose your screen slots") {
+                openSection("navigation")
+            }
+            SettingsRow("Appearance & Navigation", "Display preferences and center action") {
+                openSection("appearance")
+            }
+        }
+        SettingsGroup("SECURITY & SMART TRACKING") {
+            SettingsRow("Security & Privacy", "PIN, biometrics, auto-lock and masking") {
+                openSection("security")
+            }
+            SettingsRow("Smart Tracking", "SMS, text import and QR/barcode preferences") {
+                openSection("smart")
+            }
+            SettingsRow("Notifications", "Gift expiry and suggestion alerts") {
+                openSection("notifications")
+            }
+        }
+        SettingsGroup("ACCOUNTS & DATA") {
+            SettingsRow(
+                "Accounts & Data",
+                "Accounts, categories, currency and saved entry options",
+            ) {
+                openSection("data")
+            }
+            Text(
+                "Saved on this phone · no portable backup yet",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        SettingsGroup("HELP & DESIGN REVIEW") {
+            SettingsRow("Full UI review", "Explore the V3 page flows · sample data only") {
+                openSection("review")
+            }
+            SettingsRow(
+                "About & Support",
+                "Version ${BuildConfig.VERSION_NAME} · privacy and help",
+            ) {
+                openSection("about")
+            }
+        }
     }
 }
 
@@ -88,6 +116,12 @@ internal fun SettingsRow(title: String, summary: String, onClick: () -> Unit) {
         tone = ButtonTone.GHOST,
         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 10.dp),
     ) {
+        Icon(
+            settingsIcon(title),
+            null,
+            Modifier.size(22.dp),
+            tint = MaterialTheme.colorScheme.primary,
+        )
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(title, style = MaterialTheme.typography.titleSmall)
             Text(
@@ -222,10 +256,8 @@ internal fun SettingsDetailScreen(
             }
             "appearance" -> {
                 Text("Appearance", style = MaterialTheme.typography.titleLarge)
-                listOf("SYSTEM" to "Follow system", "LIGHT" to "Light", "DARK" to "Dark").forEach {
-                    (key, label) ->
-                    TraxosChoiceRow(label, prefs.theme == key, enabled = !busy) { vm.theme(key) }
-                }
+                ThemePicker(prefs.theme, !busy, vm::theme)
+                AccentPicker(prefs.accent, !busy, vm::accent)
                 SettingsRow(
                     "Customize navigation",
                     "Change, reorder or reset the four screen slots",

@@ -36,6 +36,30 @@ class LockLayoutUiTest {
     }
 
     @Test
+    @Config(qualifiers = "w393dp-h852dp-xhdpi")
+    fun normalUnlockCentersTheUnboxedFiveSquareBrand() {
+        dir =
+            File(
+                    ApplicationProvider.getApplicationContext<Application>().noBackupFilesDir,
+                    "center-${UUID.randomUUID()}",
+                )
+                .apply { mkdirs() }
+        val store = LockStore(dir, TestLockCipher())
+        runBlocking { store.setPin("", "123456", "123456") }
+        val vm = LockViewModel(store)
+        models.put("lock", vm)
+        compose.setContent {
+            TraxosTheme("LIGHT") { SecurityGate(vm) { Text("UNLOCKED FIXTURE") } }
+        }
+        compose.waitUntil(10000) {
+            compose.onAllNodesWithTag("app_lock").fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithContentDescription("Traxos five-square mark").assertIsDisplayed()
+        compose.onNodeWithTag("unlock_submit").assertIsDisplayed()
+        compose.runOnIdle { captureHostPreview(compose.activity, "lock-centered-light.png") }
+    }
+
+    @Test
     fun darkLargeFontKeypadKeepsUnlockVisibleAndWorksOffline() {
         dir =
             File(

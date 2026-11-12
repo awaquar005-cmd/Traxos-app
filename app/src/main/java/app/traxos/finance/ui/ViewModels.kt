@@ -90,14 +90,21 @@ class MainViewModel(val repository: LedgerRepository, private val saved: SavedSt
             .map { it?.theme ?: "SYSTEM" }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "SYSTEM")
     val search = saved.getStateFlow("search", "")
+    val recordFilter = saved.getStateFlow("record_filter", "ALL")
+
+    fun recordFilter(value: String) {
+        require(value in listOf("ALL", "EXPENSES", "INCOME", "TRANSFERS", "CARD_PAYMENTS"))
+        saved["record_filter"] = value
+    }
+
     val pages =
-        search
-            .debounce(300)
-            .distinctUntilChanged()
-            .flatMapLatest { q ->
+        combine(search.debounce(300).distinctUntilChanged(), recordFilter) { q, filter ->
+                q to filter
+            }
+            .flatMapLatest { (q, filter) ->
                 val escaped = q.trim().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
                 Pager(PagingConfig(pageSize = 40, enablePlaceholders = false)) {
-                        repository.dao.page(escaped)
+                        repository.dao.page(escaped, filter)
                     }
                     .flow
             }
@@ -136,6 +143,8 @@ class MainViewModel(val repository: LedgerRepository, private val saved: SavedSt
             }
         }
     }
+
+    fun accent(value: String) = preferenceChange("Accent saved") { repository.setAccent(value) }
 
     fun theme(value: String) = preferenceChange("Appearance saved") { repository.setTheme(value) }
 

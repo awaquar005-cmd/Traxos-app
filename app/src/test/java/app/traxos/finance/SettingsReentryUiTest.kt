@@ -11,7 +11,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35], application = TraxosApplication::class)
+@Config(sdk = [35], application = TraxosApplication::class, qualifiers = "w393dp-h852dp-xhdpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class SettingsReentryUiTest {
     @get:Rule val compose = createEmptyComposeRule()
@@ -54,6 +54,45 @@ class SettingsReentryUiTest {
             compose.onNodeWithTag("input_profile_name").assertDoesNotExist()
             compose.waitForIdle()
             scenario.onActivity { captureHostPreview(it, "settings-dark.png") }
+        }
+    }
+
+    @Test
+    fun omittedHomeRemainsReachableAndPreviewCloseNeverRestoresItsChild() {
+        val app = ApplicationProvider.getApplicationContext<TraxosApplication>()
+        kotlinx.coroutines.runBlocking {
+            app.repository.setNavigationSlots(listOf("gifts", "transactions", "accounts", "more"))
+        }
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            compose.waitUntil(15000) {
+                compose
+                    .onAllNodes(hasTestTag("nav_more") and isEnabled())
+                    .fetchSemanticsNodes()
+                    .isNotEmpty()
+            }
+            compose.onNodeWithTag("nav_more").performClick()
+            compose.onNodeWithTag("tool_home").assertExists()
+            compose.waitForIdle()
+            scenario.onActivity { captureHostPreview(it, "more-light.png") }
+            compose.onNodeWithTag("tool_ui_review").performScrollTo().performClick()
+            compose.onNodeWithTag("review_catalog").assertExists()
+            compose.onNodeWithTag("review_catalog").performScrollToNode(hasTestTag("tool_groups"))
+            compose.onNodeWithTag("tool_groups").performClick()
+            compose.onNodeWithTag("review_page_groups").assertExists()
+            compose.onNodeWithContentDescription("More actions").performClick()
+            compose.onNodeWithText("Real dashboard").performClick()
+            compose.onNodeWithTag("dashboard_list").assertExists()
+            compose.onNodeWithTag("nav_more").performClick()
+            compose.onNodeWithTag("tool_ui_review").performScrollTo().performClick()
+            compose.onNodeWithTag("review_catalog").assertExists()
+            scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+            compose.onNodeWithTag("tool_ui_review").assertExists()
+            compose.onNodeWithTag("toolbar_home").performClick()
+            compose.onNodeWithTag("dashboard_list").assertExists()
+            org.junit.Assert.assertEquals(
+                0L,
+                kotlinx.coroutines.runBlocking { app.database.ledger().recordCount() },
+            )
         }
     }
 }

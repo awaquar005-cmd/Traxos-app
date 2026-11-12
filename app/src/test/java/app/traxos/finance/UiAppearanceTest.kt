@@ -97,6 +97,26 @@ class UiAppearanceTest {
         compose.onNodeWithText("Lunch with friends").assertIsDisplayed()
     }
 
+    @Test
+    @Config(qualifiers = "w320dp-h720dp-mdpi")
+    fun compactThemeChoicesStaySingleLineAndReachableWithLargeFonts() {
+        compose.setContent { ScaledTheme("DARK", 2f) { ThemePicker("DARK", true) {} } }
+        for (label in listOf("Light", "Dark", "System")) {
+            val results = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
+            compose
+                .onNodeWithText(label)
+                .performScrollTo()
+                .assertIsDisplayed()
+                .performSemanticsAction(
+                    androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult
+                ) {
+                    it(results)
+                }
+            org.junit.Assert.assertEquals(1, results.single().lineCount)
+        }
+        save("theme-large-dark.png")
+    }
+
     private fun save(name: String) {
         val output = File("build/reports/ui-preview/$name")
         requireNotNull(output.parentFile).mkdirs()

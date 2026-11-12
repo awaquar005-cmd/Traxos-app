@@ -37,56 +37,154 @@ internal fun NavigationSettingsScreen(vm: MainViewModel) {
             },
             { restore = false },
         )
-    Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        Text("Your navigation", style = MaterialTheme.typography.headlineSmall)
-        Text(
-            "Choose each screen slot, left to right around the center action. Choosing a screen already in use swaps its position.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        slots.forEachIndexed { index, id ->
-            TraxosCard(Modifier.testTag("navigation_slot_$index")) {
-                TraxosSelector(
-                    "Slot ${index+1}",
-                    id,
-                    screenRegistry.map { it.id to screenLabel(it.id) },
-                    !busy,
-                    sheet = false,
-                ) {
-                    vm.navigationSlots(NavigationLayout.replace(slots, index, it))
-                }
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        if (busy) "Saving…" else "Position ${index+1} of ${slots.size}",
-                        Modifier.weight(1f),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    TraxosIconButton(
-                        { vm.navigationSlots(NavigationLayout.move(slots, index, index - 1)) },
-                        enabled = !busy && index > 0,
-                    ) {
-                        Icon(
-                            TraxosIcons.back,
-                            "Move slot ${index+1} earlier",
-                            Modifier.rotate(90f).size(20.dp),
-                        )
-                    }
-                    TraxosIconButton(
-                        { vm.navigationSlots(NavigationLayout.move(slots, index, index + 1)) },
-                        enabled = !busy && index < slots.lastIndex,
-                    ) {
-                        Icon(
-                            TraxosIcons.arrow,
-                            "Move slot ${index+1} later",
-                            Modifier.rotate(90f).size(20.dp),
-                        )
-                    }
+    var previewRoute by rememberSaveable { mutableStateOf("home") }
+    var assign by rememberSaveable { mutableStateOf<String?>(null) }
+    if (assign != null)
+        TraxosSheet("Choose a slot", { assign = null }) {
+            slots.forEachIndexed { index, id ->
+                TraxosChoiceRow("Slot ${index+1} · ${screenLabel(id)}", false) {
+                    vm.navigationSlots(NavigationLayout.replace(slots, index, assign!!))
+                    assign = null
                 }
             }
+        }
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
+    ) {
+        Text("Arrange your everyday tools", style = MaterialTheme.typography.titleLarge)
+        Text(
+            "Four screen slots around an independent center action. Changes save immediately; duplicate screens swap positions.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        SettingsGroup("LIVE BOTTOM BAR PREVIEW") {
+            TraxosBottomBar(
+                previewRoute,
+                CenterShortcut.from(preference.centerAction),
+                { previewRoute = it },
+                !busy,
+                slots,
+                systemInsets = false,
+            ) {
+                previewRoute =
+                    when (preference.centerAction) {
+                        "HOME" -> "home"
+                        "ACCOUNTS" -> "accounts"
+                        "TRANSACTIONS" -> "transactions"
+                        else -> "transactions"
+                    }
+            }
+            Text(
+                "Tap to preview the active indicator",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        SettingsGroup("ACTIVE SCREEN SLOTS · ${slots.size} OF 4") {
+            slots.forEachIndexed { index, id ->
+                Column(
+                    Modifier.testTag("navigation_slot_$index"),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            screenRegistry.first { it.id == id }.icon,
+                            null,
+                            Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                        Text(
+                            "Slot ${index+1}",
+                            Modifier.weight(1f).padding(start = 8.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                        )
+                        TraxosIconButton(
+                            { vm.navigationSlots(NavigationLayout.move(slots, index, index - 1)) },
+                            enabled = !busy && index > 0,
+                        ) {
+                            Icon(
+                                TraxosIcons.back,
+                                "Move slot ${index+1} earlier",
+                                Modifier.rotate(90f).size(18.dp),
+                            )
+                        }
+                        TraxosIconButton(
+                            { vm.navigationSlots(NavigationLayout.move(slots, index, index + 1)) },
+                            enabled = !busy && index < slots.lastIndex,
+                        ) {
+                            Icon(
+                                TraxosIcons.arrow,
+                                "Move slot ${index+1} later",
+                                Modifier.rotate(90f).size(18.dp),
+                            )
+                        }
+                    }
+                    TraxosSelector(
+                        "Slot ${index+1}",
+                        id,
+                        screenRegistry.map { it.id to screenLabel(it.id) },
+                        !busy,
+                        sheet = false,
+                    ) {
+                        vm.navigationSlots(NavigationLayout.replace(slots, index, it))
+                    }
+                }
+                if (index == 1)
+                    Row(
+                        Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Icon(
+                            CenterShortcut.from(preference.centerAction).icon,
+                            null,
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                        Column {
+                            Text("Center action", style = MaterialTheme.typography.titleSmall)
+                            Text(
+                                CenterShortcut.from(preference.centerAction).label +
+                                    " · configured separately",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+            }
+        }
+        SettingsGroup("AVAILABLE SCREENS") {
+            screenRegistry
+                .filter { it.id !in slots }
+                .forEach { entry ->
+                    TraxosButton(
+                        { assign = entry.id },
+                        Modifier.fillMaxWidth(),
+                        !busy,
+                        tone = ButtonTone.SECONDARY,
+                    ) {
+                        Icon(entry.icon, null, Modifier.size(20.dp))
+                        Text(entry.label, Modifier.weight(1f))
+                        Text("Assign", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            Text(
+                "Future modules are reviewable in Full UI Review; only live screens can become real tabs.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        SettingsGroup("NAVIGATION PRESETS") {
+            listOf(
+                    "Default ledger" to NavigationLayout.defaults,
+                    "Wallet focus" to listOf("home", "gifts", "accounts", "more"),
+                    "Smart tracking" to listOf("home", "transactions", "smart", "more"),
+                )
+                .forEach { (label, layout) ->
+                    TraxosChoiceRow(label, slots == layout, enabled = !busy) {
+                        vm.navigationSlots(layout)
+                    }
+                }
         }
         TraxosButton(
             { restore = true },
@@ -97,8 +195,8 @@ internal fun NavigationSettingsScreen(vm: MainViewModel) {
             Text("Restore default navigation")
         }
         Text(
-            "Only implemented screens are offered. The center quick action is independent of this layout.",
-            style = MaterialTheme.typography.bodySmall,
+            if (busy) "Saving layout…" else "Layout saved on this phone",
+            style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }

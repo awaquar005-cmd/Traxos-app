@@ -166,29 +166,29 @@ private fun LockScreen(vm: LockViewModel) {
             Modifier.weight(1f)
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+                .padding(horizontal = 24.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
         ) {
-            Row(
+            Column(
                 Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 LockBrand()
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        "TRAXOS",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                    Text(
-                        if (fatal) "Security needs attention" else "Unlock",
-                        style = MaterialTheme.typography.titleLarge,
-                    )
-                }
-                TraxosIconButton({ (context as? Activity)?.moveTaskToBack(true) }) {
-                    Icon(TraxosIcons.back, "Back to phone")
-                }
+                Text(
+                    "TRAXOS",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    if (fatal) "Security needs attention" else "Welcome back",
+                    style = MaterialTheme.typography.titleLarge,
+                )
+                Text(
+                    "Unlock your private ledger",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
             if (error != null) TraxosNotice(error!!, NoticeKind.ERROR)
             if (!fatal) {
@@ -484,19 +484,15 @@ private fun LockBrand() {
             label = "Traxos mark entrance",
         )
     LaunchedEffect(Unit) { entered = true }
-    Box(
-        Modifier.size(44.dp)
-            .background(MaterialTheme.colorScheme.primary.copy(alpha = .09f), Radius.control),
-        contentAlignment = Alignment.Center,
-    ) {
-        BrandMark(
-            Modifier.graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            },
-            tint = MaterialTheme.colorScheme.primary,
-        )
-    }
+    androidx.compose.material3.Icon(
+        androidx.compose.ui.res.painterResource(app.traxos.finance.R.drawable.traxos_mark),
+        "Traxos five-square mark",
+        Modifier.size(42.dp).graphicsLayer {
+            scaleX = scale
+            scaleY = scale
+        },
+        tint = MaterialTheme.colorScheme.primary,
+    )
 }
 
 @Composable

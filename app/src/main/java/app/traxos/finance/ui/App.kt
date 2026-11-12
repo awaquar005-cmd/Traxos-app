@@ -35,6 +35,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun TraxosApp(vm: MainViewModel) {
+    val appContext = LocalContext.current
     val app = LocalContext.current.applicationContext as app.traxos.finance.TraxosApplication
     val gifts: GiftViewModel =
         viewModel(factory = viewModelFactory { initializer { GiftViewModel(app.gifts) } })
@@ -74,7 +75,8 @@ fun TraxosApp(vm: MainViewModel) {
     val form =
         route.startsWith("transaction/") ||
             route.startsWith("account/") ||
-            route.startsWith("gift_edit/")
+            route.startsWith("gift_edit/") ||
+            route.startsWith("ui_review")
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(Unit) {
         for (message in snackbarGiftEvents) {
@@ -105,33 +107,39 @@ fun TraxosApp(vm: MainViewModel) {
     val mainNav: (String) -> Unit = { target ->
         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
         val current = nav.currentDestination?.route.orEmpty()
-        val inSettings =
-            current == "settings" ||
-                current.startsWith("settings/") ||
-                current == "navigation_settings" ||
-                current == "categories" ||
-                current.startsWith("labels/")
         if (target == "settings") {
-            if (current != "settings") {
-                if (!inSettings || !nav.popBackStack("settings", false)) {
-                    nav.clearBackStack("settings")
-                    // Settings is a fresh utility branch on top of the current main page.
-                    nav.navigate("settings") {
-                        launchSingleTop = true
-                        restoreState = false
-                    }
+            val inSettings =
+                current == "settings" ||
+                    current.startsWith("settings/") ||
+                    current == "navigation_settings" ||
+                    current == "categories" ||
+                    current.startsWith("labels/")
+            if (current != "settings" && (!inSettings || !nav.popBackStack("settings", false))) {
+                nav.clearBackStack("settings")
+                nav.navigate("settings") {
+                    launchSingleTop = true
+                    restoreState = false
                 }
             }
-        } else {
-            // Never save nested Settings as a tab stack: it must not restore Profile later.
-            if (inSettings) nav.popBackStack("settings", true)
-            if (nav.currentDestination?.route != target)
-                nav.navigate(target) {
-                    popUpTo(nav.graph.startDestinationId) { saveState = true }
+        } else if (target == "home") {
+            // Never restore Home's saved child stack: this action means the dashboard itself.
+            if (current != "home" && !nav.popBackStack("home", false))
+                nav.navigate("home") {
                     launchSingleTop = true
-                    restoreState = true
+                    restoreState = false
                 }
-        }
+        } else if (target in NavigationLayout.implemented) {
+            if (current != target)
+                nav.navigate(target) {
+                    popUpTo("home") { saveState = false }
+                    launchSingleTop = true
+                    restoreState = false
+                }
+        } else
+            nav.navigate(target) {
+                launchSingleTop = true
+                restoreState = false
+            }
     }
     val add: () -> Unit = { nav.navigate("transaction/new") { launchSingleTop = true } }
     val search: () -> Unit = {
@@ -186,6 +194,7 @@ fun TraxosApp(vm: MainViewModel) {
                                 "gift/{id}" -> "Gift card"
                                 "more" -> "More"
                                 "smart" -> "Smart Add"
+                                "transfer" -> "Own-account transfer"
                                 "categories" -> "Categories"
                                 "labels/{kind}" -> "Saved entry options"
                                 "card_payment/{id}" -> "Pay card"
@@ -193,7 +202,8 @@ fun TraxosApp(vm: MainViewModel) {
                             },
                             back =
                                 if (
-                                    route == "categories" ||
+                                    route == "transfer" ||
+                                        route == "categories" ||
                                         route.startsWith("labels/") ||
                                         route.startsWith("card_payment/") ||
                                         route == "settings" ||
@@ -202,19 +212,27 @@ fun TraxosApp(vm: MainViewModel) {
                                         route.startsWith("gift")
                                 ) {
                                     {
-                                        nav.popBackStack()
+                                        if (route == "transfer")
+                                            (appContext as? androidx.activity.ComponentActivity)
+                                                ?.onBackPressedDispatcher
+                                                ?.onBackPressed()
+                                        else nav.popBackStack()
                                         Unit
                                     }
                                 } else null,
+                            home = { mainNav("home") },
                             actions =
                                 if (
-                                    prefs.centerAction != "ADD_TRANSACTION" ||
-                                        "settings" !in slots ||
-                                        "more" !in slots
+                                    route != "transfer" &&
+                                        (prefs.centerAction != "ADD_TRANSACTION" ||
+                                            "settings" !in slots ||
+                                            "home" !in slots ||
+                                            "more" !in slots)
                                 ) {
                                     {
                                         TraxosActionMenu(
                                             buildList {
+                                                if ("home" !in slots) add("home" to "Home")
                                                 if (prefs.centerAction != "ADD_TRANSACTION")
                                                     add("add" to "Add transaction")
                                                 if ("settings" !in slots)
@@ -231,7 +249,7 @@ fun TraxosApp(vm: MainViewModel) {
                 }
         },
         bottomBar = {
-            if (!form)
+            if (!form && route != "transfer")
                 TraxosBottomBar(
                     if (route == "navigation_settings" || route.startsWith("settings/")) "settings"
                     else route,
@@ -304,7 +322,13 @@ fun TraxosApp(vm: MainViewModel) {
             composable("settings") {
                 RoutePage("settings") {
                     SettingsScreen(vm) { section ->
-                        nav.navigate("settings/$section") {
+                        val destination =
+                            when (section) {
+                                "review" -> "ui_review"
+                                "navigation" -> "navigation_settings"
+                                else -> "settings/$section"
+                            }
+                        nav.navigate(destination) {
                             popUpTo("settings")
                             launchSingleTop = true
                         }
@@ -418,6 +442,33 @@ fun TraxosApp(vm: MainViewModel) {
                     CardPaymentScreen(vm.repository, e.arguments?.getString("id").orEmpty()) {
                         nav.popBackStack()
                     }
+                }
+            }
+            composable("transfer") {
+                RoutePage("transfer") {
+                    TransferScreen(vm.repository, back = { nav.popBackStack() }) { id ->
+                        feedback(
+                            Feedback(
+                                "Transfer recorded between your accounts",
+                                close = true,
+                                undoId = id,
+                                undoRevision = 1,
+                            )
+                        )
+                    }
+                }
+            }
+            composable(
+                "ui_review?screen={screen}",
+                arguments =
+                    listOf(androidx.navigation.navArgument("screen") { defaultValue = "catalog" }),
+            ) { e ->
+                RoutePage("ui_review") {
+                    DesignReviewScreen(
+                        e.arguments?.getString("screen") ?: "catalog",
+                        { nav.popBackStack() },
+                        { mainNav("home") },
+                    )
                 }
             }
             composable("transaction/{id}") {

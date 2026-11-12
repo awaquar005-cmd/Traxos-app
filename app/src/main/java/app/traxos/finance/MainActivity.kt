@@ -145,7 +145,8 @@ class MainActivity : FragmentActivity() {
                     isAppearanceLightNavigationBars = !dark
                 }
             }
-            TraxosTheme(theme) {
+            val preferences by vm.preferences.collectAsStateWithLifecycle()
+            TraxosTheme(theme, preferences?.accent ?: "COBALT") {
                 CompositionLocalProvider(
                     LocalLockController provides security,
                     LocalDevicePrompt provides showDevice,

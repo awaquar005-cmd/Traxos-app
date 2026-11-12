@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
@@ -153,6 +154,92 @@ object TraxosIcons {
             verticalLineTo(9f)
             horizontalLineTo(9f)
             close()
+        }
+    val tools =
+        line("More tools") {
+            for (x in listOf(3f, 14f)) for (y in listOf(3f, 14f)) {
+                moveTo(x, y)
+                horizontalLineTo(x + 7f)
+                verticalLineTo(y + 7f)
+                horizontalLineTo(x)
+                close()
+            }
+        }
+    val spark =
+        line("Smart Add") {
+            moveTo(12f, 2f)
+            lineTo(14.5f, 9.5f)
+            lineTo(22f, 12f)
+            lineTo(14.5f, 14.5f)
+            lineTo(12f, 22f)
+            lineTo(9.5f, 14.5f)
+            lineTo(2f, 12f)
+            lineTo(9.5f, 9.5f)
+            close()
+        }
+    val transfer =
+        line("Transfer") {
+            moveTo(3f, 7f)
+            horizontalLineTo(20f)
+            moveTo(16f, 3f)
+            lineTo(20f, 7f)
+            lineTo(16f, 11f)
+            moveTo(21f, 17f)
+            horizontalLineTo(4f)
+            moveTo(8f, 13f)
+            lineTo(4f, 17f)
+            lineTo(8f, 21f)
+        }
+    val people =
+        line("People") {
+            moveTo(8f, 4f)
+            curveTo(2f, 4f, 2f, 12f, 8f, 12f)
+            curveTo(14f, 12f, 14f, 4f, 8f, 4f)
+            moveTo(2f, 21f)
+            curveTo(2f, 12f, 14f, 12f, 14f, 21f)
+            moveTo(17f, 6f)
+            curveTo(23f, 6f, 23f, 14f, 17f, 14f)
+            moveTo(17f, 16f)
+            curveTo(21f, 16f, 23f, 18f, 23f, 21f)
+        }
+    val target =
+        line("Goal") {
+            moveTo(12f, 3f)
+            curveTo(0f, 3f, 0f, 21f, 12f, 21f)
+            curveTo(24f, 21f, 24f, 3f, 12f, 3f)
+            moveTo(12f, 8f)
+            curveTo(6f, 8f, 6f, 16f, 12f, 16f)
+            curveTo(18f, 16f, 18f, 8f, 12f, 8f)
+        }
+    val clock =
+        line("Recurring") {
+            moveTo(12f, 3f)
+            curveTo(0f, 3f, 0f, 21f, 12f, 21f)
+            curveTo(24f, 21f, 24f, 3f, 12f, 3f)
+            moveTo(12f, 7f)
+            verticalLineTo(12f)
+            lineTo(16f, 14f)
+        }
+    val shield =
+        line("Security") {
+            moveTo(12f, 2f)
+            lineTo(21f, 6f)
+            verticalLineTo(13f)
+            curveTo(21f, 18f, 15f, 21f, 12f, 23f)
+            curveTo(9f, 21f, 3f, 18f, 3f, 13f)
+            verticalLineTo(6f)
+            close()
+            moveTo(8f, 12f)
+            lineTo(11f, 15f)
+            lineTo(16f, 9f)
+        }
+    val cloud =
+        line("Data and backup") {
+            moveTo(5f, 19f)
+            curveTo(-2f, 18f, 0f, 9f, 6f, 9f)
+            curveTo(8f, 0f, 20f, 2f, 20f, 10f)
+            curveTo(26f, 11f, 24f, 19f, 19f, 19f)
+            horizontalLineTo(5f)
         }
     val home =
         line("Home") {
@@ -291,6 +378,7 @@ internal fun TraxosToolbar(
     title: String,
     back: (() -> Unit)? = null,
     actions: (@Composable () -> Unit)? = null,
+    home: (() -> Unit)? = null,
 ) {
     Row(
         Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(horizontal = 12.dp),
@@ -298,8 +386,10 @@ internal fun TraxosToolbar(
     ) {
         if (back != null) TraxosIconButton(onClick = back) { Icon(TraxosIcons.back, "Back") }
         else {
-            BrandMark()
-            Spacer(Modifier.width(10.dp))
+            if (home != null)
+                TraxosIconButton(home, Modifier.testTag("toolbar_home")) { BrandMark() }
+            else BrandMark()
+            Spacer(Modifier.width(if (home != null) 2.dp else 10.dp))
         }
         Column(Modifier.weight(1f)) {
             Text(

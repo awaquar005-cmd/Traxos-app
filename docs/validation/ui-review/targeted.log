@@ -1,0 +1,42 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.11.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:preBuild UP-TO-DATE
+> Task :app:prePersonalDebugBuild UP-TO-DATE
+> Task :app:generatePersonalDebugBuildConfig UP-TO-DATE
+> Task :app:checkPersonalDebugAarMetadata UP-TO-DATE
+> Task :app:generatePersonalDebugResValues UP-TO-DATE
+> Task :app:mapPersonalDebugSourceSetPaths UP-TO-DATE
+> Task :app:generatePersonalDebugResources UP-TO-DATE
+> Task :app:mergePersonalDebugResources UP-TO-DATE
+> Task :app:packagePersonalDebugResources UP-TO-DATE
+> Task :app:parsePersonalDebugLocalResources UP-TO-DATE
+> Task :app:createPersonalDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksPersonalDebug UP-TO-DATE
+> Task :app:processPersonalDebugMainManifest UP-TO-DATE
+> Task :app:processPersonalDebugManifest UP-TO-DATE
+> Task :app:processPersonalDebugManifestForPackage UP-TO-DATE
+> Task :app:processPersonalDebugResources UP-TO-DATE
+> Task :app:javaPreCompilePersonalDebug UP-TO-DATE
+> Task :app:prePersonalDebugUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompilePersonalDebugUnitTest UP-TO-DATE
+> Task :app:mergePersonalDebugShaders UP-TO-DATE
+> Task :app:compilePersonalDebugShaders NO-SOURCE
+> Task :app:generatePersonalDebugAssets UP-TO-DATE
+> Task :app:mergePersonalDebugAssets UP-TO-DATE
+> Task :app:packagePersonalDebugUnitTestForUnitTest UP-TO-DATE
+> Task :app:generatePersonalDebugUnitTestConfig UP-TO-DATE
+> Task :app:kspPersonalDebugKotlin
+> Task :app:compilePersonalDebugKotlin
+> Task :app:compilePersonalDebugJavaWithJavac UP-TO-DATE
+> Task :app:bundlePersonalDebugClassesToRuntimeJar
+> Task :app:processPersonalDebugJavaRes UP-TO-DATE
+> Task :app:bundlePersonalDebugClassesToCompileJar
+> Task :app:kspPersonalDebugUnitTestKotlin
+> Task :app:compilePersonalDebugUnitTestKotlin
+> Task :app:compilePersonalDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :app:processPersonalDebugUnitTestJavaRes UP-TO-DATE
+> Task :app:testPersonalDebugUnitTest
+
+BUILD SUCCESSFUL in 1m 40s
+30 actionable tasks: 7 executed, 23 up-to-date

@@ -69,3 +69,14 @@ Upgrade0.4→0.5 without uninstall: verify ledger/gift codes/history/navigation.
 ## 0.6.0 physical acceptance — NOT EXECUTED
 
 Upgrade0.5→0.6 in place: verify transaction/account/category/gift history, encrypted codes/PINs/images, lock configuration and navigation. Confirm no OCR controls/model; scan a QR/barcode and retain attachments. Create/rename/style/archive categories and accounts; inline-create from transaction/Smart Add/Settings/payment selectors and verify prior amount/date/note. Record card charge/refund/paired payment, delete/Undo, restart and compare exact debt/net worth/monthly net outflow; reject mismatched currency/overpayment. Enable biometrics: cold launch/timed background automatically prompts once, cancellation stays locked with retry/PIN, rotation and permission dialogs do not loop or expose content. Test no enrollment/device credential/key invalidation without destroying real data. Personal SMS disclosure/permission denial/revocation/unsupported installer/device, real bank/UPI/card/gift messages, duplicates/OTPs/unrelated/failed payments, manual approval and generic private notifications. Play must not request SMS. Settings→Profile→leave→Settings must return home; nested Back returns Settings then preceding main. Test both themes,320dp/200% fonts, fixed Unlock/Save with IME, all pickers/dialogs, TalkBack/system Back, recent-app previews, process death and OEM reminder restrictions. No emulator or phone pass is claimed.
+
+## 0.7 UI review acceptance — not performed on a physical phone
+
+- Update 0.6 in place; verify existing ledger, encrypted gift codes, PIN, custom navigation and preferences.
+- Open app locked/unlocked; verify transparent five-square splash and vertically balanced unlock at normal/200% fonts, native auto-prompt once per lock and PIN fallback.
+- Switch each accent/theme, restart; check forms/dialogs/sheets/outlined buttons and small-screen labels.
+- Remove Home/Settings/More from slots in turn; use header fallback, visit nested screens, close and re-enter, verify correct root and Back.
+- Browse More → all UI review journeys. Check state selector, validation, destructive preview, Back/Close/Real dashboard. Confirm real balances/counts unchanged.
+- Paste a redacted gift message with prefix/suffix INR, order/tax amounts and ambiguous values; review every field before save. No image OCR should appear.
+- Transfer between two owned same-currency accounts; check two linked rows, unchanged net worth/spending, separate Activity filter, delete/Undo and restart. Reject same-account/card/currency mismatch/insufficient amount.
+- Personal only: explicit consent and SMS permission accepted/denied/revoked; self-transfer suggestions need two accounts and approval. Play has no automatic SMS access.

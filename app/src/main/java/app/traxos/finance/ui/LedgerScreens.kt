@@ -1,8 +1,10 @@
 package app.traxos.finance.ui
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -41,7 +43,8 @@ internal fun RecordItem(row: RecordRow, hidden: Boolean = false, click: () -> Un
                 ) {
                     Box(Modifier.size(36.dp), contentAlignment = Alignment.Center) {
                         Icon(
-                            catalogIcon(row.categoryIcon),
+                            if (row.record.type.startsWith("TRANSFER")) TraxosIcons.transfer
+                            else catalogIcon(row.categoryIcon),
                             null,
                             Modifier.size(19.dp),
                             tint = catalogColor(row.categoryColor),
@@ -69,7 +72,10 @@ internal fun RecordItem(row: RecordRow, hidden: Boolean = false, click: () -> Un
                             row.record.amountMinor,
                             row.currency,
                             prefix =
-                                if (row.record.type in listOf("INCOME", "REFUND", "PAYMENT_IN"))
+                                if (
+                                    row.record.type in
+                                        listOf("INCOME", "REFUND", "PAYMENT_IN", "TRANSFER_IN")
+                                )
                                     "+ "
                                 else "− ",
                             hidden = hidden,
@@ -81,7 +87,11 @@ internal fun RecordItem(row: RecordRow, hidden: Boolean = false, click: () -> Un
                     row.record.amountMinor,
                     row.currency,
                     prefix =
-                        if (row.record.type in listOf("INCOME", "REFUND", "PAYMENT_IN")) "+ "
+                        if (
+                            row.record.type in
+                                listOf("INCOME", "REFUND", "PAYMENT_IN", "TRANSFER_IN")
+                        )
+                            "+ "
                         else "− ",
                     hidden = hidden,
                 )
@@ -94,6 +104,8 @@ internal fun RecordItem(row: RecordRow, hidden: Boolean = false, click: () -> Un
                         "REFUND" -> "Card refund"
                         "PAYMENT_IN",
                         "PAYMENT_OUT" -> "Card payment"
+                        "TRANSFER_IN",
+                        "TRANSFER_OUT" -> "Own-account transfer"
                         else -> "Expense"
                     },
                 style = MaterialTheme.typography.labelSmall,
@@ -113,6 +125,7 @@ internal fun TransactionsScreen(
     add: () -> Unit,
 ) {
     val search by vm.search.collectAsStateWithLifecycle()
+    val filter by vm.recordFilter.collectAsStateWithLifecycle()
     val list = vm.pages.collectAsLazyPagingItems()
     val requester = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
@@ -132,6 +145,27 @@ internal fun TransactionsScreen(
             TraxosIconButton(onClick = add) { Icon(TraxosIcons.plus, "Add transaction") }
         }
         LedgerSearch(search, vm::search, requester)
+        Row(
+            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            listOf(
+                    "ALL" to "All",
+                    "EXPENSES" to "Expenses",
+                    "INCOME" to "Income",
+                    "TRANSFERS" to "Transfers",
+                    "CARD_PAYMENTS" to "Card payments",
+                )
+                .forEach { (id, label) ->
+                    TraxosButton(
+                        { vm.recordFilter(id) },
+                        tone = if (filter == id) ButtonTone.PRIMARY else ButtonTone.SECONDARY,
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                    ) {
+                        Text(label, style = MaterialTheme.typography.labelMedium)
+                    }
+                }
+        }
         LazyColumn(
             Modifier.weight(1f),
             contentPadding = PaddingValues(bottom = 20.dp),
@@ -151,15 +185,19 @@ internal fun TransactionsScreen(
             if (list.itemCount == 0 && list.loadState.refresh is LoadState.NotLoading)
                 item {
                     Message(
-                        if (search.isBlank()) "Your ledger starts here"
+                        if (search.isBlank() && filter == "ALL") "Your ledger starts here"
                         else "No matching transactions",
-                        if (search.isBlank())
+                        if (search.isBlank() && filter == "ALL")
                             "Record an expense or income. All changes stay on this phone."
                         else "Try a different note, account or category.",
-                        if (search.isBlank()) "Add transaction" else "Clear search",
-                        if (search.isBlank()) add
+                        if (search.isBlank() && filter == "ALL") "Add transaction"
+                        else "Clear search",
+                        if (search.isBlank() && filter == "ALL") add
                         else {
-                            { vm.search("") }
+                            {
+                                vm.search("")
+                                vm.recordFilter("ALL")
+                            }
                         },
                     )
                 }

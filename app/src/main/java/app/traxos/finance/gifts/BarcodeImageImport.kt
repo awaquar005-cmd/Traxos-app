@@ -128,16 +128,24 @@ object BarcodeImageImport {
                     else "Several barcodes found. Photograph one card at a time."
                 }
                 val code = codes.single()
-                GiftRules.validateCode(code)
+                val text = GiftParser.parse(code)
                 val parsed =
-                    GiftExtraction(
-                        code = code,
-                        confidence = mapOf("code" to 65),
-                        warnings =
-                            listOf(
-                                "Review this barcode code. Merchant and value must be entered manually."
-                            ),
-                    )
+                    if (text.code.isNotBlank()) {
+                        GiftRules.validateCode(text.code)
+                        text.copy(
+                            warnings =
+                                text.warnings +
+                                    "Review all text encoded in this QR/barcode before saving"
+                        )
+                    } else {
+                        GiftRules.validateCode(code)
+                        GiftExtraction(
+                            code = code,
+                            confidence = mapOf("code" to 65),
+                            warnings =
+                                listOf("Review this code. No merchant or balance was encoded."),
+                        )
+                    }
                 val ratio = minOf(1f, 1600f / maxOf(bitmap.width, bitmap.height))
                 val small =
                     if (ratio < 1f)
