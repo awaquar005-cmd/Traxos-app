@@ -327,10 +327,75 @@ internal fun SmartInboxScreen(
                     s.status.lowercase().replace('_', ' '),
                     style = MaterialTheme.typography.bodySmall,
                 )
-                // Codes/PINs and raw message text are never list labels or notifications.
-                TraxosTextButton({ vm.select(s) }, enabled = !busy) {
-                    Text(if (s.status == "PENDING") "Review / edit" else "View status")
-                }
+                if (p.kind != "GIFT") {
+                    Text(
+                        "${p.type.lowercase()} · ${p.currency} ${p.amount.ifBlank { "Amount missing" }} · ${p.day.ifBlank { "Date missing" }}",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Text(
+                        "${p.bankName.ifBlank { "Bank not identified" }} · Account •••• ${p.accountHint.ifBlank { "Unknown" }}",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    if (p.reference.isNotBlank())
+                        Text(
+                            "Reference: ${p.reference}",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                } else
+                    Text(
+                        "${p.currency} ${p.amount.ifBlank { "Value unknown" }} · ${p.expiry.ifBlank { "No detected expiry" }}",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                val eligible =
+                    accounts.filter {
+                        !it.account.archived &&
+                            it.account.currency == p.currency &&
+                            (!p.cardRequired || it.account.type == "CREDIT_CARD")
+                    }
+                val suggestedAccount =
+                    eligible.firstOrNull { it.account.id == prefs?.defaultAccountId }
+                        ?: eligible.singleOrNull()
+                val suggestedCategory =
+                    categories.firstOrNull {
+                        !it.archived &&
+                            it.type == p.type &&
+                            it.id == prefs?.defaultExpenseCategoryId
+                    } ?: categories.filter { !it.archived && it.type == p.type }.singleOrNull()
+                if (p.kind == "TRANSACTION")
+                    Text(
+                        "Save to: ${suggestedAccount?.account?.name ?: "Choose account in Edit"} · ${suggestedCategory?.name ?: "Choose category in Edit"}",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                if (p.warning.isNotBlank())
+                    Text(
+                        p.warning,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                // Secrets remain masked; review/edit is the only action opening a sheet.
+                if (s.status == "PENDING")
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        CompactAction(
+                            "Approve",
+                            {
+                                vm.approveSuggestion(
+                                    s,
+                                    suggestedAccount?.account?.id.orEmpty(),
+                                    suggestedCategory?.id.orEmpty(),
+                                )
+                            },
+                            Modifier.weight(1f).testTag("approve_${s.id}"),
+                            !busy && p.kind in listOf("TRANSACTION", "GIFT"),
+                        )
+                        CompactAction(
+                            "Reject",
+                            { vm.rejectSuggestion(s) },
+                            Modifier.weight(1f),
+                            !busy,
+                        )
+                        CompactAction("Edit", { vm.select(s) }, Modifier.weight(1f), !busy)
+                    }
+                else TraxosTextButton({ vm.select(s) }, enabled = !busy) { Text("View status") }
             }
         }
         if (rows.orEmpty().size >= 200)

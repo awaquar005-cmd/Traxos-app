@@ -93,7 +93,7 @@ class SmartViewModel(val repository: SmartRepository, val ledger: LedgerReposito
         else {
             if (!offered.second || offered.first.status != "PENDING")
                 events.send("This message or gift code has already been reviewed/imported")
-            if (offered.first.status == "PENDING") open(offered.first)
+            // Stay in the inbox; only Edit opens a sheet.
         }
     }
 
@@ -128,6 +128,20 @@ class SmartViewModel(val repository: SmartRepository, val ledger: LedgerReposito
         selected.value = null
         draft.value = null
         events.send(if (ignore) "Suggestion ignored" else "Suggestion rejected")
+    }
+
+    fun rejectSuggestion(s: SmartSuggestion) = action {
+        repository.reject(s.id, false)
+        events.send("Suggestion rejected")
+    }
+
+    fun approveSuggestion(s: SmartSuggestion, account: String, category: String) = action {
+        val d = repository.read(s)
+        require(d.kind == "GIFT" || (account.isNotBlank() && category.isNotBlank())) {
+            "Tap Edit to choose the account and category before approving"
+        }
+        repository.approve(s.id, d, account, category)
+        events.send(if (d.kind == "GIFT") "Gift card added" else "Transaction added")
     }
 
     fun approve(account: String, category: String) = action {

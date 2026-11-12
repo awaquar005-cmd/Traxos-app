@@ -128,6 +128,8 @@ internal fun TransactionsScreen(
     focusSearch: Boolean,
     onFocusHandled: () -> Unit,
     add: () -> Unit,
+    smartPending: Long = 0,
+    openSmart: () -> Unit = {},
 ) {
     val search by vm.search.collectAsStateWithLifecycle()
     val filter by vm.recordFilter.collectAsStateWithLifecycle()
@@ -205,6 +207,9 @@ internal fun TransactionsScreen(
                 (if (largeFont) Modifier.weight(1f) else Modifier).testTag("activity_sort"),
                 preferences != null && !preferenceBusy,
             )
+        }
+        TraxosTextButton(openSmart, Modifier.fillMaxWidth().testTag("activity_smart_add")) {
+            Text("SMS Smart Add · $smartPending waiting for review")
         }
         LedgerSearch(search, vm::search, requester)
         if (scope.active) {
@@ -306,6 +311,7 @@ internal fun AccountsScreen(
     accounts: List<AccountBalance>,
     open: (String) -> Unit,
     hidden: Boolean = false,
+    cardDetails: (String) -> Unit = {},
 ) {
     LazyColumn(
         Modifier.fillMaxSize(),
@@ -366,6 +372,10 @@ internal fun AccountsScreen(
                         a.account.currency,
                         hidden = hidden,
                     )
+                    if (a.account.type == "CREDIT_CARD")
+                        TraxosTextButton({ cardDetails(a.account.id) }) {
+                            Text("Card number, expiry & CVV")
+                        }
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             accountTypeLabel(a.account.type) +

@@ -322,6 +322,8 @@ fun TraxosApp(vm: MainViewModel) {
                         focusSearch,
                         { focusSearch = false },
                         add,
+                        smart.pending.collectAsStateWithLifecycle().value,
+                        { nav.navigate("smart") { launchSingleTop = true } },
                     )
                 }
             }
@@ -332,6 +334,7 @@ fun TraxosApp(vm: MainViewModel) {
                             it.accounts,
                             { id -> nav.navigate("account/$id") { launchSingleTop = true } },
                             prefs.balancesHidden,
+                            { id -> nav.navigate("card_details/$id") { launchSingleTop = true } },
                         )
                     }
                 }

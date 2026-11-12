@@ -22,6 +22,7 @@ data class SmartDraft(
     val originalText: String = "",
     val giftKind: String = "STORED_VALUE",
     val cardRequired: Boolean = false,
+    val bankName: String = "",
 ) {
     fun gift() =
         GiftExtraction(
@@ -94,9 +95,14 @@ object SmartParser {
                     "Refunds/reversals must be matched to their original purchase; they are not earned income. No record will be posted."
                 else -> ""
             }
+        val amountText =
+            text.replace(
+                Regex("(?i)(\\b(?:debited|credited)\\s+(?:by|with)\\s+)(?=[0-9])"),
+                "$1 INR ",
+            )
         val values =
             Regex("(?i)(?:₹|INR|Rs\\.?|USD|EUR|JPY|KWD)\\s*([0-9][0-9,]*(?:\\.[0-9]+)?)")
-                .findAll(text)
+                .findAll(amountText)
                 .mapNotNull { m ->
                     val n = m.groupValues[1]
                     if (
@@ -108,9 +114,13 @@ object SmartParser {
                     )
                         null
                     else {
-                        val before = text.substring(maxOf(0, m.range.first - 28), m.range.first)
+                        val before =
+                            amountText.substring(maxOf(0, m.range.first - 28), m.range.first)
                         val after =
-                            text.substring(m.range.last + 1, minOf(text.length, m.range.last + 36))
+                            amountText.substring(
+                                m.range.last + 1,
+                                minOf(amountText.length, m.range.last + 36),
+                            )
                         val score =
                             if (Regex("(?i)balance|limit|avl|avail").containsMatchIn(before)) 0
                             else if (direction.containsMatchIn(before + after)) 90 else 50
@@ -134,7 +144,7 @@ object SmartParser {
                 !Regex("(?i)\\b(?:debited|spent|paid|withdrawn|deducted)\\b").containsMatchIn(text)
         val merchant =
             Regex(
-                    "(?i)\\b(?:at|to|from)\\s+([A-Za-z][A-Za-z0-9 &'._-]{1,60}?)(?=\\s+(?:on|ref|upi|a/c|acct|account|for|via)|[.;\\n]|$)"
+                    "(?i)\\b(?:at|to|from)\\s+([A-Za-z][A-Za-z0-9 &'._-]{1,60}?)(?=\\s+(?:on|ref(?:no)?|rrn|upi|a/c|acct|account|for|via|if)|[.;\\n]|$)"
                 )
                 .find(text)
                 ?.groupValues
@@ -143,11 +153,19 @@ object SmartParser {
                 .orEmpty()
         val reference =
             Regex(
-                    "(?i)\\b(?:ref(?:erence)?(?:\\s*(?:no|id))?|utr|upi ref(?: no)?)\\s*[:#.-]?\\s*([A-Za-z0-9]{6,32})\\b"
+                    "(?i)\\b(?:ref(?:erence)?(?:\\s*(?:no|id))?|rrn|utr|upi ref(?: no)?)\\s*[:#.-]?\\s*([A-Za-z0-9]{6,32}(?:\\n[0-9]{1,8})?)\\b"
                 )
                 .find(text)
                 ?.groupValues
                 ?.get(1)
+                ?.replace(Regex("\\s+"), "")
+                .orEmpty()
+        val bank =
+            Regex("(?i)[-–]\\s*((?:Bank of )?[A-Za-z][A-Za-z .]{1,55})\\s*$")
+                .find(text)
+                ?.groupValues
+                ?.get(1)
+                ?.trim()
                 .orEmpty()
         val account =
             Regex("(?i)(?:a/c|acct?|account|card)\\s*[:.-]?\\s*[xX*]*(\\d{3,6})\\b")
@@ -190,13 +208,15 @@ object SmartParser {
                 },
             originalText = text,
             cardRequired = Regex("(?i)credit\\s*card").containsMatchIn(text),
+            bankName = bank,
         )
     }
 
     private fun messageDate(text: String): String? {
         val iso = Regex("\\b\\d{4}-\\d{2}-\\d{2}\\b").find(text)?.value
         if (iso != null) return runCatching { LocalDate.parse(iso).toString() }.getOrNull()
-        val named = Regex("(?i)\\b(\\d{1,2})[- /]([A-Za-z]{3,9})[- /](\\d{2}|\\d{4})\\b").find(text)
+        val named =
+            Regex("(?i)\\b(\\d{1,2})[- /]?([A-Za-z]{3,9})[- /]?(\\d{4}|\\d{2})\\b").find(text)
         if (named != null)
             return runCatching {
                     val month =

@@ -1,5 +1,14 @@
 # Progress
 
+## 0.9.1 Personal — SMS quick review and hero correction
+
+**BUILT: 168 Personal host tests passed, zero failures/errors/skips; lint 0 errors / 21 existing warnings.** Signature matches earlier releases; 16KiB ZIP/64-bit ELF alignment verified. Only Personal built. [Actual validation](validation/sms-quick-review/README.md). Physical-device SMS/UI acceptance remains pending.
+
+Only the dashboard watermark hero's padding/gaps return to its previous proportions; other compact UI stays unchanged. Accounts now exposes Card number, expiry & CVV directly on credit-card rows. Activity has a live pending-count SMS Smart Add entry. Smart Add lists direction, amount/currency, date, counterparty, issuer bank, masked account hint, reference and proposed save account/category. Approve and Reject act directly, with busy/idempotent protection; only Edit opens the review sheet. If required fields/defaults are missing, use Edit; ambiguous transfers/settlements still cannot become ordinary expenses. No record is saved without an approval tap.
+
+SMS parser supports explicit debited-by/credited-with INR amounts without a currency prefix, compact named dates, RRN/Refno including wrapped digits, merchant boundaries before references and trailing bank names. Issuer and counterparty are separate. Missing fields stay blank. A name alone does not prove ownership of both accounts: use the existing Transfer flow for self transfers. No hardcoded personal identity or new SMS permissions. Old encrypted suggestions decode with an empty issuer field; no Room migration is required. Previously captured suggestions retain their original extraction, so Edit old rows if needed. New messages use the improved parser.
+
+
 ## Compact Personal release — 0.9.0 (code10)
 
 **BUILT: 166 Personal host tests passed; lint passed with 0 errors / 21 existing warnings.** APK signature matches the previous release; 16KiB ZIP/64-bit ELF alignment and permission checks passed. No Play APK built.

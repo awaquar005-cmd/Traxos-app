@@ -1,5 +1,9 @@
 # Created files
 
+## 0.9.1 changed files
+
+Updated Dashboard, LedgerScreens, App, SmartInboxScreen, SmartViewModel, SmartParser, SmartRepository and version metadata; added BankMessageParserTest; updated SmartInboxUiTest, release documentation and validation. No Room/schema/logo/dependency change.
+
 ## 0.9.0 compact Personal changes
 
 Created `data/CardVault.kt`, `ui/CardDetailsScreen.kt`, Room schema9, `CompactCardTest.kt`, `CardVaultMigrationTest.kt`, `CardDetailsUiTest.kt`, `docs/COMPACT_CARD_PLAN.md`, `docs/COMPACT_PERSONAL.md` and validation/compact-cards. Updated build metadata, TraxosApplication, Database, GiftParser/GiftViewModel, SmartParser, App/Forms, shared Controls/Components/Navigation, Dashboard, LedgerScreens and GiftWalletScreens. Updated release/download documentation and checksum. Existing logo assets unchanged.

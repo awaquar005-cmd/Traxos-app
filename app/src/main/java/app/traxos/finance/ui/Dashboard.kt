@@ -55,8 +55,8 @@ internal fun HomeScreen(
                         Modifier.align(Alignment.CenterEnd).padding(end = 8.dp).size(140.dp)
                     )
                     Column(
-                        Modifier.padding(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         Row(
                             Modifier.fillMaxWidth(),

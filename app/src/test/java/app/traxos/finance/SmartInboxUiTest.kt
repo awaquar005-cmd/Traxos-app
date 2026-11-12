@@ -10,6 +10,7 @@ import app.traxos.finance.smart.*
 import app.traxos.finance.ui.*
 import java.time.LocalDate
 import java.util.UUID
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.*
 import org.junit.Assert.*
@@ -72,6 +73,11 @@ class SmartInboxUiTest {
         }
         compose.onNodeWithText("Find suggestion").performScrollTo().performClick()
         compose.waitUntil(10000) {
+            compose.onAllNodesWithText("Edit").fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithTag("traxos_sheet").assertDoesNotExist()
+        compose.onNodeWithText("Edit").performScrollTo().performClick()
+        compose.waitUntil(10000) {
             compose.onAllNodesWithTag("smart_approve").fetchSemanticsNodes().isNotEmpty()
         }
         assertEquals(0L, runBlocking { db.ledger().recordCount() })
@@ -94,6 +100,53 @@ class SmartInboxUiTest {
     }
 
     @Test
+    fun inlineApproveAndRejectNeverOpenEditorAndCannotDuplicateWrites() {
+        val day = LocalDate.now()
+        val suggestion = runBlocking {
+            vm.ledger.saveAccount(
+                UUID.randomUUID().toString(),
+                "bank",
+                "Test bank",
+                "BANK",
+                "INR",
+                100000,
+                openingDate = day.minusDays(1).toEpochDay(),
+            )
+            val category =
+                db.ledger().categories().first().first { it.type == "EXPENSE" && !it.archived }
+            vm.ledger.setDefaults("bank", category.id)
+            repo.offer("Bank account debited INR 25 at Merchant on $day Ref QUICK123456")!!.first
+        }
+        compose.setContent { TraxosTheme("LIGHT") { SmartInboxScreen(vm) } }
+        compose.waitUntil(10000) {
+            compose.onAllNodesWithTag("approve_${suggestion.id}").fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithTag("traxos_sheet").assertDoesNotExist()
+        val approve =
+            compose
+                .onNodeWithTag("approve_${suggestion.id}")
+                .performScrollTo()
+                .fetchSemanticsNode()
+                .config[androidx.compose.ui.semantics.SemanticsActions.OnClick]
+                .action!!
+        compose.runOnIdle { repeat(10) { approve() } }
+        compose.waitUntil(10000) {
+            compose.onAllNodesWithTag("approve_${suggestion.id}").fetchSemanticsNodes().isEmpty()
+        }
+        assertEquals(1L, runBlocking { db.ledger().recordCount() })
+        runBlocking { repo.offer("Bank account debited INR 30 at Shop on $day Ref QUICK654321") }
+        compose.waitUntil(10000) {
+            compose.onAllNodesWithText("Reject").fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithText("Reject").performScrollTo().performClick()
+        compose.waitUntil(10000) {
+            compose.onAllNodesWithText("Reject").fetchSemanticsNodes().isEmpty()
+        }
+        compose.onNodeWithTag("traxos_sheet").assertDoesNotExist()
+        assertEquals(1L, runBlocking { db.ledger().recordCount() })
+    }
+
+    @Test
     fun settlementOffersRejectWithoutExpenseApprovalControl() {
         compose.setContent {
             TraxosTheme("DARK") {
@@ -104,10 +157,17 @@ class SmartInboxUiTest {
             }
         }
         compose.waitUntil(10000) {
+            compose.onAllNodesWithText("Edit").fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithText("Edit").performScrollTo().performClick()
+        compose.waitUntil(10000) {
             compose.onAllNodesWithTag("traxos_sheet").fetchSemanticsNodes().isNotEmpty()
         }
         compose.onNodeWithTag("smart_approve").assertDoesNotExist()
-        compose.onNodeWithText("Reject").performScrollTo().performClick()
+        compose
+            .onNode(hasText("Reject") and hasAnyAncestor(hasTestTag("traxos_sheet")))
+            .performScrollTo()
+            .performClick()
         compose.waitUntil(10000) {
             compose.onAllNodesWithTag("traxos_sheet").fetchSemanticsNodes().isEmpty()
         }

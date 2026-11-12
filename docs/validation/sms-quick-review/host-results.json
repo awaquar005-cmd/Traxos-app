@@ -1,0 +1,426 @@
+{
+  "version": "0.9.1-personal",
+  "versionCode": 11,
+  "personalOnly": true,
+  "build": "passed",
+  "tests": {
+    "totals": {
+      "tests": 168,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "suites": [
+      {
+        "name": "app.traxos.finance.AccentMigrationTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.ActivityFiltersUiTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.BankMessageParserTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.BrandedControlsUiTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.CardDetailsUiTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.CardVaultMigrationTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.CatalogAccountingTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.CatalogInlineUiTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.CatalogMigrationTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.CompactCardTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.CustomFormsUiTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.FormViewModelTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.GiftAppearanceTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.GiftContextParserTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.GiftImagePreparationTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.GiftMigrationTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.GiftNavigationUiTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.GiftReminderWorkerTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.GiftRepositoryTest",
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.GiftRulesTest",
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.GiftWalletUiTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.HomeStartupTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.LedgerRepositoryTest",
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.LoadingUiTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.LockLayoutUiTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.LockSessionTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.LockStoreTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.MoneyTest",
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.NavigationCustomizationUiTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.NavigationLayoutTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.NavigationPreferencesTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.NavigationUiTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.OfflineLedgerToolsTest",
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.OfflineToolsMigrationTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.OfflineToolsUiTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.PreferenceIsolationTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.PreferencesMigrationTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.SavedLedgerLaunchTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.SecurityUiTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.SettingsReentryUiTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.SmartAddTest",
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.SmartInboxUiTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.SmartMigrationTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.SmartParserTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.SmsIngestionTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.SplashMaskTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.StructuredSettingsUiTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.ThemeContrastTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.TransferAndImportTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.UiAppearanceTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "app.traxos.finance.UiReviewTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ]
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 21,
+    "categories": {
+      "VectorRaster": 1,
+      "AndroidGradlePluginVersion": 2,
+      "GradleDependency": 17,
+      "UseKtx": 1
+    }
+  },
+  "apk": {
+    "path": "downloads/TRAXOS-0.9.1-personal.apk",
+    "bytes": 35846399,
+    "sha256": "14610924f79f1d2f737f09bc261dcc6f0e17d8376d6fcec0ce29d3b90edc63d2",
+    "certificateSha256": "9df8f47a6aefa51f5b1b61dfb1a3aea3ea159757e39024821a0c9ffea4990f54",
+    "zip16KiBAligned": true,
+    "elf64BitAlignments": {
+      "lib/arm64-v8a/libandroidx.graphics.path.so": [
+        16384,
+        16384,
+        16384
+      ],
+      "lib/arm64-v8a/libbarhopper_v3.so": [
+        16384,
+        16384,
+        16384
+      ],
+      "lib/x86_64/libandroidx.graphics.path.so": [
+        16384,
+        16384,
+        16384
+      ],
+      "lib/x86_64/libbarhopper_v3.so": [
+        16384,
+        16384,
+        16384
+      ]
+    }
+  },
+  "permissions": [
+    "android.permission.RECEIVE_SMS",
+    "android.permission.POST_NOTIFICATIONS",
+    "android.permission.USE_BIOMETRIC",
+    "android.permission.USE_FINGERPRINT",
+    "android.permission.WAKE_LOCK",
+    "android.permission.ACCESS_NETWORK_STATE",
+    "android.permission.RECEIVE_BOOT_COMPLETED",
+    "app.traxos.finance.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+  ],
+  "roomSchema": 9,
+  "brandMarkWatermarkBodiesUnchanged": true,
+  "physicalDeviceTested": false,
+  "emulatorUsed": false
+}

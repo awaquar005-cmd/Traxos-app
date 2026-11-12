@@ -26,6 +26,7 @@ class SmartRepository(
             .apply {
                 put("giftKind", d.giftKind)
                 put("cardRequired", d.cardRequired)
+                put("bankName", d.bankName)
                 put("v", 1)
                 put("kind", d.kind)
                 put("merchant", d.merchant)
@@ -68,6 +69,7 @@ class SmartRepository(
                 j.getString("text"),
                 j.optString("giftKind", "STORED_VALUE"),
                 j.optBoolean("cardRequired", false),
+                j.optString("bankName", ""),
             )
         }
 
