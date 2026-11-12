@@ -412,9 +412,7 @@ internal fun TraxosToolbar(
         if (back != null) TraxosIconButton(onClick = back) { Icon(TraxosIcons.back, "Back") }
         else {
             if (home != null)
-                TraxosIconButton(home, Modifier.testTag("toolbar_home"), outlined = false) {
-                    BrandMark()
-                }
+                TraxosIconButton(home, Modifier.testTag("toolbar_home")) { BrandMark() }
             else BrandMark()
             Spacer(Modifier.width(if (home != null) 2.dp else 10.dp))
         }
@@ -422,7 +420,7 @@ internal fun TraxosToolbar(
             Text(
                 "TRAXOS",
                 style = MaterialTheme.typography.labelSmall,
-                letterSpacing = 2.sp,
+                letterSpacing = if (LocalUnslop.current) 0.sp else 2.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
@@ -469,7 +467,7 @@ internal fun MoneyText(
             (if (large) MaterialTheme.typography.headlineMedium
                 else MaterialTheme.typography.titleMedium)
                 .copy(fontFeatureSettings = "tnum"),
-        fontWeight = FontWeight.SemiBold,
+        fontWeight = if (LocalUnslop.current) FontWeight.Medium else FontWeight.SemiBold,
         color = color,
         modifier =
             if (hidden) Modifier.semantics { contentDescription = "Amount hidden" } else Modifier,
@@ -483,7 +481,7 @@ internal fun SectionHeader(title: String, action: String? = null, onClick: () ->
             title,
             Modifier.weight(1f),
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
+            fontWeight = if (LocalUnslop.current) FontWeight.Medium else FontWeight.SemiBold,
         )
         if (action != null)
             TraxosTextButton(onClick = onClick, contentPadding = PaddingValues(horizontal = 8.dp)) {

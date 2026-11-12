@@ -20,15 +20,17 @@ import androidx.compose.ui.unit.dp
 internal fun SettingsGroup(title: String, content: @Composable ColumnScope.() -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            title,
-            style = MaterialTheme.typography.labelSmall,
+            if (LocalUnslop.current) experimentCaption(title) else title,
+            style =
+                if (LocalUnslop.current) MaterialTheme.typography.labelMedium
+                else MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.semantics { heading() },
         )
         Surface(shape = Radius.control, color = MaterialTheme.colorScheme.surfaceContainerLowest) {
             Column(
                 Modifier.padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(if (LocalUnslop.current) 4.dp else 6.dp),
                 content = content,
             )
         }
@@ -69,7 +71,7 @@ internal fun ThemePicker(value: String, enabled: Boolean, onChange: (String) -> 
 @Composable
 internal fun AccentPicker(value: String, enabled: Boolean, onChange: (String) -> Unit) {
     Text(
-        "ACCENT PALETTE",
+        if (LocalUnslop.current) "Accent palette" else "ACCENT PALETTE",
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -113,7 +115,7 @@ internal data class ToolEntry(
 internal fun MoreScreen(navigate: (String) -> Unit) {
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp),
+        verticalArrangement = Arrangement.spacedBy(if (LocalUnslop.current) 16.dp else 18.dp),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text("Your Traxos tools", style = MaterialTheme.typography.titleLarge)
@@ -261,7 +263,14 @@ internal fun ToolRow(entry: ToolEntry, preview: Boolean, navigate: (String) -> U
         tone = ButtonTone.GHOST,
         contentPadding = PaddingValues(vertical = 8.dp, horizontal = 8.dp),
     ) {
-        Icon(entry.icon, null, Modifier.size(23.dp), tint = MaterialTheme.colorScheme.primary)
+        Icon(
+            entry.icon,
+            null,
+            Modifier.size(if (LocalUnslop.current) 20.dp else 23.dp),
+            tint =
+                if (LocalUnslop.current) MaterialTheme.colorScheme.onSurfaceVariant
+                else MaterialTheme.colorScheme.primary,
+        )
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 entry.title,

@@ -98,7 +98,16 @@ fun TraxosTheme(mode: String, accent: String, content: @Composable () -> Unit) {
         )
     MaterialTheme(
         colorScheme = colors,
-        typography = TraxosType,
+        typography =
+            if (LocalUnslop.current)
+                TraxosType.copy(
+                    headlineMedium = type(32, 40, FontWeight.Medium),
+                    headlineSmall = type(24, 32, FontWeight.Medium),
+                    titleLarge = type(20, 28, FontWeight.Medium),
+                    bodyMedium = type(14, 20),
+                    labelSmall = type(12, 16),
+                )
+            else TraxosType,
         shapes =
             Shapes(
                 small = RoundedCornerShape(8.dp),

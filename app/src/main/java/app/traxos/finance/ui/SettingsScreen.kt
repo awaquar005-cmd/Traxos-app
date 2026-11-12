@@ -120,13 +120,16 @@ internal fun SettingsRow(title: String, summary: String, onClick: () -> Unit) {
         onClick,
         Modifier.fillMaxWidth().testTag("setting_$title"),
         tone = ButtonTone.GHOST,
-        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp),
+        contentPadding =
+            PaddingValues(horizontal = 8.dp, vertical = if (LocalUnslop.current) 8.dp else 10.dp),
     ) {
         Icon(
             settingsIcon(title),
             null,
-            Modifier.size(22.dp),
-            tint = MaterialTheme.colorScheme.primary,
+            Modifier.size(if (LocalUnslop.current) 20.dp else 22.dp),
+            tint =
+                if (LocalUnslop.current) MaterialTheme.colorScheme.onSurfaceVariant
+                else MaterialTheme.colorScheme.primary,
         )
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(title, style = MaterialTheme.typography.titleSmall)
@@ -168,7 +171,7 @@ internal fun SettingsToggle(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        TraxosSwitch(checked, onChange, enabled = enabled)
+        TraxosSwitch(checked, onChange, enabled = enabled, label = title)
     }
 }
 
@@ -261,6 +264,17 @@ internal fun SettingsDetailScreen(
                 }
             }
             "appearance" -> {
+                val experiment =
+                    (context.applicationContext as app.traxos.finance.TraxosApplication)
+                        .designExperiment
+                val experimental by experiment.enabled.collectAsStateWithLifecycle()
+                SettingsToggle(
+                    "Experimental interface",
+                    "Unslop study · off restores the previous styling",
+                    experimental,
+                    true,
+                    experiment::setEnabled,
+                )
                 Text("Appearance", style = MaterialTheme.typography.titleLarge)
                 ThemePicker(prefs.theme, !busy, vm::theme)
                 AccentPicker(prefs.accent, !busy, vm::accent)
@@ -469,6 +483,10 @@ internal fun SettingsDetailScreen(
                 )
             }
             "about" -> {
+                Text(
+                    "Design experiment guided by Unslop — Damir Sokolovsky (@heydamir), CC BY4.0. Adapted for native Traxos. github.com/heydamir/unslop",
+                    style = MaterialTheme.typography.bodySmall,
+                )
                 BrandMark()
                 Text(
                     "TRAXOS ${BuildConfig.VERSION_NAME}",

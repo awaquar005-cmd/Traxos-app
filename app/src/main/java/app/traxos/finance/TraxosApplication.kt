@@ -18,6 +18,7 @@ open class TraxosApplication : Application(), androidx.work.Configuration.Provid
             app.traxos.finance.security.KeystoreLockCipher(),
         )
     }
+    val designExperiment by lazy { app.traxos.finance.ui.DesignExperimentStore(this) }
     val database by lazy { TraxosDatabase.open(this) }
     val repository by lazy { LedgerRepository(database) }
     val giftScheduler by lazy { AndroidGiftScheduler(this) }

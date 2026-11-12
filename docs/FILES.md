@@ -1,5 +1,44 @@
 # Created files
 
+## Personal-only Unslop experiment
+
+Reversible native UI polish; one local comparison store, no schema/financial/security/resource change. Existing icons/logo/watermark preserved; button outlines removed per final feedback. Source/credit/license and actual validation are in docs/UNSLOP_EXPERIMENT.md and docs/validation/unslop-experiment.
+
+- `README.md`
+- `app/build.gradle.kts`
+- `app/src/main/java/app/traxos/finance/MainActivity.kt`
+- `app/src/main/java/app/traxos/finance/TraxosApplication.kt`
+- `app/src/main/java/app/traxos/finance/ui/Components.kt`
+- `app/src/main/java/app/traxos/finance/ui/Controls.kt`
+- `app/src/main/java/app/traxos/finance/ui/Dashboard.kt`
+- `app/src/main/java/app/traxos/finance/ui/DesignExperiment.kt`
+- `app/src/main/java/app/traxos/finance/ui/Navigation.kt`
+- `app/src/main/java/app/traxos/finance/ui/SettingsScreen.kt`
+- `app/src/main/java/app/traxos/finance/ui/Theme.kt`
+- `app/src/main/java/app/traxos/finance/ui/UiHierarchy.kt`
+- `app/src/test/java/app/traxos/finance/CustomFormsUiTest.kt`
+- `app/src/test/java/app/traxos/finance/DesignExperimentTest.kt`
+- `app/src/test/java/app/traxos/finance/NavigationUiTest.kt`
+- `app/src/test/java/app/traxos/finance/SavedLedgerLaunchTest.kt`
+- `app/src/test/java/app/traxos/finance/UnslopComparisonUiTest.kt`
+- `app/src/test/java/app/traxos/finance/UnslopVisualTest.kt`
+- `docs/ARCHITECTURE.md`
+- `docs/DECISIONS.md`
+- `docs/FILES.md`
+- `docs/PROGRESS.md`
+- `docs/UNSLOP_EXPERIMENT.md`
+- `docs/third-party/unslop-LICENSE.txt`
+- `docs/validation/unslop-experiment/README.md`
+- `docs/validation/unslop-experiment/build.log`
+- `docs/validation/unslop-experiment/host-results.json`
+- `docs/validation/unslop-experiment/unslop-after-dark.png`
+- `docs/validation/unslop-experiment/unslop-after-light.png`
+- `docs/validation/unslop-experiment/unslop-before-light.png`
+- `downloads/SHA256SUMS.txt`
+- `downloads/TRAXOS-0.8.0-unslop-personal.apk`
+
+Historical inventories follow.
+
 ## 0.8.0 offline ledger tools
 
 `LedgerToolsScreens.kt` implements filter drafts, deleted recovery and monthly reports; `ActivityScope.kt` defines validated date/ID criteria. Room queries/MVVM add paging/aggregate/sort/restore state without changing financial entities. Schema8 adds only activitySort. Reports joins the real destination registry; More/Settings/Activity expose all completed tools. Shared button borders are half-dp; the header logo explicitly opts out. `traxos_splash_icon.xml` adds Android12 safe-area padding separate from animation. No new SDK/dependency or permission.

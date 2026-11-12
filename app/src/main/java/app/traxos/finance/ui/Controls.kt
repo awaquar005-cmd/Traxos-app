@@ -48,21 +48,23 @@ enum class NoticeKind {
 
 internal data class ButtonPalette(val foreground: Color, val background: Color, val pressed: Color)
 
-internal fun controlOutline(colors: ColorScheme) = colors.onSurfaceVariant.copy(alpha = .40f)
-
-internal fun buttonPalette(tone: ButtonTone, colors: ColorScheme): ButtonPalette {
+internal fun buttonPalette(
+    tone: ButtonTone,
+    colors: ColorScheme,
+    quiet: Boolean = false,
+): ButtonPalette {
     val foreground =
         when (tone) {
             ButtonTone.PRIMARY -> colors.onPrimaryContainer
             ButtonTone.DESTRUCTIVE -> Color.White
-            ButtonTone.GHOST -> colors.primary
+            ButtonTone.GHOST -> if (quiet) colors.onSurface else colors.primary
             else -> colors.onSurface
         }
     val base =
         when (tone) {
             ButtonTone.PRIMARY -> colors.primaryContainer
             ButtonTone.DESTRUCTIVE -> Ink.coral
-            ButtonTone.SECONDARY -> colors.surfaceContainerLowest
+            ButtonTone.SECONDARY -> colors.surfaceContainer
             ButtonTone.GHOST -> Color.Transparent
         }
     val pressed =
@@ -88,7 +90,7 @@ internal fun TraxosButton(
 ) {
     val source = remember { MutableInteractionSource() }
     val pressed by source.collectIsPressedAsState()
-    val palette = buttonPalette(tone, MaterialTheme.colorScheme)
+    val palette = buttonPalette(tone, MaterialTheme.colorScheme, LocalUnslop.current)
     val foreground = palette.foreground
     val background = if (pressed) palette.pressed else palette.background
     CompositionLocalProvider(LocalContentColor provides foreground) {
@@ -98,15 +100,6 @@ internal fun TraxosButton(
                 .alpha(if (enabled) 1f else .65f)
                 .clip(shape)
                 .background(background)
-                .then(
-                    Modifier.border(
-                        .5.dp,
-                        if (tone == ButtonTone.PRIMARY || tone == ButtonTone.DESTRUCTIVE)
-                            foreground.copy(alpha = .20f)
-                        else controlOutline(MaterialTheme.colorScheme),
-                        shape,
-                    )
-                )
                 .clickable(
                     interactionSource = source,
                     indication = null,
@@ -120,7 +113,9 @@ internal fun TraxosButton(
         ) {
             if (busy) BusyMark(Modifier.size(20.dp), foreground)
             ProvideTextStyle(
-                MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold)
+                MaterialTheme.typography.labelLarge.copy(
+                    fontWeight = if (LocalUnslop.current) FontWeight.Medium else FontWeight.SemiBold
+                )
             ) {
                 content()
             }
@@ -151,7 +146,6 @@ internal fun TraxosIconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    outlined: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     val source = remember { MutableInteractionSource() }
@@ -163,15 +157,6 @@ internal fun TraxosIconButton(
             .background(
                 if (pressed) MaterialTheme.colorScheme.primary.copy(alpha = .10f)
                 else Color.Transparent
-            )
-            .then(
-                if (outlined)
-                    Modifier.border(
-                        .5.dp,
-                        controlOutline(MaterialTheme.colorScheme),
-                        Radius.control,
-                    )
-                else Modifier
             )
             .alpha(if (enabled) 1f else .65f)
             .clickable(
@@ -349,7 +334,7 @@ internal fun TraxosAmountInput(
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(
-                    "AMOUNT",
+                    if (LocalUnslop.current) "Amount" else "AMOUNT",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

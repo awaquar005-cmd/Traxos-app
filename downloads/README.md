@@ -1,5 +1,13 @@
 # Test APK download
 
+## Personal-only design experiment
+
+**[Download TRAXOS Unslop Personal APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/experiment/unslop-ui/downloads/TRAXOS-0.8.0-unslop-personal.apk)**
+
+On the experiment branch only. Install as Update; never uninstall/clear data. Same package/key/version code9/schema8 as0.8. All offline tools remain. Settings → Appearance & Navigation → Experimental interface switches back to the previous styling with the latest borderless-button corrections. Logo, watermark, useful eye/finance icons and splash are preserved. Add Account, Back, overflow and other actions have no outline. No new Play experiment. [Actual validation](../docs/validation/unslop-experiment/README.md) · [Unslop source credit and comparison guide](../docs/UNSLOP_EXPERIMENT.md).
+
+The links below preserve the separate0.8 baseline.
+
 **[Download TRAXOS 0.8.0 Personal APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.8.0-personal.apk)**
 
 [SMS-free Play build](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.8.0-play.apk).

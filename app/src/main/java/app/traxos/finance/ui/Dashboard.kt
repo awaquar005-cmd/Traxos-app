@@ -42,7 +42,7 @@ internal fun HomeScreen(
     LazyColumn(
         Modifier.fillMaxSize().testTag("dashboard_list"),
         contentPadding = PaddingValues(16.dp, 8.dp, 16.dp, 20.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        verticalArrangement = Arrangement.spacedBy(if (LocalUnslop.current) 12.dp else 14.dp),
     ) {
         item(key = "hero") {
             Surface(
@@ -56,15 +56,16 @@ internal fun HomeScreen(
                         Modifier.align(Alignment.CenterEnd).padding(end = 8.dp).size(140.dp)
                     )
                     Column(
-                        Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        Modifier.padding(if (LocalUnslop.current) 16.dp else 20.dp),
+                        verticalArrangement =
+                            Arrangement.spacedBy(if (LocalUnslop.current) 8.dp else 10.dp),
                     ) {
                         Row(
                             Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
-                                "TOTAL BALANCE",
+                                if (LocalUnslop.current) "Total balance" else "TOTAL BALANCE",
                                 Modifier.weight(1f),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = Color(0xFFC0CDE5),
@@ -85,11 +86,13 @@ internal fun HomeScreen(
                         }
                         if (groups.isEmpty()) {
                             Text(
-                                "Make room for clarity.",
+                                if (LocalUnslop.current) "Your accounts, in one place"
+                                else "Make room for clarity.",
                                 style = MaterialTheme.typography.headlineSmall,
                             )
                             Text(
-                                "Create your first account to see a balance.",
+                                if (LocalUnslop.current) "Add your first account to see its balance"
+                                else "Create your first account to see a balance.",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color(0xFFCAD5E9),
                             )
@@ -139,13 +142,19 @@ internal fun HomeScreen(
         }
         item(key = "search") { SearchShortcut(search) }
         item(key = "monthly") {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(if (LocalUnslop.current) 8.dp else 10.dp)
+            ) {
                 Text(
-                    "THIS MONTH",
+                    if (LocalUnslop.current) "This month" else "THIS MONTH",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement =
+                        Arrangement.spacedBy(if (LocalUnslop.current) 8.dp else 10.dp),
+                ) {
                     MetricCard("Inflow", summaries, true, hidden, Modifier.weight(1f))
                     MetricCard("Net outflow", summaries, false, hidden, Modifier.weight(1f))
                 }
@@ -157,7 +166,8 @@ internal fun HomeScreen(
                     Row(
                         Modifier.padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        horizontalArrangement =
+                            Arrangement.spacedBy(if (LocalUnslop.current) 8.dp else 10.dp),
                     ) {
                         Icon(
                             TraxosIcons.wallet,
@@ -200,7 +210,10 @@ internal fun HomeScreen(
             }
         else
             item(key = "account_cards") {
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                LazyRow(
+                    horizontalArrangement =
+                        Arrangement.spacedBy(if (LocalUnslop.current) 8.dp else 10.dp)
+                ) {
                     items(active, key = { it.account.id }) { a ->
                         Surface(
                             onClick = { openAccount(a.account.id) },
@@ -209,7 +222,7 @@ internal fun HomeScreen(
                             modifier = Modifier.width(220.dp),
                         ) {
                             Column(
-                                Modifier.padding(14.dp),
+                                Modifier.padding(if (LocalUnslop.current) 12.dp else 14.dp),
                                 verticalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
                                 Row(

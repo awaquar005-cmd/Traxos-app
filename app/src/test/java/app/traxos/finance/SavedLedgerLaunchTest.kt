@@ -86,7 +86,10 @@ class SavedLedgerLaunchTest {
 
     private fun awaitLedger() {
         compose.waitUntil(timeoutMillis = 15000) {
-            compose.onAllNodesWithText("TOTAL BALANCE").fetchSemanticsNodes().isNotEmpty() ||
+            compose
+                .onAllNodesWithText("TOTAL BALANCE", ignoreCase = true)
+                .fetchSemanticsNodes()
+                .isNotEmpty() ||
                 compose.onAllNodesWithText("Saved lunch").fetchSemanticsNodes().isNotEmpty()
         }
     }

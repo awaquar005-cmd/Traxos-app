@@ -238,7 +238,10 @@ class CustomFormsUiTest {
 
     private fun awaitHome() {
         compose.waitUntil(15000) {
-            compose.onAllNodesWithText("TOTAL BALANCE").fetchSemanticsNodes().isNotEmpty()
+            compose
+                .onAllNodesWithText("TOTAL BALANCE", ignoreCase = true)
+                .fetchSemanticsNodes()
+                .isNotEmpty()
         }
     }
 }

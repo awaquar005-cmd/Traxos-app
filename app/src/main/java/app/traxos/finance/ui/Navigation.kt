@@ -1,6 +1,5 @@
 package app.traxos.finance.ui
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
@@ -90,7 +89,6 @@ internal fun TraxosBottomBar(
                     onClick = launchShortcut,
                     enabled = shortcutEnabled,
                     shape = Radius.card,
-                    border = BorderStroke(.5.dp, Color.White.copy(alpha = .20f)),
                     color = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = Color.White,
                     modifier =
@@ -148,7 +146,10 @@ private fun NavItem(
         Text(
             label,
             style = MaterialTheme.typography.labelSmall,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+            fontWeight =
+                if (selected) {
+                    if (LocalUnslop.current) FontWeight.Medium else FontWeight.Bold
+                } else FontWeight.Normal,
             color =
                 if (selected) MaterialTheme.colorScheme.primary
                 else MaterialTheme.colorScheme.onSurfaceVariant,

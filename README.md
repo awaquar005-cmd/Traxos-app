@@ -2,7 +2,15 @@
 
 Offline-first Kotlin/Jetpack Compose personal finance application. Development milestone 1; **not a finished commercial release**. Source of truth: [V3 specification](docs/Traxos_Native_Android_Product_Blueprint_v3.md).
 
-## Download for phone testing
+## Personal design experiment
+
+**[Download the Unslop Personal experiment APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/experiment/unslop-ui/downloads/TRAXOS-0.8.0-unslop-personal.apk)**. This branch is an experiment; main retains the validated0.8.0 release.
+
+Compare in **Settings → Appearance & Navigation → Experimental interface**. Turn it off to return to the previous styling with the latest borderless-button corrections. All0.8 financial tools stay working. Logo, watermark, splash, hero eye and meaningful icons are retained. No new dashboard widgets, images, animations, SDKs or Room migration. Back/Add Account/overflow and other actions have no outline and retain feedback. Only the Personal experiment is built.
+
+Install as **Update**, never uninstall/clear storage. Same package, signing key, version code9 and schema8 as the baseline. [Audit, return instructions and Unslop attribution](docs/UNSLOP_EXPERIMENT.md) · [Actual Personal validation](docs/validation/unslop-experiment/README.md).
+
+## Preserved baseline download
 
 **[Download TRAXOS 0.8.0 Personal APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.8.0-personal.apk)**. Install as **Update**; do not uninstall or clear storage. Your records, app PIN, gift secrets and navigation preferences are preserved by the signed update and explicit Room migration.
 

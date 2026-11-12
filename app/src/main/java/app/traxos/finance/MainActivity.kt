@@ -146,12 +146,15 @@ class MainActivity : FragmentActivity() {
                 }
             }
             val preferences by vm.preferences.collectAsStateWithLifecycle()
-            TraxosTheme(theme, preferences?.accent ?: "COBALT") {
-                CompositionLocalProvider(
-                    LocalLockController provides security,
-                    LocalDevicePrompt provides showDevice,
-                ) {
-                    SecurityGate(security) { TraxosApp(vm) }
+            val experiment by app.designExperiment.enabled.collectAsStateWithLifecycle()
+            CompositionLocalProvider(LocalUnslop provides experiment) {
+                TraxosTheme(theme, preferences?.accent ?: "COBALT") {
+                    CompositionLocalProvider(
+                        LocalLockController provides security,
+                        LocalDevicePrompt provides showDevice,
+                    ) {
+                        SecurityGate(security) { TraxosApp(vm) }
+                    }
                 }
             }
         }

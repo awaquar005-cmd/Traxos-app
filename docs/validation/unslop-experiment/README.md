@@ -1,0 +1,9 @@
+# Personal Unslop experiment validation
+
+**Personal APK built;163 tests passed, zero failures/errors/skips; lint passed with zero errors and21 warnings.** [Exact suites, signature, permissions and checksum](host-results.json), [successful full Personal build/test/lint log](build.log). No Play experiment was built.
+
+Four new cases cover persistent comparison preference/caption safeguards, toggling old/new styling and Activity recreation without changing financial records/journal/sort, functional hero eye masking, native light/dark comparisons and320dp/200% font reachability. Existing159 tests include offline filters/reports/recovery,50k-row paging, safe migrations, gifts, security, navigation and splash geometry. Normal text and pressed-state contrast remain checked. First full attempt hit workspace temporary-disk exhaustion; after deduplicating byte-identical APK copies, the whole suite passed cleanly.
+
+Logo assets, splash resources, schema8 and financial/security/smart/gift/domain sources are byte-identical to baseline fd692ca. BrandMark/BrandWatermark function bodies compare identical. Same package, certificate and version code9 preserve update/return compatibility; signing,16KiB ZIP/ELF alignment and permissions verify. The comparison switch changes one non-sensitive SharedPreferences flag, not Room. No OCR/internet/historical SMS/camera/media-read permission introduced.
+
+PNGs are synthetic native host fixtures. Before-light means previous styling with the user's latest borderless-button corrections; after-light/dark are Unslop enabled. The useful eye, finance icons and watermark remain. No generated imagery/video/new SDK was used. Real phone/OEM splash, keyboard/TalkBack, biometrics/SMS and performance acceptance remain pending. [Experiment audit, direction, attribution and return instructions](../../UNSLOP_EXPERIMENT.md).

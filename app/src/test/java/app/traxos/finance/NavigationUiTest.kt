@@ -57,7 +57,10 @@ class NavigationUiTest {
         }
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             compose.waitUntil(15000) {
-                compose.onAllNodesWithText("TOTAL BALANCE").fetchSemanticsNodes().isNotEmpty()
+                compose
+                    .onAllNodesWithText("TOTAL BALANCE", ignoreCase = true)
+                    .fetchSemanticsNodes()
+                    .isNotEmpty()
             }
             // Check early (64ms) in the previous default crossfade: outgoing page must be gone.
             compose.mainClock.autoAdvance = false
