@@ -48,6 +48,8 @@ enum class NoticeKind {
 
 internal data class ButtonPalette(val foreground: Color, val background: Color, val pressed: Color)
 
+internal fun controlOutline(colors: ColorScheme) = colors.onSurfaceVariant.copy(alpha = .40f)
+
 internal fun buttonPalette(tone: ButtonTone, colors: ColorScheme): ButtonPalette {
     val foreground =
         when (tone) {
@@ -97,9 +99,13 @@ internal fun TraxosButton(
                 .clip(shape)
                 .background(background)
                 .then(
-                    if (tone == ButtonTone.SECONDARY)
-                        Modifier.border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
-                    else Modifier
+                    Modifier.border(
+                        .5.dp,
+                        if (tone == ButtonTone.PRIMARY || tone == ButtonTone.DESTRUCTIVE)
+                            foreground.copy(alpha = .20f)
+                        else controlOutline(MaterialTheme.colorScheme),
+                        shape,
+                    )
                 )
                 .clickable(
                     interactionSource = source,
@@ -145,6 +151,7 @@ internal fun TraxosIconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    outlined: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     val source = remember { MutableInteractionSource() }
@@ -157,8 +164,23 @@ internal fun TraxosIconButton(
                 if (pressed) MaterialTheme.colorScheme.primary.copy(alpha = .10f)
                 else Color.Transparent
             )
+            .then(
+                if (outlined)
+                    Modifier.border(
+                        .5.dp,
+                        controlOutline(MaterialTheme.colorScheme),
+                        Radius.control,
+                    )
+                else Modifier
+            )
             .alpha(if (enabled) 1f else .65f)
-            .clickable(source, null, enabled, role = Role.Button, onClick = onClick),
+            .clickable(
+                source,
+                null,
+                enabled && LocalAppInteractionAllowed.current,
+                role = Role.Button,
+                onClick = onClick,
+            ),
         contentAlignment = Alignment.Center,
     ) {
         content()

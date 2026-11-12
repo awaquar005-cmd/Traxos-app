@@ -159,6 +159,23 @@ internal fun MoreScreen(navigate: (String) -> Unit) {
                 )
                 .forEach { ToolRow(it, false, navigate) }
         }
+        SettingsGroup("LEDGER TOOLS") {
+            listOf(
+                    ToolEntry(
+                        "reports",
+                        "Monthly reports",
+                        "Income, purchases and refunds by category",
+                        TraxosIcons.report,
+                    ),
+                    ToolEntry(
+                        "deleted",
+                        "Deleted transactions",
+                        "Recover entries and linked movements",
+                        TraxosIcons.history,
+                    ),
+                )
+                .forEach { ToolRow(it, false, navigate) }
+        }
         SettingsGroup("MAKE IT YOURS") {
             listOf(
                     ToolEntry(
@@ -242,7 +259,7 @@ internal fun ToolRow(entry: ToolEntry, preview: Boolean, navigate: (String) -> U
         { navigate(entry.route) },
         Modifier.fillMaxWidth().testTag("tool_${entry.route}"),
         tone = ButtonTone.GHOST,
-        contentPadding = PaddingValues(vertical = 8.dp, horizontal = 2.dp),
+        contentPadding = PaddingValues(vertical = 8.dp, horizontal = 8.dp),
     ) {
         Icon(entry.icon, null, Modifier.size(23.dp), tint = MaterialTheme.colorScheme.primary)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {

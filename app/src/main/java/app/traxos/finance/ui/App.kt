@@ -194,6 +194,8 @@ fun TraxosApp(vm: MainViewModel) {
                                 "gift/{id}" -> "Gift card"
                                 "more" -> "More"
                                 "smart" -> "Smart Add"
+                                "reports" -> "Monthly reports"
+                                "deleted" -> "Deleted transactions"
                                 "transfer" -> "Own-account transfer"
                                 "categories" -> "Categories"
                                 "labels/{kind}" -> "Saved entry options"
@@ -203,6 +205,15 @@ fun TraxosApp(vm: MainViewModel) {
                             back =
                                 if (
                                     route == "transfer" ||
+                                        route == "deleted" ||
+                                        (route == "transactions" &&
+                                            nav.previousBackStackEntry?.destination?.route ==
+                                                "reports") ||
+                                        (route == "reports" &&
+                                            nav.previousBackStackEntry
+                                                ?.destination
+                                                ?.route
+                                                ?.startsWith("settings") == true) ||
                                         route == "categories" ||
                                         route.startsWith("labels/") ||
                                         route.startsWith("card_payment/") ||
@@ -224,7 +235,8 @@ fun TraxosApp(vm: MainViewModel) {
                             actions =
                                 if (
                                     route != "transfer" &&
-                                        (prefs.centerAction != "ADD_TRANSACTION" ||
+                                        (route == "transactions" ||
+                                            prefs.centerAction != "ADD_TRANSACTION" ||
                                             "settings" !in slots ||
                                             "home" !in slots ||
                                             "more" !in slots)
@@ -232,6 +244,10 @@ fun TraxosApp(vm: MainViewModel) {
                                     {
                                         TraxosActionMenu(
                                             buildList {
+                                                if (route == "transactions") {
+                                                    add("reports" to "Monthly reports")
+                                                    add("deleted" to "Deleted transactions")
+                                                }
                                                 if ("home" !in slots) add("home" to "Home")
                                                 if (prefs.centerAction != "ADD_TRANSACTION")
                                                     add("add" to "Add transaction")
@@ -326,6 +342,8 @@ fun TraxosApp(vm: MainViewModel) {
                             when (section) {
                                 "review" -> "ui_review"
                                 "navigation" -> "navigation_settings"
+                                "deleted" -> "deleted"
+                                "reports" -> "reports"
                                 else -> "settings/$section"
                             }
                         nav.navigate(destination) {
@@ -355,6 +373,16 @@ fun TraxosApp(vm: MainViewModel) {
             }
             composable("navigation_settings") {
                 RoutePage("navigation_settings") { NavigationSettingsScreen(vm) }
+            }
+            composable("reports") {
+                RoutePage("reports") {
+                    MonthlyReportsScreen(vm, prefs.balancesHidden) {
+                        nav.navigate("transactions") { launchSingleTop = true }
+                    }
+                }
+            }
+            composable("deleted") {
+                RoutePage("deleted") { DeletedTransactionsScreen(vm, prefs.balancesHidden) }
             }
             composable("more") { RoutePage("more") { MoreScreen(mainNav) } }
             composable("smart") {

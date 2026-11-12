@@ -173,8 +173,8 @@ internal fun TraxosDialog(
                     .testTag("traxos_dialog"),
         ) {
             Column(
-                Modifier.verticalScroll(rememberScrollState()).padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
+                Modifier.verticalScroll(rememberScrollState()).padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Text(
                     if (destructive) "PLEASE REVIEW" else "TRAXOS",
@@ -524,6 +524,8 @@ internal fun TraxosActionMenu(options: List<Pair<String, String>>, onSelect: (St
                                         when (id) {
                                             "add" -> TraxosIcons.plus
                                             "settings" -> TraxosIcons.settings
+                                            "reports" -> TraxosIcons.report
+                                            "deleted" -> TraxosIcons.history
                                             else -> TraxosIcons.ledger
                                         },
                                         null,

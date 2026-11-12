@@ -80,3 +80,14 @@ Upgrade0.5→0.6 in place: verify transaction/account/category/gift history, enc
 - Paste a redacted gift message with prefix/suffix INR, order/tax amounts and ambiguous values; review every field before save. No image OCR should appear.
 - Transfer between two owned same-currency accounts; check two linked rows, unchanged net worth/spending, separate Activity filter, delete/Undo and restart. Reject same-account/card/currency mismatch/insufficient amount.
 - Personal only: explicit consent and SMS permission accepted/denied/revoked; self-transfer suggestions need two accounts and approval. Play has no automatic SMS access.
+
+## 0.8 offline tools — physical acceptance pending
+
+- Update7→8 in place, verify existing transactions, encrypted gifts, PIN and custom tabs.
+- Activity: combine search/type/dates/account/category/currency, include archived references, validate bad dates/ranges, cancel/reset/apply, close nested pickers without losing dates. Use soft keyboard and 200% fonts on a narrow screen; fixed buttons/errors must stay reachable.
+- Change sort in Activity and Settings, force-close/reopen; dates/filter state follows the documented task lifetime.
+- Reports: change months, leap/year boundaries, income/spending/refund-negative rows and mixed currencies; tap a category, inspect exact Activity results, use Up/Back to return to report. Mask amounts, edit/delete/Undo and check reactive totals.
+- Deleted transactions: search, cancel restore, restore and Undo normal entry and both linked movement types; rapidly repeat taps, restart, restore archived history. Confirm no purge/deletion-date claim or duplicate financial entry.
+- Review light/dark outlines, focus/disabled/error states, text overflow, TalkBack labels, IME and native Back. Existing native biometrics/SMS restrictions remain separate acceptance.
+
+- On the phone shown in the feedback, cold-launch repeatedly: all five splash squares must remain complete, balanced and unboxed. Verify the short animation never enlarges the mark outside the mask. Header/lock logos must have no outline; button borders should be half-dp and subtle. Native host mask simulation is evidence of geometry only.

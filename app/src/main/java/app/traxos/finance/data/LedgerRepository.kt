@@ -421,6 +421,11 @@ class LedgerRepository(private val db: TraxosDatabase) {
             recordJournal(pairedId(op), incoming, "CREATE", 0)
         }
 
+    suspend fun setActivitySort(value: String) {
+        require(value in listOf("NEWEST", "OLDEST")) { "Choose a valid activity order" }
+        dao.activitySort(value)
+    }
+
     suspend fun setAccent(value: String) {
         require(value in listOf("COBALT", "NAVY", "PETROL", "GRAPHITE", "FOREST"))
         dao.accent(value)

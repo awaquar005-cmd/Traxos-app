@@ -102,6 +102,7 @@ data class Preferences(
     @ColumnInfo(defaultValue = "0") val smsOptIn: Boolean = false,
     @ColumnInfo(defaultValue = "0") val suggestionNotifications: Boolean = false,
     @ColumnInfo(defaultValue = "'COBALT'") val accent: String = "COBALT",
+    @ColumnInfo(defaultValue = "'NEWEST'") val activitySort: String = "NEWEST",
 )
 
 @Entity(
@@ -133,6 +134,18 @@ data class RecordRow(
     val merchantName: String? = null,
     val categoryIcon: String = "tag",
     val categoryColor: String = "BLUE",
+)
+
+data class CategoryReport(
+    val currency: String,
+    val categoryId: String,
+    val categoryName: String,
+    val categoryIcon: String,
+    val categoryColor: String,
+    val expenseMinor: Long,
+    val refundMinor: Long,
+    val incomeMinor: Long,
+    val entries: Long,
 )
 
 data class Summary(val currency: String, val expenseMinor: Long, val incomeMinor: Long)
@@ -186,14 +199,32 @@ interface LedgerDao {
     fun recent(): Flow<List<RecordRow>>
 
     @Query(
-        "SELECT t.*, a.name AS accountName, c.name AS categoryName, a.currency, m.name AS merchantName, c.icon AS categoryIcon, c.color AS categoryColor FROM transactions t JOIN accounts a ON a.id = t.accountId JOIN categories c ON c.id = t.categoryId LEFT JOIN entry_labels m ON m.id = t.merchantId WHERE t.deleted = 0 AND t.profileId = 'local' AND (:filter='ALL' OR (:filter='EXPENSES' AND t.type IN ('EXPENSE','REFUND')) OR (:filter='INCOME' AND t.type='INCOME') OR (:filter='TRANSFERS' AND t.type IN ('TRANSFER_IN','TRANSFER_OUT')) OR (:filter='CARD_PAYMENTS' AND t.type IN ('PAYMENT_IN','PAYMENT_OUT'))) AND (t.note LIKE '%' || :search || '%' ESCAPE '\\' OR c.name LIKE '%' || :search || '%' ESCAPE '\\' OR a.name LIKE '%' || :search || '%' ESCAPE '\\' OR m.name LIKE '%' || :search || '%' ESCAPE '\\') ORDER BY t.day DESC, t.id DESC"
+        "SELECT t.*, a.name AS accountName, c.name AS categoryName, a.currency, m.name AS merchantName, c.icon AS categoryIcon, c.color AS categoryColor FROM transactions t JOIN accounts a ON a.id = t.accountId JOIN categories c ON c.id = t.categoryId LEFT JOIN entry_labels m ON m.id = t.merchantId WHERE t.deleted = :deleted AND (NOT :deleted OR t.linkId IS NULL OR t.type IN ('TRANSFER_OUT','PAYMENT_OUT')) AND t.profileId = 'local' AND t.day >= :start AND t.day <= :end AND (:account='' OR t.accountId=:account) AND (:category='' OR t.categoryId=:category) AND (:currency='' OR a.currency=:currency) AND (:filter='ALL' OR (:filter='EXPENSES' AND t.type IN ('EXPENSE','REFUND')) OR (:filter='INCOME' AND t.type='INCOME') OR (:filter='TRANSFERS' AND t.type IN ('TRANSFER_IN','TRANSFER_OUT')) OR (:filter='CARD_PAYMENTS' AND t.type IN ('PAYMENT_IN','PAYMENT_OUT'))) AND (t.note LIKE '%' || :search || '%' ESCAPE '\\' OR c.name LIKE '%' || :search || '%' ESCAPE '\\' OR a.name LIKE '%' || :search || '%' ESCAPE '\\' OR m.name LIKE '%' || :search || '%' ESCAPE '\\') ORDER BY CASE WHEN :sort='OLDEST' THEN t.day END ASC, CASE WHEN :sort='OLDEST' THEN t.id END ASC, t.day DESC, t.id DESC"
     )
-    fun page(search: String, filter: String = "ALL"): PagingSource<Int, RecordRow>
+    fun page(
+        search: String,
+        filter: String = "ALL",
+        start: Long = Long.MIN_VALUE,
+        end: Long = Long.MAX_VALUE,
+        account: String = "",
+        category: String = "",
+        currency: String = "",
+        sort: String = "NEWEST",
+        deleted: Boolean = false,
+    ): PagingSource<Int, RecordRow>
 
     @Query(
         "SELECT a.currency, COALESCE(SUM(CASE WHEN t.type = 'EXPENSE' THEN t.amountMinor WHEN t.type = 'REFUND' THEN -t.amountMinor ELSE 0 END),0) AS expenseMinor, COALESCE(SUM(CASE WHEN t.type = 'INCOME' THEN t.amountMinor ELSE 0 END),0) AS incomeMinor FROM transactions t JOIN accounts a ON a.id = t.accountId WHERE t.deleted = 0 AND t.profileId = 'local' AND t.day >= :start AND t.day < :end GROUP BY a.currency"
     )
     fun summary(start: Long, end: Long): Flow<List<Summary>>
+
+    @Query(
+        "SELECT a.currency, c.id AS categoryId, c.name AS categoryName, c.icon AS categoryIcon, c.color AS categoryColor, SUM(CASE WHEN t.type='EXPENSE' THEN t.amountMinor ELSE 0 END) AS expenseMinor, SUM(CASE WHEN t.type='REFUND' THEN t.amountMinor ELSE 0 END) AS refundMinor, SUM(CASE WHEN t.type='INCOME' THEN t.amountMinor ELSE 0 END) AS incomeMinor, COUNT(*) AS entries FROM transactions t JOIN accounts a ON a.id=t.accountId JOIN categories c ON c.id=t.categoryId WHERE t.profileId='local' AND t.deleted=0 AND t.type IN ('EXPENSE','REFUND','INCOME') AND t.day>=:start AND t.day<:end GROUP BY a.currency,c.id ORDER BY a.currency,c.name COLLATE NOCASE,c.id"
+    )
+    fun categoryReport(start: Long, end: Long): Flow<List<CategoryReport>>
+
+    @Query("UPDATE preferences SET activitySort=:value WHERE id=1")
+    suspend fun activitySort(value: String)
 
     @Insert suspend fun insertAccount(account: Account)
 
@@ -266,7 +297,7 @@ interface LedgerDao {
             SmartSuggestion::class,
             EntryLabel::class,
         ],
-    version = 7,
+    version = 8,
     exportSchema = true,
 )
 abstract class TraxosDatabase : RoomDatabase() {
@@ -401,6 +432,15 @@ abstract class TraxosDatabase : RoomDatabase() {
                 }
             }
 
+        val MIGRATION_7_8 =
+            object : Migration(7, 8) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "ALTER TABLE preferences ADD COLUMN activitySort TEXT NOT NULL DEFAULT 'NEWEST'"
+                    )
+                }
+            }
+
         fun open(context: Context, name: String = "traxos.db"): TraxosDatabase =
             Room.databaseBuilder(context, TraxosDatabase::class.java, name)
                 .addMigrations(
@@ -410,6 +450,7 @@ abstract class TraxosDatabase : RoomDatabase() {
                     MIGRATION_4_5,
                     MIGRATION_5_6,
                     MIGRATION_6_7,
+                    MIGRATION_7_8,
                 )
                 .addCallback(
                     object : Callback() {

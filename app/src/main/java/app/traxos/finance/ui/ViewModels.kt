@@ -7,8 +7,10 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import app.traxos.finance.data.*
+import app.traxos.finance.domain.ActivityScope
 import app.traxos.finance.domain.Money
 import java.time.LocalDate
+import java.time.YearMonth
 import java.util.UUID
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -36,6 +38,24 @@ data class Feedback(
     val preferenceChange: Boolean = false,
     val kind: NoticeKind = NoticeKind.SUCCESS,
 )
+
+internal data class ActivityPagingQuery(
+    val search: String,
+    val type: String,
+    val scope: ActivityScope,
+    val sort: String,
+)
+
+sealed interface ReportReadState {
+    data object Loading : ReportReadState
+
+    data object Failed : ReportReadState
+
+    data class Ready(val rows: List<CategoryReport>) : ReportReadState
+}
+
+private fun escapeSearch(value: String) =
+    value.trim().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class MainViewModel(val repository: LedgerRepository, private val saved: SavedStateHandle) :
@@ -97,18 +117,130 @@ class MainViewModel(val repository: LedgerRepository, private val saved: SavedSt
         saved["record_filter"] = value
     }
 
+    val scopeValues = saved.getStateFlow("activity_scope", arrayListOf("", "", "", "", ""))
+
+    fun scope(value: ActivityScope) {
+        saved["activity_scope"] = value.validate().saved()
+    }
+
+    fun clearActivityFilters() {
+        search("")
+        recordFilter("ALL")
+        scope(ActivityScope())
+    }
+
+    fun activitySort(value: String) =
+        preferenceChange("Activity order saved") { repository.setActivitySort(value) }
+
     val pages =
-        combine(search.debounce(300).distinctUntilChanged(), recordFilter) { q, filter ->
-                q to filter
+        combine(
+                search.debounce(300).distinctUntilChanged(),
+                recordFilter,
+                scopeValues,
+                preferences.filterNotNull().map { it.activitySort }.distinctUntilChanged(),
+            ) { q, filter, scope, sort ->
+                ActivityPagingQuery(q, filter, ActivityScope.read(scope), sort)
             }
-            .flatMapLatest { (q, filter) ->
-                val escaped = q.trim().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            .flatMapLatest { query ->
                 Pager(PagingConfig(pageSize = 40, enablePlaceholders = false)) {
-                        repository.dao.page(escaped, filter)
+                        val scope = query.scope
+                        repository.dao.page(
+                            escapeSearch(query.search),
+                            query.type,
+                            scope.startDay,
+                            scope.endDay,
+                            scope.accountId,
+                            scope.categoryId,
+                            scope.currency,
+                            query.sort,
+                        )
                     }
                     .flow
             }
             .cachedIn(viewModelScope)
+
+    val deletedSearch = saved.getStateFlow("deleted_search", "")
+
+    fun deletedSearch(value: String) {
+        saved["deleted_search"] = value.take(200)
+    }
+
+    val deletedPages =
+        deletedSearch
+            .debounce(300)
+            .distinctUntilChanged()
+            .flatMapLatest { q ->
+                Pager(PagingConfig(pageSize = 40, enablePlaceholders = false)) {
+                        repository.dao.page(escapeSearch(q), deleted = true)
+                    }
+                    .flow
+            }
+            .cachedIn(viewModelScope)
+
+    val reportMonth = saved.getStateFlow("report_month", YearMonth.now().toString())
+    val reportType = saved.getStateFlow("report_type", "EXPENSES")
+
+    fun reportMonth(value: String) {
+        require(YearMonth.parse(value).year in 1..9999) { "Choose a year from 0001 to 9999" }
+        saved["report_month"] = value
+    }
+
+    fun reportType(value: String) {
+        require(value in listOf("EXPENSES", "INCOME"))
+        saved["report_type"] = value
+    }
+
+    val report =
+        retry
+            .flatMapLatest {
+                reportMonth.flatMapLatest { value ->
+                    val month = YearMonth.parse(value)
+                    repository.dao
+                        .categoryReport(
+                            month.atDay(1).toEpochDay(),
+                            month.plusMonths(1).atDay(1).toEpochDay(),
+                        )
+                        .map<List<CategoryReport>, ReportReadState> { ReportReadState.Ready(it) }
+                        .onStart { emit(ReportReadState.Loading) }
+                        .catch { e ->
+                            if (e is CancellationException) throw e
+                            emit(ReportReadState.Failed)
+                        }
+                }
+            }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ReportReadState.Loading)
+
+    fun restore(row: RecordRow) {
+        if (busy.value) return
+        busy.value = true
+        val op = UUID.randomUUID().toString()
+        viewModelScope.launch {
+            try {
+                repository.setDeleted(op, row.record.id, row.record.revision, false)
+                events.send(
+                    Feedback(
+                        if (row.record.linkId == null) "Transaction restored"
+                        else "Both sides restored",
+                        undoId = row.record.id,
+                        undoRevision = row.record.revision + 1,
+                        undoDeleted = true,
+                    )
+                )
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                events.send(
+                    Feedback(
+                        if (e is IllegalArgumentException) e.message ?: "Could not restore"
+                        else "Could not restore. Your records are unchanged; try again.",
+                        kind = NoticeKind.ERROR,
+                    )
+                )
+            } finally {
+                busy.value = false
+            }
+        }
+    }
+
     val events = Channel<Feedback>(Channel.BUFFERED)
     var busy = MutableStateFlow(false)
         private set

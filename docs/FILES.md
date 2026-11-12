@@ -1,5 +1,66 @@
 # Created files
 
+## 0.8.0 offline ledger tools
+
+`LedgerToolsScreens.kt` implements filter drafts, deleted recovery and monthly reports; `ActivityScope.kt` defines validated date/ID criteria. Room queries/MVVM add paging/aggregate/sort/restore state without changing financial entities. Schema8 adds only activitySort. Reports joins the real destination registry; More/Settings/Activity expose all completed tools. Shared button borders are half-dp; the header logo explicitly opts out. `traxos_splash_icon.xml` adds Android12 safe-area padding separate from animation. No new SDK/dependency or permission.
+
+Created/modified paths:
+
+- `README.md`
+- `app/build.gradle.kts`
+- `app/schemas/app.traxos.finance.data.TraxosDatabase/8.json`
+- `app/src/main/java/app/traxos/finance/data/Database.kt`
+- `app/src/main/java/app/traxos/finance/data/LedgerRepository.kt`
+- `app/src/main/java/app/traxos/finance/domain/ActivityScope.kt`
+- `app/src/main/java/app/traxos/finance/domain/NavigationLayout.kt`
+- `app/src/main/java/app/traxos/finance/ui/App.kt`
+- `app/src/main/java/app/traxos/finance/ui/Components.kt`
+- `app/src/main/java/app/traxos/finance/ui/Controls.kt`
+- `app/src/main/java/app/traxos/finance/ui/LedgerScreens.kt`
+- `app/src/main/java/app/traxos/finance/ui/LedgerToolsScreens.kt`
+- `app/src/main/java/app/traxos/finance/ui/Navigation.kt`
+- `app/src/main/java/app/traxos/finance/ui/Overlays.kt`
+- `app/src/main/java/app/traxos/finance/ui/SettingsScreen.kt`
+- `app/src/main/java/app/traxos/finance/ui/UiHierarchy.kt`
+- `app/src/main/java/app/traxos/finance/ui/ViewModels.kt`
+- `app/src/main/res/drawable/traxos_splash_animated.xml`
+- `app/src/main/res/drawable/traxos_splash_icon.xml`
+- `app/src/test/java/app/traxos/finance/ActivityFiltersUiTest.kt`
+- `app/src/test/java/app/traxos/finance/OfflineLedgerToolsTest.kt`
+- `app/src/test/java/app/traxos/finance/OfflineToolsMigrationTest.kt`
+- `app/src/test/java/app/traxos/finance/OfflineToolsUiTest.kt`
+- `app/src/test/java/app/traxos/finance/SplashMaskTest.kt`
+- `docs/ARCHITECTURE.md`
+- `docs/DECISIONS.md`
+- `docs/DEVICE_QA.md`
+- `docs/FILES.md`
+- `docs/IMPLEMENTATION_PLAN.md`
+- `docs/OFFLINE_TOOLS.md`
+- `docs/OFFLINE_TOOLS_PLAN.md`
+- `docs/PROGRESS.md`
+- `docs/UI_REVIEW_COVERAGE.md`
+- `docs/validation/offline-tools/README.md`
+- `docs/validation/offline-tools/build.log`
+- `docs/validation/offline-tools/host-results.json`
+- `docs/validation/offline-tools/targeted.log`
+- `downloads/README.md`
+- `downloads/SHA256SUMS.txt`
+- `downloads/TRAXOS-0.8.0-personal.apk`
+- `downloads/TRAXOS-0.8.0-play.apk`
+
+Validation PNGs created for0.8:
+
+- `docs/validation/offline-tools/dashboard-dark.png`
+- `docs/validation/offline-tools/dashboard-light.png`
+- `docs/validation/offline-tools/deleted-light.png`
+- `docs/validation/offline-tools/more-light.png`
+- `docs/validation/offline-tools/reports-dark-masked.png`
+- `docs/validation/offline-tools/reports-light.png`
+- `docs/validation/offline-tools/settings-dark.png`
+- `docs/validation/offline-tools/splash-mask-simulation.png`
+
+Validation PNGs are synthetic host renders or the splash-mask simulation, not physical screenshots. Historical inventories follow.
+
 ## 0.7.0 UI review release
 
 New reusable hierarchy/theme/accent/tool rows are in `UiHierarchy.kt`; `ReviewCatalog.kt` defines 100 isolated sample pages and `DesignReviewScreen.kt` renders their state/journey layouts. `TransferScreen.kt` is a real owned-transfer form. Root navigation, Settings/navigation editor, centered unlock, distinct icons/buttons, gift parsing, Smart Add, ledger filters and schema7 are updated in the existing source. Existing transparent brand assets are reused. Test fixtures contain synthetic values only. Validation PNGs in `docs/validation/ui-review/` are synthetic host renders.

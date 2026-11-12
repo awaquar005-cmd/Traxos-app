@@ -120,3 +120,7 @@ Full document read:1,164 lines. 100 individual preview pages, each with state va
 ## Latest-request overrides and real implementation
 
 Image OCR remains removed. Existing transparent five-square brand vector is reused directly; its original provenance remains in assets/brand/README.md. No exact raster trace is claimed without an original file. Personal/play SMS separation is retained. Real own-account transfers and gift text amount extraction, Home/root navigation, distinct icons, sectioned Settings/More and persisted accents are implemented separately from these sample layouts. Advanced accounting, cloud/recovery, voice, groups and billing remain prototypes here.
+
+## 0.8 live promotions
+
+Activity date/account/category/currency filters, calendar-month category reports and deleted-transaction recovery are now real separate screens, with persisted sorting, filtered drill-through and atomic restore/Undo. They use the actual Room ledger; the gallery pages above remain intentionally isolated sample journeys. See [offline tools behavior and validation](OFFLINE_TOOLS.md). This does not implement future budgets, groups, cloud export/backup or other service-backed previews.

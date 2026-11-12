@@ -4,12 +4,14 @@ Offline-first Kotlin/Jetpack Compose personal finance application. Development m
 
 ## Download for phone testing
 
-**[Download TRAXOS 0.7.0 Personal APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.7.0-personal.apk)**. Install as **Update**; do not uninstall or clear storage. Your records, app PIN, gift secrets and navigation preferences are preserved by the signed update and explicit Room migration.
+**[Download TRAXOS 0.8.0 Personal APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.8.0-personal.apk)**. Install as **Update**; do not uninstall or clear storage. Your records, app PIN, gift secrets and navigation preferences are preserved by the signed update and explicit Room migration.
 
-[SMS-free Play build](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.7.0-play.apk) · [Installation help/checksums](downloads/README.md) · [Current guide and limitations](docs/UI_REVIEW.md) · [Actual tests/lint/previews](docs/validation/ui-review/README.md).
+[SMS-free Play build](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.8.0-play.apk) · [Installation help/checksums](downloads/README.md) · [Current guide and limitations](docs/OFFLINE_TOOLS.md) · [Actual tests/lint/previews](docs/validation/offline-tools/README.md).
 
 
-This release centers the unboxed five-square unlock branding, groups Settings/More, adds persisted accent palettes and a navigation preview/presets, and fixes Home/root history. Text-based gift value extraction is improved. Real same-currency own-account transfers use linked entries and stay separate from income/spending. **More → Explore all screen flows** opens 100 linked sample UI pages for full V3 hierarchy review. Those future features are explicitly marked **UI PREVIEW** and do not write data or call services. [Review inventory](docs/UI_REVIEW_COVERAGE.md).
+This release adds **real Activity filters and saved ordering, monthly category reports with drill-through, and deleted-transaction restore/Undo**. Reports separate currencies and exclude transfers/card payments; linked movements restore atomically. Find the new tools in More, Activity's menu and Settings → Accounts & Data. [Behavior and edge cases](docs/OFFLINE_TOOLS.md).
+
+The splash mark now fits Android12's icon mask with all five squares intact. The logo has no outline; action buttons use minimal half-dp borders. Existing financial data, UI themes/navigation, gifts and security remain. More → Explore all screen flows still opens 100 explicitly labeled sample pages for future V3 hierarchy review. [Review inventory](docs/UI_REVIEW_COVERAGE.md).
 
 OCR is removed; QR/barcodes, manual/text gift entry, reminders and redemption remain. Custom categories/accounts, inline creation, saved entry options, compact forms, automatic biometric prompting, a branded PIN/splash, compact menus and Settings fresh-entry navigation are implemented. Credit-card charges/refunds/paired payments use signed debt and do not count credit limits or repayments as income/expense.
 

@@ -7,11 +7,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -19,6 +23,7 @@ import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import app.traxos.finance.data.*
+import app.traxos.finance.domain.ActivityScope
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -126,6 +131,38 @@ internal fun TransactionsScreen(
 ) {
     val search by vm.search.collectAsStateWithLifecycle()
     val filter by vm.recordFilter.collectAsStateWithLifecycle()
+    val scopeValues by vm.scopeValues.collectAsStateWithLifecycle()
+    val preferences by vm.preferences.collectAsStateWithLifecycle()
+    val reads by vm.reads.collectAsStateWithLifecycle()
+    val scope = ActivityScope.read(scopeValues)
+    var filtering by rememberSaveable { mutableStateOf(false) }
+    var sorting by rememberSaveable { mutableStateOf(false) }
+    val preferenceBusy by vm.busy.collectAsStateWithLifecycle()
+    val sort = preferences?.activitySort ?: "NEWEST"
+    if (filtering) {
+        val ready = reads as? ReadState.Ready
+        if (ready != null)
+            ActivityFilterSheet(
+                scope,
+                ready.accounts,
+                ready.categories,
+                { filtering = false },
+                vm::scope,
+            )
+    }
+    if (sorting)
+        TraxosSheet("Activity order", { sorting = false }, scrollable = true) {
+            listOf("NEWEST" to "Newest first", "OLDEST" to "Oldest first").forEach { (id, label) ->
+                TraxosChoiceRow(label, sort == id, enabled = !preferenceBusy) {
+                    vm.activitySort(id)
+                    sorting = false
+                }
+            }
+            Text(
+                "Saved for Activity. Deleted entries always use newest transaction date first.",
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
     val list = vm.pages.collectAsLazyPagingItems()
     val requester = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
@@ -138,13 +175,83 @@ internal fun TransactionsScreen(
     }
     Column(
         Modifier.fillMaxSize().padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text("Your activity", Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
-            TraxosIconButton(onClick = add) { Icon(TraxosIcons.plus, "Add transaction") }
+        val largeFont = LocalDensity.current.fontScale > 1.3f
+        if (largeFont) Text("Activity", style = MaterialTheme.typography.titleMedium)
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (!largeFont)
+                Text(
+                    "Activity",
+                    Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            TraxosButton(
+                { filtering = true },
+                (if (largeFont) Modifier.weight(1f) else Modifier).testTag("activity_filters"),
+                reads is ReadState.Ready,
+                tone = ButtonTone.SECONDARY,
+            ) {
+                Text(
+                    if (scope.active) "Filters · On" else "Filters",
+                    style = MaterialTheme.typography.labelMedium,
+                )
+            }
+            TraxosButton(
+                { sorting = true },
+                (if (largeFont) Modifier.weight(1f) else Modifier).testTag("activity_sort"),
+                preferences != null && !preferenceBusy,
+                tone = ButtonTone.SECONDARY,
+            ) {
+                Text(
+                    if (sort == "OLDEST") "Oldest first" else "Newest first",
+                    style = MaterialTheme.typography.labelMedium,
+                )
+            }
         }
         LedgerSearch(search, vm::search, requester)
+        if (scope.active) {
+            val ready = reads as? ReadState.Ready
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(
+                    listOfNotNull(
+                            if (scope.from.isNotBlank() || scope.through.isNotBlank())
+                                "${scope.from.ifBlank { "Any date" }} → ${scope.through.ifBlank { "Any date" }}"
+                            else null,
+                            ready
+                                ?.accounts
+                                ?.firstOrNull { it.account.id == scope.accountId }
+                                ?.account
+                                ?.name,
+                            ready?.categories?.firstOrNull { it.id == scope.categoryId }?.name,
+                            scope.currency.takeIf { it.isNotBlank() },
+                        )
+                        .joinToString(" · "),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f).testTag("activity_scope_summary"),
+                )
+                TraxosIconButton(
+                    vm::clearActivityFilters,
+                    Modifier.testTag("activity_clear_filters").semantics {
+                        contentDescription = "Clear search and filters"
+                    },
+                ) {
+                    Text("×", style = MaterialTheme.typography.titleLarge)
+                }
+            }
+        }
         Row(
             Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -185,19 +292,17 @@ internal fun TransactionsScreen(
             if (list.itemCount == 0 && list.loadState.refresh is LoadState.NotLoading)
                 item {
                     Message(
-                        if (search.isBlank() && filter == "ALL") "Your ledger starts here"
+                        if (search.isBlank() && filter == "ALL" && !scope.active)
+                            "Your ledger starts here"
                         else "No matching transactions",
-                        if (search.isBlank() && filter == "ALL")
+                        if (search.isBlank() && filter == "ALL" && !scope.active)
                             "Record an expense or income. All changes stay on this phone."
                         else "Try a different note, account or category.",
-                        if (search.isBlank() && filter == "ALL") "Add transaction"
+                        if (search.isBlank() && filter == "ALL" && !scope.active) "Add transaction"
                         else "Clear search",
-                        if (search.isBlank() && filter == "ALL") add
+                        if (search.isBlank() && filter == "ALL" && !scope.active) add
                         else {
-                            {
-                                vm.search("")
-                                vm.recordFilter("ALL")
-                            }
+                            { vm.clearActivityFilters() }
                         },
                     )
                 }

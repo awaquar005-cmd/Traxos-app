@@ -65,6 +65,31 @@ object TraxosIcons {
             }
             .build()
 
+    val report =
+        line("Reports") {
+            moveTo(4f, 3f)
+            lineTo(4f, 21f)
+            lineTo(21f, 21f)
+            moveTo(8f, 17f)
+            lineTo(8f, 12f)
+            moveTo(13f, 17f)
+            lineTo(13f, 8f)
+            moveTo(18f, 17f)
+            lineTo(18f, 4f)
+        }
+    val history =
+        line("Recovery") {
+            moveTo(3f, 10f)
+            curveTo(4f, 4f, 10f, 2f, 15f, 4f)
+            curveTo(22f, 7f, 22f, 17f, 15f, 20f)
+            curveTo(10f, 22f, 5f, 19f, 4f, 16f)
+            moveTo(3f, 4f)
+            lineTo(3f, 10f)
+            lineTo(9f, 10f)
+            moveTo(12f, 7f)
+            lineTo(12f, 12f)
+            lineTo(16f, 14f)
+        }
     val tag =
         line("Category") {
             moveTo(3f, 3f)
@@ -387,7 +412,9 @@ internal fun TraxosToolbar(
         if (back != null) TraxosIconButton(onClick = back) { Icon(TraxosIcons.back, "Back") }
         else {
             if (home != null)
-                TraxosIconButton(home, Modifier.testTag("toolbar_home")) { BrandMark() }
+                TraxosIconButton(home, Modifier.testTag("toolbar_home"), outlined = false) {
+                    BrandMark()
+                }
             else BrandMark()
             Spacer(Modifier.width(if (home != null) 2.dp else 10.dp))
         }

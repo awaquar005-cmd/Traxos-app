@@ -82,6 +82,12 @@ internal fun SettingsScreen(vm: MainViewModel, openSection: (String) -> Unit) {
             }
         }
         SettingsGroup("ACCOUNTS & DATA") {
+            SettingsRow("Monthly reports", "Category totals and matching activity") {
+                openSection("reports")
+            }
+            SettingsRow("Deleted transactions", "Restore saved history; no automatic purge") {
+                openSection("deleted")
+            }
             SettingsRow(
                 "Accounts & Data",
                 "Accounts, categories, currency and saved entry options",
@@ -114,7 +120,7 @@ internal fun SettingsRow(title: String, summary: String, onClick: () -> Unit) {
         onClick,
         Modifier.fillMaxWidth().testTag("setting_$title"),
         tone = ButtonTone.GHOST,
-        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 10.dp),
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp),
     ) {
         Icon(
             settingsIcon(title),
@@ -375,17 +381,6 @@ internal fun SettingsDetailScreen(
                 NotificationPermissionRow()
             }
             "data" -> {
-                SettingsRow(
-                    "Categories",
-                    "Create, rename, style or archive",
-                    { openCatalog("categories") },
-                )
-                SettingsRow("Merchants", "Saved merchant names", { openCatalog("labels/MERCHANT") })
-                SettingsRow(
-                    "Descriptions",
-                    "Frequently used transaction notes",
-                    { openCatalog("labels/DESCRIPTION") },
-                )
                 TraxosSelector(
                     "Default currency",
                     prefs.defaultCurrency,
@@ -398,6 +393,14 @@ internal fun SettingsDetailScreen(
                     "Used for new accounts and suggested gift/import currency. Existing financial records and balances are never converted.",
                     style = MaterialTheme.typography.bodySmall,
                 )
+                TraxosSelector(
+                    "Activity order",
+                    prefs.activitySort,
+                    listOf("NEWEST" to "Newest first", "OLDEST" to "Oldest first"),
+                    !busy,
+                ) {
+                    vm.activitySort(it)
+                }
                 val ready = read as? ReadState.Ready
                 if (ready != null) {
                     AccountPicker(
@@ -426,11 +429,40 @@ internal fun SettingsDetailScreen(
                         Text("Use recent expense category")
                     }
                 }
-                SettingsRow(
-                    "Manage financial accounts",
-                    "Cash, bank, wallet and card balances",
-                    openAccounts,
-                )
+                SettingsGroup("MANAGE ACCOUNTS & LABELS") {
+                    SettingsRow(
+                        "Manage financial accounts",
+                        "Cash, bank, wallet and card balances",
+                        openAccounts,
+                    )
+                    SettingsRow(
+                        "Categories",
+                        "Create, rename, style or archive",
+                        { openCatalog("categories") },
+                    )
+                    SettingsRow(
+                        "Merchants",
+                        "Saved merchant names",
+                        { openCatalog("labels/MERCHANT") },
+                    )
+                    SettingsRow(
+                        "Descriptions",
+                        "Frequently used transaction notes",
+                        { openCatalog("labels/DESCRIPTION") },
+                    )
+                }
+                SettingsGroup("LEDGER TOOLS") {
+                    SettingsRow(
+                        "Deleted transactions",
+                        "Restore financial entries",
+                        { openCatalog("deleted") },
+                    )
+                    SettingsRow(
+                        "Monthly reports",
+                        "Calendar-month category summaries",
+                        { openCatalog("reports") },
+                    )
+                }
                 Text(
                     "Export, portable encrypted backup and cloud sync are unavailable. Records are saved locally; uninstalling/clearing storage deletes them. App lock does not add a recovery mechanism.",
                     style = MaterialTheme.typography.bodySmall,
