@@ -21,7 +21,7 @@ interface GiftCipher {
 }
 
 /** Standard AES-256-GCM, random per-write IV, row-ID AAD, non-exportable Android Keystore keys. */
-class KeystoreGiftCipher : GiftCipher {
+class KeystoreGiftCipher(private val namespace: String = "traxos.gifts") : GiftCipher {
     private val store
         get() = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
 
@@ -53,19 +53,19 @@ class KeystoreGiftCipher : GiftCipher {
     }
 
     override fun verifyExisting() {
-        key("traxos.gifts.aes.v1", create = false)
-        key("traxos.gifts.hmac.v1", true, create = false)
+        key("$namespace.aes.v1", create = false)
+        key("$namespace.hmac.v1", true, create = false)
     }
 
     override fun seal(id: String, bytes: ByteArray) =
-        GiftEnvelope.seal(key("traxos.gifts.aes.v1"), id, bytes)
+        GiftEnvelope.seal(key("$namespace.aes.v1"), id, bytes)
 
     override fun open(id: String, bytes: ByteArray) =
-        GiftEnvelope.open(key("traxos.gifts.aes.v1", create = false), id, bytes)
+        GiftEnvelope.open(key("$namespace.aes.v1", create = false), id, bytes)
 
     override fun fingerprint(code: String): String =
         Mac.getInstance("HmacSHA256").run {
-            init(key("traxos.gifts.hmac.v1", true))
+            init(key("$namespace.hmac.v1", true))
             doFinal(GiftRules.normalize(code).toByteArray(Charsets.UTF_8)).joinToString("") {
                 "%02x".format(it)
             }

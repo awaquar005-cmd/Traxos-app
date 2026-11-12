@@ -1,5 +1,14 @@
 # Progress
 
+## Smart import/security/settings — 0.5.0-smart-security (code 6)
+
+Implemented staged OCR/compact-entry fixes, unified encrypted Smart Add review inbox, offline PIN/native biometric lock and categorized functional Settings. Existing ledger/gift/navigation functionality retained with explicit Room4→5 migration and per-setting atomic updates. See [implementation, security/recovery limits and policy](SMART_SECURITY.md).
+
+**assembleDebug and assembleDebugAndroidTest passed; 113 host tests passed with zero failures/errors/skips; lint passed with zero errors and21 dependency/tool update advisories.** Upgrade signature matches0.4;16KiB ZIP/64-bit ELF alignment passed. Standard APK is78,647,907bytes. Final build/test/lint evidence is recorded in [validation/smart-security](validation/smart-security/README.md). APK: `downloads/TRAXOS-0.5.0-smart-security.apk`; install as Update, never uninstall/clear data. This remains a development release. No native OCR accuracy, physical-device or commercial-readiness claim. Standard APK has no SMS access; manual share/paste works. Real failing Amazon image, hardware biometrics/Keystore, native OCR/camera/system notifications/process death and full accessibility acceptance remain pending. Existing ledger/metadata are not encrypted; app lock and device-bound secret encryption have no portable recovery.
+
+Next task: physical acceptance and genuine redacted image measurement, not another finance module. Earlier sections below are historical snapshots; statements such as “no app lock” describe those older releases.
+
+
 ## Gift wallet — 0.4.0-gift-wallet (code 5)
 
 **BUILT AND AUTOMATED VALIDATION PASSED.** Separate local gift card/voucher tables, manual CRUD/archive/expiry marking, exact stored-value redemption/history/last Undo and refund, Keystore-encrypted secrets/attachments, conservative mandatory-reviewed imports, bundled offline OCR/barcode capture, local reminder settings/workers and optional Gift Cards/More navigation routes. Existing default navigation and ledger records are preserved through explicit schema v3→v4 migration.

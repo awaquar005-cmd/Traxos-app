@@ -93,7 +93,7 @@ internal fun TraxosButton(
                 .clickable(
                     interactionSource = source,
                     indication = null,
-                    enabled = enabled && !busy,
+                    enabled = enabled && !busy && LocalAppInteractionAllowed.current,
                     role = Role.Button,
                     onClick = onClick,
                 )
@@ -236,7 +236,7 @@ internal fun TraxosInput(
                 else androidx.compose.ui.text.input.VisualTransformation.None,
             value = value,
             onValueChange = onChange,
-            enabled = enabled,
+            enabled = enabled && LocalAppInteractionAllowed.current,
             singleLine = !multiline,
             minLines = if (multiline) 2 else 1,
             textStyle =
@@ -247,7 +247,8 @@ internal fun TraxosInput(
             keyboardOptions =
                 KeyboardOptions(
                     keyboardType =
-                        if (secret) KeyboardType.Password
+                        if (secret && number) KeyboardType.NumberPassword
+                        else if (secret) KeyboardType.Password
                         else if (number) KeyboardType.Decimal else KeyboardType.Text,
                     imeAction = if (multiline) ImeAction.Default else ImeAction.Done,
                 ),

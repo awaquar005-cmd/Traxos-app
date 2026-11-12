@@ -3,3 +3,4 @@
 7a6ce3326b3bb5a616b4b403e4b82cf688a4d0fd0ef51c5ab251334ed8005a69  TRAXOS-0.2.0-ui-pass.apk
 db37d6d06b29fd35b68c958c877d684acca6662980913eec7a1d59aabfbdb1d0  TRAXOS-0.3.0-ui-components.apk
 f97d42c0ceed1c70ffeda4541010f2e7108a7e1ffd44e10fb5860976961c634e  TRAXOS-0.4.0-gift-wallet.apk
+6409cd9ae97f35aafa5409dcf7d602c3d99161fc89600c4a63801845745a24e1  TRAXOS-0.5.0-smart-security.apk

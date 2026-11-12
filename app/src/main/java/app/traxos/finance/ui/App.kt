@@ -30,6 +30,7 @@ import androidx.navigation.compose.*
 import app.traxos.finance.data.*
 import app.traxos.finance.domain.NavigationLayout
 import app.traxos.finance.gifts.*
+import app.traxos.finance.smart.*
 import kotlinx.coroutines.launch
 
 @Composable
@@ -37,14 +38,23 @@ fun TraxosApp(vm: MainViewModel) {
     val app = LocalContext.current.applicationContext as app.traxos.finance.TraxosApplication
     val gifts: GiftViewModel =
         viewModel(factory = viewModelFactory { initializer { GiftViewModel(app.gifts) } })
+    val smart: SmartViewModel =
+        viewModel(
+            factory = viewModelFactory { initializer { SmartViewModel(app.smart, app.repository) } }
+        )
     val incoming by GiftInbox.pending.collectAsState()
     val nav = rememberNavController()
     LaunchedEffect(incoming) {
         when (incoming) {
+            GiftIncoming.SmartOpen -> {
+                nav.navigate("smart") { launchSingleTop = true }
+                GiftInbox.pending.value = null
+            }
             GiftIncoming.Open -> {
                 nav.navigate("gifts") { launchSingleTop = true }
                 GiftInbox.pending.value = null
             }
+            is GiftIncoming.Text -> nav.navigate("smart") { launchSingleTop = true }
             null -> Unit
             else -> nav.navigate("gift_import") { launchSingleTop = true }
         }
@@ -52,6 +62,7 @@ fun TraxosApp(vm: MainViewModel) {
     val snackbarGiftEvents = remember {
         kotlinx.coroutines.channels.Channel<String>(kotlinx.coroutines.channels.Channel.BUFFERED)
     }
+    LaunchedEffect(smart) { for (message in smart.events) snackbarGiftEvents.send(message) }
     LaunchedEffect(gifts) {
         for (message in gifts.events) {
             snackbarGiftEvents.send(message)
@@ -94,7 +105,11 @@ fun TraxosApp(vm: MainViewModel) {
     val mainNav: (String) -> Unit = { target ->
         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
         if (nav.currentDestination?.route != target) {
-            if (target == "settings" && nav.currentDestination?.route == "navigation_settings")
+            if (
+                target == "settings" &&
+                    (nav.currentDestination?.route == "navigation_settings" ||
+                        nav.currentDestination?.route == "settings/{section}")
+            )
                 nav.popBackStack("settings", false)
             else
                 nav.navigate(target) {
@@ -144,17 +159,25 @@ fun TraxosApp(vm: MainViewModel) {
                                 "transactions" -> "Transactions"
                                 "accounts" -> "Accounts"
                                 "settings" -> "Settings"
+                                "settings/{section}" ->
+                                    settingSections
+                                        .firstOrNull {
+                                            it.first == entry?.arguments?.getString("section")
+                                        }
+                                        ?.second ?: "Settings"
                                 "navigation_settings" -> "Navigation"
                                 "gifts" -> "Gift Cards"
                                 "gift_import" -> "Smart import"
                                 "gift_settings" -> "Gift settings"
                                 "gift/{id}" -> "Gift card"
                                 "more" -> "More"
+                                "smart" -> "Smart Add"
                                 else -> "Dashboard"
                             },
                             back =
                                 if (
                                     route == "settings" ||
+                                        route.startsWith("settings/") ||
                                         route == "navigation_settings" ||
                                         route.startsWith("gift")
                                 ) {
@@ -190,7 +213,8 @@ fun TraxosApp(vm: MainViewModel) {
         bottomBar = {
             if (!form)
                 TraxosBottomBar(
-                    if (route == "navigation_settings") "settings" else route,
+                    if (route == "navigation_settings" || route.startsWith("settings/")) "settings"
+                    else route,
                     CenterShortcut.from(prefs.centerAction),
                     mainNav,
                     loadedPreferences != null,
@@ -259,10 +283,20 @@ fun TraxosApp(vm: MainViewModel) {
             }
             composable("settings") {
                 RoutePage("settings") {
-                    SettingsScreen(
+                    SettingsScreen(vm) { section ->
+                        nav.navigate("settings/$section") { launchSingleTop = true }
+                    }
+                }
+            }
+            composable("settings/{section}") { e ->
+                RoutePage("settings_detail") {
+                    SettingsDetailScreen(
+                        e.arguments?.getString("section").orEmpty(),
                         vm,
+                        gifts,
                         { nav.navigate("navigation_settings") { launchSingleTop = true } },
-                        { nav.navigate("gift_settings") { launchSingleTop = true } },
+                        { mainNav("accounts") },
+                        { nav.navigate("settings/data") { launchSingleTop = true } },
                     )
                 }
             }
@@ -270,13 +304,22 @@ fun TraxosApp(vm: MainViewModel) {
                 RoutePage("navigation_settings") { NavigationSettingsScreen(vm) }
             }
             composable("more") { RoutePage("more") { MoreScreen(mainNav) } }
+            composable("smart") {
+                RoutePage("smart") {
+                    SmartInboxScreen(
+                        smart,
+                        (incoming as? GiftIncoming.Text)?.value,
+                        { GiftInbox.pending.value = null },
+                    )
+                }
+            }
             composable("gifts") {
                 RoutePage("gifts") {
                     GiftWalletScreen(
                         gifts,
                         { nav.navigate("gift/$it") { launchSingleTop = true } },
                         {
-                            gifts.begin()
+                            gifts.begin(defaultCurrency = prefs.defaultCurrency)
                             nav.navigate("gift_edit/new") { launchSingleTop = true }
                         },
                         { nav.navigate("gift_import") { launchSingleTop = true } },
@@ -294,6 +337,12 @@ fun TraxosApp(vm: MainViewModel) {
                         { GiftInbox.pending.value = null },
                         { nav.popBackStack() },
                         { nav.navigate("gift_edit/new") { launchSingleTop = true } },
+                        saved = { id ->
+                            nav.popBackStack()
+                            if (nav.currentDestination?.route == "gift_edit/{id}")
+                                nav.popBackStack()
+                            nav.navigate("gift/$id") { launchSingleTop = true }
+                        },
                     )
                 }
             }
@@ -309,6 +358,7 @@ fun TraxosApp(vm: MainViewModel) {
                             if (nav.currentDestination?.route != "gift/{id}")
                                 nav.navigate("gift/$id") { launchSingleTop = true }
                         },
+                        scan = { nav.navigate("gift_import") { launchSingleTop = true } },
                     )
                 }
             }

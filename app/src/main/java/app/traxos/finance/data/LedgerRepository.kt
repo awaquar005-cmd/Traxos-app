@@ -136,6 +136,52 @@ class LedgerRepository(private val db: TraxosDatabase) {
             recordJournal(operationId, changed, if (deleted) "DELETE" else "RESTORE", old.revision)
         }
 
+    suspend fun setCurrency(value: String) {
+        require(value in Money.currencies)
+        dao.currency(value)
+    }
+
+    suspend fun setDisplayName(value: String) {
+        require(value.trim().length <= 80 && value.none { it.isISOControl() })
+        dao.displayName(value.trim())
+    }
+
+    suspend fun setDefaults(account: String, category: String) {
+        require(account.isBlank() || dao.account(account)?.archived == false) {
+            "Choose an active account"
+        }
+        require(category.isBlank() || dao.category(category)?.type == "EXPENSE") {
+            "Choose an expense category"
+        }
+        dao.defaults(account, category)
+    }
+
+    suspend fun setDefaultAccount(value: String) {
+        require(value.isBlank() || dao.account(value)?.archived == false)
+        dao.defaultAccount(value)
+    }
+
+    suspend fun setDefaultCategory(value: String) {
+        require(value.isBlank() || dao.category(value)?.type == "EXPENSE")
+        dao.defaultCategory(value)
+    }
+
+    suspend fun setSmartEnabled(value: Boolean) = dao.smartEnabled(value)
+
+    suspend fun setSmsOptIn(value: Boolean) {
+        require(!value || app.traxos.finance.BuildConfig.SMS_POLICY_APPROVED)
+        dao.smsOptIn(value)
+    }
+
+    suspend fun setSuggestionNotices(value: Boolean) = dao.suggestionNotices(value)
+
+    suspend fun setSmartSettings(enabled: Boolean, sms: Boolean, notices: Boolean) {
+        require(!sms || app.traxos.finance.BuildConfig.SMS_POLICY_APPROVED) {
+            "Automatic SMS access is unavailable in this build"
+        }
+        dao.smartSettings(enabled, sms, notices)
+    }
+
     private suspend fun mutate(operationId: String, block: suspend () -> Unit) =
         gate.withLock {
             UUID.fromString(operationId)

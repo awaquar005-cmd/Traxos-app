@@ -56,3 +56,8 @@ Bundled detection dependencies include vendor SDK infrastructure; their inherite
 Automated host evidence belongs in `docs/validation/gift-wallet/`. It includes real Room migration/restart, exact accounting, duplicate/idempotency checks, standard crypto envelope tamper tests, WorkManager scheduling/private notification tests and Compose interaction/layout tests. Host crypto tests replace only Android Keystore provisioning with ephemeral JCE keys. Synthetic previews are not user data or phone screenshots.
 
 Actual hardware Keystore, first-use offline OCR/camera quality, system notification permission UI/channel delivery, OEM background restrictions, real keyboard, enlarged fonts/TalkBack and OS process death remain physical-device checks in DEVICE_QA. No emulator is used.
+
+
+## 0.5.0 update
+
+See [smart import guide](SMART_SECURITY.md). Gift entry is compact with More details. Camera OCR now uses full-resolution capture and corrected EXIF/tiled processing, contextual candidates and crop/rescan. Settings moved into categories. App lock is now optional; metadata/ledger remain plaintext and portable recovery is unavailable. Earlier0.4 notes below are historical, including prior limitations.

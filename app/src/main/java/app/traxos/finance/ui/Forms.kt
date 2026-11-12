@@ -42,6 +42,7 @@ internal fun FormDestination(
     val focusManager = LocalFocusManager.current
     val latestFeedback by rememberUpdatedState(feedback)
     LaunchedEffect(vm) { for (event in vm.events) latestFeedback(event) }
+    val preferences by main.preferences.collectAsStateWithLifecycle()
     val fields by vm.fields.collectAsStateWithLifecycle()
     val busy by vm.busy.collectAsStateWithLifecycle()
     val loading by vm.loading.collectAsStateWithLifecycle()
@@ -83,7 +84,11 @@ internal fun FormDestination(
     val selectionsReady =
         account || (!fields["accountId"].isNullOrBlank() && !fields["categoryId"].isNullOrBlank())
     val ready =
-        !loading && fields.isNotEmpty() && selectionsReady && (account || reads is ReadState.Ready)
+        !loading &&
+            preferences != null &&
+            fields.isNotEmpty() &&
+            selectionsReady &&
+            (account || reads is ReadState.Ready)
     Column(Modifier.fillMaxSize().imePadding()) {
         TraxosToolbar(
             if (account) if (vm.isNew) "New account" else "Edit account"
@@ -118,6 +123,7 @@ internal fun FormDestination(
                                 !busy,
                                 vm.isNew,
                                 vm::set,
+                                preferences ?: Preferences(),
                                 vm::default,
                             ) {
                                 nav.navigate("account/new") { launchSingleTop = true }
@@ -176,6 +182,7 @@ private fun TransactionFormFields(
     enabled: Boolean,
     isNew: Boolean,
     set: (String, String) -> Unit,
+    preferences: Preferences,
     initial: (String, String) -> Unit,
     addAccount: () -> Unit,
 ) {
@@ -187,11 +194,20 @@ private fun TransactionFormFields(
                     .firstOrNull { r -> accounts.any { it.account.id == r.record.accountId } }
                     ?.record
                     ?.accountId
-            initial("accountId", recent ?: accounts.first().account.id)
+            initial(
+                "accountId",
+                preferences.defaultAccountId.takeIf { id -> accounts.any { it.account.id == id } }
+                    ?: recent
+                    ?: accounts.first().account.id,
+            )
         }
         if (f["categoryId"].isNullOrEmpty()) {
             val category =
-                state.recent.firstOrNull { it.record.type == f["type"] }?.record?.categoryId
+                preferences.defaultExpenseCategoryId.takeIf { id ->
+                    f["type"] == "EXPENSE" &&
+                        state.categories.any { it.id == id && it.type == "EXPENSE" }
+                }
+                    ?: state.recent.firstOrNull { it.record.type == f["type"] }?.record?.categoryId
                     ?: state.categories.firstOrNull { it.type == f["type"] }?.id
             if (category != null) initial("categoryId", category)
         }

@@ -87,6 +87,7 @@ class NavigationUiTest {
                 .onAllNodesWithText(Money.format(7500, "INR"), substring = true)
                 .assertCountEquals(0)
             compose.onNodeWithTag("nav_settings").performClick()
+            compose.onNodeWithText("Appearance & Navigation").performScrollTo().performClick()
             compose.onNodeWithTag("choice_Accounts").performScrollTo().performClick()
             compose.waitUntil(5000) {
                 runBlocking {
@@ -104,6 +105,8 @@ class NavigationUiTest {
                 runBlocking { app.repository.dao.preferences().first()!!.theme == "DARK" }
             }
             compose.onNodeWithContentDescription("Back").performClick()
+            compose.onNodeWithTag("page_settings").assertExists()
+            compose.onNodeWithTag("nav_home").performClick()
             scenario.recreate()
             compose.waitUntil(15000) {
                 compose

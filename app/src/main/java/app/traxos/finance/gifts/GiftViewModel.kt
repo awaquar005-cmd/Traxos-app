@@ -16,6 +16,8 @@ sealed interface GiftIncoming {
 
     data class Image(val uri: Uri) : GiftIncoming
 
+    data object SmartOpen : GiftIncoming
+
     data object Open : GiftIncoming
 }
 
@@ -47,7 +49,9 @@ data class GiftDraft(
         GiftCard(
             id,
             merchant.trim(),
-            name.trim(),
+            name.trim().ifBlank {
+                "${merchant.trim()} ${if(kind=="DISCOUNT") "voucher" else "gift card"}"
+            },
             kind,
             byteArrayOf(),
             "",
@@ -78,6 +82,11 @@ class GiftViewModel(val repository: GiftRepository) : ViewModel() {
                 emit(emptyList())
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    val localPreferences =
+        repository.db
+            .ledger()
+            .preferences()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
     val settings =
         repository.settings
             .map { it ?: GiftSettings() }
@@ -101,14 +110,20 @@ class GiftViewModel(val repository: GiftRepository) : ViewModel() {
         _error.value = null
     }
 
-    fun begin(extracted: GiftExtraction? = null, image: ByteArray? = null) {
+    fun begin(
+        extracted: GiftExtraction? = null,
+        image: ByteArray? = null,
+        defaultCurrency: String = "INR",
+    ) {
         draft.value =
             GiftDraft(
                 merchant = extracted?.merchant.orEmpty(),
+                kind = extracted?.giftKind ?: "STORED_VALUE",
                 code = extracted?.code.orEmpty(),
+                pin = extracted?.pin.orEmpty(),
                 original = if (extracted?.amountIsBalance == false) extracted.amount else "",
                 remaining = if (extracted?.amountIsBalance == true) extracted.amount else "",
-                currency = if (extracted == null) "INR" else extracted.currency,
+                currency = extracted?.currency?.ifBlank { defaultCurrency } ?: defaultCurrency,
                 expiry = extracted?.expiry.orEmpty(),
                 image = image,
             )
@@ -177,6 +192,30 @@ class GiftViewModel(val repository: GiftRepository) : ViewModel() {
             done(saved.id)
             events.send("Gift card saved")
         }
+    }
+
+    suspend fun duplicate(code: String, id: String, kind: String, merchant: String): Boolean =
+        repository.hasDuplicate(code, id, kind, merchant)
+
+    fun applyExtraction(e: GiftExtraction, image: ByteArray?) {
+        update { old ->
+            old.copy(
+                merchant = e.merchant.ifBlank { old.merchant },
+                code = e.code.ifBlank { old.code },
+                pin = e.pin.ifBlank { old.pin },
+                original =
+                    if (!e.amountIsBalance) e.amount.ifBlank { old.original } else old.original,
+                remaining =
+                    if (e.amountIsBalance) e.amount.ifBlank { old.remaining } else old.remaining,
+                currency = e.currency.ifBlank { old.currency },
+                expiry = e.expiry.ifBlank { old.expiry },
+                image = image ?: old.image,
+            )
+        }
+    }
+
+    fun changeSettings(update: (GiftSettings) -> GiftSettings) = action {
+        repository.changeSettings(update)
     }
 
     fun settings(value: GiftSettings) = action { repository.updateSettings(value) }

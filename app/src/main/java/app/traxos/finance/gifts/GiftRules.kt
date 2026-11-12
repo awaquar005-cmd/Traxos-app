@@ -19,6 +19,9 @@ object GiftRules {
         require(code.trim().length in 3..512 && code.none { it.isISOControl() }) {
             "Enter a code of 3–512 printable characters"
         }
+        require(!ImportTextSafety.isLink(code) && !ImportTextSafety.isOtp(code)) {
+            "Links and one-time passwords are not gift codes"
+        }
         require(normalize(code).isNotBlank()) { "Enter a valid code" }
     }
 
@@ -86,62 +89,16 @@ data class GiftExtraction(
     val currency: String = "",
     val expiry: String = "",
     val amountIsBalance: Boolean = false,
+    val pin: String = "",
+    val confidence: Map<String, Int> = emptyMap(),
+    val candidates: List<ImportCandidate> = emptyList(),
+    val warnings: List<String> = emptyList(),
+    val giftKind: String = "STORED_VALUE",
 )
 
-/**
- * Deliberately conservative: labeled codes/amounts only, unambiguous dates only. Never follows
- * links.
- */
-object GiftParser {
-    fun parse(text: String): GiftExtraction {
-        val input = text.take(16000)
-        fun match(pattern: String) =
-            Regex(pattern, RegexOption.IGNORE_CASE)
-                .find(input)
-                ?.groupValues
-                ?.get(1)
-                ?.trim()
-                .orEmpty()
-        val merchant =
-            listOf("Amazon", "Flipkart", "Myntra", "IKEA", "Starbucks").firstOrNull {
-                Regex("\\b${Regex.escape(it)}\\b", RegexOption.IGNORE_CASE).containsMatchIn(input)
-            } ?: match("(?:merchant|store)\\s*[:=]\\s*([^\\r\\n]{1,80})")
-        val code =
-            match(
-                "(?:gift\\s*card\\s*(?:number|code)|voucher\\s*code|promo\\s*code|code|card\\s*number)\\s*(?:[:=]|\\bis\\b)\\s*([A-Za-z0-9][A-Za-z0-9_-]{2,511})(?=\\s|$)"
-            )
-        val money =
-            Regex(
-                    "(?:value|amount|balance|worth)\\s*[:=]?\\s*(INR|USD|EUR|JPY|KWD|₹|\\$|€|¥)\\s*([0-9]+(?:,[0-9]{3})*(?:\\.[0-9]+)?)(?=\\s|$|[;!?])",
-                    RegexOption.IGNORE_CASE,
-                )
-                .find(input)
-        val currency =
-            when (money?.groupValues?.get(1)?.uppercase()) {
-                "₹",
-                "INR" -> "INR"
-                "USD" -> "USD"
-                "€",
-                "EUR" -> "EUR"
-                "JPY" -> "JPY"
-                "KWD" -> "KWD"
-                else -> ""
-            }
-        // Bare $ / ¥ are ambiguous; do not assume their currency.
-        val amount =
-            if (currency.isEmpty()) "" else money?.groupValues?.get(2)?.replace(",", "").orEmpty()
-        val rawDate =
-            match(
-                "(?:expires?|expiry|valid\\s*(?:until|till))(?:\\s+(?:on|date))?\\s*[:=]?\\s*(\\d{4}-\\d{2}-\\d{2})"
-            )
-        val expiry = runCatching { LocalDate.parse(rawDate).toString() }.getOrDefault("")
-        return GiftExtraction(
-            merchant,
-            code,
-            amount,
-            currency,
-            expiry,
-            money?.value?.startsWith("balance", ignoreCase = true) == true,
-        )
-    }
-}
+data class ImportCandidate(
+    val field: String,
+    val value: String,
+    val score: Int,
+    val isBalance: Boolean = false,
+)

@@ -40,3 +40,8 @@ Use bundled ML Kit Latin OCR and barcode models (verified Maven versions 16.0.1 
 Gift secrets use standard AES-256-GCM with random IVs, row-ID AAD and non-exportable Android Keystore keys. A separate Keystore HMAC key fingerprints normalized codes to avoid plaintext code indexes. Merchant/balance/date metadata and the existing ledger remain unencrypted app-private Room. Device-bound keys are not portable backup. Backup remains disabled; key invalidation fails visibly without resetting keys/data. Future recovery must decrypt and re-encrypt through a versioned, separately portable backup design. No app-lock or full-database-encryption claim.
 
 WorkManager handles offline deferrable reminders at local 09:00; Android may delay them. Default intervals 30/7/1/0 days. Reconcile on mutations/resume/daily; jobs recheck revision, expiry, preferences and status. Notification text excludes even merchant/balance. Stable per-card/expiry/offset tags and persisted receipts prevent repeated alerts; missed intermediate reminders are skipped, an overdue expiry can appear once. No exact-alarm permission.
+
+
+## 0.5.0 decisions
+
+Keep offline bundled ML Kit, bounded EXIF-aware image processing and generic context parsing; never fetch extracted URLs. Use mandatory review and atomic inbox approval. Default SMS access stays absent pending policy review; approved builds are receive-only/consent gated. Use standard PBKDF2 and Keystore AES-GCM plus native BiometricPrompt, fail closed on lost security state; no reset bypass. App lock is not ledger encryption. See [tradeoffs/recovery/validation](SMART_SECURITY.md).

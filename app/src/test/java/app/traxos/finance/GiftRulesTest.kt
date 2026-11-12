@@ -121,7 +121,7 @@ class GiftRulesTest {
         assertEquals("", GiftParser.parse("Code: https://example.com").code)
         assertTrue(GiftParser.parse("Balance INR 300").amountIsBalance)
         assertEquals("ABC123", GiftParser.parse("Gift card code is ABC123").code)
-        assertEquals("", GiftParser.parse("Value INR 1,00,000").amount)
+        assertEquals("100000", GiftParser.parse("Value INR 1,00,000").amount)
     }
 
     @Test

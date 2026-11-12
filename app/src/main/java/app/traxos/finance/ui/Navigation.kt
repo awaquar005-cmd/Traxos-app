@@ -47,6 +47,7 @@ internal val screenRegistry =
         ScreenEntry("settings", "Settings", TraxosIcons.settings),
         ScreenEntry("gifts", "Gift Cards", TraxosIcons.wallet),
         ScreenEntry("more", "More", TraxosIcons.ledger),
+        ScreenEntry("smart", "Smart Add", TraxosIcons.plus),
     )
 
 internal fun screenLabel(id: String) =

@@ -6,6 +6,7 @@ import androidx.room.*
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import app.traxos.finance.gifts.*
+import app.traxos.finance.smart.*
 import kotlinx.coroutines.flow.Flow
 
 @Entity(tableName = "accounts", indices = [Index("profileId")])
@@ -70,6 +71,13 @@ data class Preferences(
     @ColumnInfo(defaultValue = "0") val balancesHidden: Boolean = false,
     @ColumnInfo(defaultValue = "'home,transactions,accounts,settings'")
     val navigationSlots: String = "home,transactions,accounts,settings",
+    @ColumnInfo(defaultValue = "'INR'") val defaultCurrency: String = "INR",
+    @ColumnInfo(defaultValue = "''") val displayName: String = "",
+    @ColumnInfo(defaultValue = "''") val defaultAccountId: String = "",
+    @ColumnInfo(defaultValue = "''") val defaultExpenseCategoryId: String = "",
+    @ColumnInfo(defaultValue = "1") val smartEnabled: Boolean = true,
+    @ColumnInfo(defaultValue = "0") val smsOptIn: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val suggestionNotifications: Boolean = false,
 )
 
 @Entity(
@@ -165,6 +173,36 @@ interface LedgerDao {
     @Query("UPDATE preferences SET navigationSlots = :slots WHERE id = 1")
     suspend fun setNavigationSlots(slots: String)
 
+    @Query("UPDATE preferences SET defaultCurrency=:value WHERE id=1")
+    suspend fun currency(value: String)
+
+    @Query("UPDATE preferences SET displayName=:value WHERE id=1")
+    suspend fun displayName(value: String)
+
+    @Query(
+        "UPDATE preferences SET defaultAccountId=:account,defaultExpenseCategoryId=:category WHERE id=1"
+    )
+    suspend fun defaults(account: String, category: String)
+
+    @Query(
+        "UPDATE preferences SET smartEnabled=:enabled,smsOptIn=:sms,suggestionNotifications=:notices WHERE id=1"
+    )
+    suspend fun smartSettings(enabled: Boolean, sms: Boolean, notices: Boolean)
+
+    @Query("UPDATE preferences SET defaultAccountId=:value WHERE id=1")
+    suspend fun defaultAccount(value: String)
+
+    @Query("UPDATE preferences SET defaultExpenseCategoryId=:value WHERE id=1")
+    suspend fun defaultCategory(value: String)
+
+    @Query("UPDATE preferences SET smartEnabled=:value WHERE id=1")
+    suspend fun smartEnabled(value: Boolean)
+
+    @Query("UPDATE preferences SET smsOptIn=:value WHERE id=1") suspend fun smsOptIn(value: Boolean)
+
+    @Query("UPDATE preferences SET suggestionNotifications=:value WHERE id=1")
+    suspend fun suggestionNotices(value: Boolean)
+
     @Upsert suspend fun preferences(preferences: Preferences)
 }
 
@@ -180,14 +218,17 @@ interface LedgerDao {
             GiftRedemption::class,
             GiftSettings::class,
             GiftNotification::class,
+            SmartSuggestion::class,
         ],
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 abstract class TraxosDatabase : RoomDatabase() {
     abstract fun ledger(): LedgerDao
 
     abstract fun gifts(): GiftDao
+
+    abstract fun smart(): SmartDao
 
     companion object {
         val MIGRATION_1_2 =
@@ -238,9 +279,45 @@ abstract class TraxosDatabase : RoomDatabase() {
                 }
             }
 
+        val MIGRATION_4_5 =
+            object : Migration(4, 5) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "ALTER TABLE preferences ADD COLUMN defaultCurrency TEXT NOT NULL DEFAULT 'INR'"
+                    )
+                    db.execSQL(
+                        "ALTER TABLE preferences ADD COLUMN displayName TEXT NOT NULL DEFAULT ''"
+                    )
+                    db.execSQL(
+                        "ALTER TABLE preferences ADD COLUMN defaultAccountId TEXT NOT NULL DEFAULT ''"
+                    )
+                    db.execSQL(
+                        "ALTER TABLE preferences ADD COLUMN defaultExpenseCategoryId TEXT NOT NULL DEFAULT ''"
+                    )
+                    db.execSQL(
+                        "ALTER TABLE preferences ADD COLUMN smartEnabled INTEGER NOT NULL DEFAULT 1"
+                    )
+                    db.execSQL(
+                        "ALTER TABLE preferences ADD COLUMN smsOptIn INTEGER NOT NULL DEFAULT 0"
+                    )
+                    db.execSQL(
+                        "ALTER TABLE preferences ADD COLUMN suggestionNotifications INTEGER NOT NULL DEFAULT 0"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS smart_suggestions (id TEXT NOT NULL, fingerprint TEXT NOT NULL, kind TEXT NOT NULL, secret BLOB NOT NULL, status TEXT NOT NULL, createdAt INTEGER NOT NULL, PRIMARY KEY(id))"
+                    )
+                    db.execSQL(
+                        "CREATE UNIQUE INDEX IF NOT EXISTS index_smart_suggestions_fingerprint ON smart_suggestions(fingerprint)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_smart_suggestions_status_createdAt ON smart_suggestions(status,createdAt)"
+                    )
+                }
+            }
+
         fun open(context: Context, name: String = "traxos.db"): TraxosDatabase =
             Room.databaseBuilder(context, TraxosDatabase::class.java, name)
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 .addCallback(
                     object : Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {

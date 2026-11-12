@@ -12,3 +12,6 @@ key.properties
 *.apk
 *.aab
 .DS_Store
+
+# Real OCR fixtures may contain private material; never commit unreviewed files.
+/app/src/androidTest/assets/local-ocr-fixtures/

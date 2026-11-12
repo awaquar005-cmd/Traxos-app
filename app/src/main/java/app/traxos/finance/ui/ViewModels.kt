@@ -150,6 +150,35 @@ class MainViewModel(val repository: LedgerRepository, private val saved: SavedSt
     fun navigationSlots(slots: List<String>) =
         preferenceChange("Navigation updated") { repository.setNavigationSlots(slots) }
 
+    fun currency(value: String) =
+        preferenceChange("Default currency saved") { repository.setCurrency(value) }
+
+    fun displayName(value: String) =
+        preferenceChange("Local profile saved") { repository.setDisplayName(value) }
+
+    fun defaults(account: String, category: String) =
+        preferenceChange("Entry defaults saved") { repository.setDefaults(account, category) }
+
+    fun defaultAccount(value: String) =
+        preferenceChange("Default account saved") { repository.setDefaultAccount(value) }
+
+    fun defaultCategory(value: String) =
+        preferenceChange("Default category saved") { repository.setDefaultCategory(value) }
+
+    fun smartEnabled(value: Boolean) =
+        preferenceChange("Smart Add preference saved") { repository.setSmartEnabled(value) }
+
+    fun smsOptIn(value: Boolean) =
+        preferenceChange("SMS consent saved") { repository.setSmsOptIn(value) }
+
+    fun suggestionNotices(value: Boolean) =
+        preferenceChange("Suggestion alerts saved") { repository.setSuggestionNotices(value) }
+
+    fun smartSettings(enabled: Boolean, sms: Boolean, notices: Boolean) =
+        preferenceChange("Smart tracking saved") {
+            repository.setSmartSettings(enabled, sms, notices)
+        }
+
     fun undo(feedback: Feedback) {
         if (busy.value) {
             viewModelScope.launch {
@@ -228,7 +257,9 @@ class FormViewModel(
                                 hashMapOf(
                                     "name" to "",
                                     "type" to "CASH",
-                                    "currency" to "INR",
+                                    "currency" to
+                                        (repository.dao.preferences().first()?.defaultCurrency
+                                            ?: "INR"),
                                     "opening" to "0",
                                     "archived" to "false",
                                     "day" to LocalDate.now().toString(),

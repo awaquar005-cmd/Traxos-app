@@ -27,14 +27,17 @@ internal fun GiftImportScreen(
     consumed: () -> Unit,
     back: () -> Unit,
     review: () -> Unit,
+    saved: ((String) -> Unit)? = null,
 ) {
     val context = LocalContext.current
+    val globalPrefs by vm.localPreferences.collectAsStateWithLifecycle()
     val settings by vm.settings.collectAsStateWithLifecycle()
     val busy by vm.busy.collectAsStateWithLifecycle()
     val error by vm.error.collectAsStateWithLifecycle()
     var text by remember { mutableStateOf("") }
     var detected by remember { mutableStateOf(false) }
     var resultReady by remember { mutableStateOf(false) }
+    var reviewDetails by remember { mutableStateOf(false) }
     var extracted by remember { mutableStateOf(GiftExtraction()) }
     var image by remember { mutableStateOf<ByteArray?>(null) }
     fun present(result: GiftExtraction, attachment: ByteArray? = null, openReview: Boolean = true) {
@@ -43,6 +46,22 @@ internal fun GiftImportScreen(
         resultReady = true
         detected = openReview
     }
+    var sourceBitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
+    var cropOpen by remember { mutableStateOf(false) }
+    var cameraPath by
+        androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
+    // UI bitmaps follow GC lifetime: recycling on page disposal can race an in-flight ML Kit task.
+    fun recognize(bitmap: android.graphics.Bitmap, automatic: Boolean = false) {
+        vm.action {
+            val effective = vm.repository.dao.settings().first() ?: GiftSettings()
+            require(effective.imageDetection) {
+                "Enable image detection in Gift wallet settings first"
+            }
+            val result = GiftImageImport.detect(bitmap, true)
+            present(result.extraction, result.image, !automatic || effective.autoReview)
+            cropOpen = false
+        }
+    }
     fun fromImage(uri: android.net.Uri, automatic: Boolean = false) {
         vm.action {
             val effective = vm.repository.dao.settings().first() ?: GiftSettings()
@@ -50,12 +69,13 @@ internal fun GiftImportScreen(
                 "Enable image detection in Gift wallet settings first"
             }
             val bitmap = GiftImageImport.load(context, uri)
-            try {
-                val result = GiftImageImport.detect(bitmap, true)
-                present(result.extraction, result.image, !automatic || effective.autoReview)
-            } finally {
-                bitmap.recycle()
+            sourceBitmap = bitmap
+            if (uri.authority == "${context.packageName}.capture") {
+                cameraPath?.let { java.io.File(it).delete() }
+                cameraPath = null
             }
+            val result = GiftImageImport.detect(bitmap, true)
+            present(result.extraction, result.image, !automatic || effective.autoReview)
         }
     }
     val pick =
@@ -63,19 +83,30 @@ internal fun GiftImportScreen(
             if (it != null) fromImage(it)
         }
     val camera =
-        rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
-            if (bitmap != null)
-                vm.action {
-                    try {
-                        val result = GiftImageImport.detect(bitmap, false)
-                        require(result.extraction.code.isNotBlank()) {
-                            "No single barcode found. Try a closer, well-lit image or import a cropped screenshot"
-                        }
-                        present(result.extraction, result.image)
-                    } finally {
-                        bitmap.recycle()
-                    }
+        rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok ->
+            val path = cameraPath
+            if (ok && path != null) {
+                val file = java.io.File(path)
+                val uri =
+                    androidx.core.content.FileProvider.getUriForFile(
+                        context,
+                        "${context.packageName}.capture",
+                        file,
+                    )
+                fromImage(uri)
+            } else if (path != null) java.io.File(path).delete()
+        }
+    if (cropOpen && sourceBitmap != null)
+        GiftCropSheet(sourceBitmap!!, busy, { if (!busy) cropOpen = false }) { bitmap ->
+            vm.action {
+                try {
+                    val result = GiftImageImport.detect(bitmap, true)
+                    present(result.extraction, result.image)
+                    cropOpen = false
+                } finally {
+                    if (bitmap !== sourceBitmap) bitmap.recycle()
                 }
+            }
         }
     LaunchedEffect(incoming) {
         when (val value = incoming) {
@@ -100,6 +131,18 @@ internal fun GiftImportScreen(
             },
             scrollable = true,
         ) {
+            if (extracted.warnings.isNotEmpty())
+                TraxosNotice(extracted.warnings.joinToString(" · "), NoticeKind.WARNING)
+            if (sourceBitmap != null)
+                TraxosTextButton(
+                    {
+                        detected = false
+                        cropOpen = true
+                    },
+                    enabled = !busy,
+                ) {
+                    Text("Crop / rescan")
+                }
             Text(
                 "Check every detail. Unknown or ambiguous values stay blank. Traxos never verifies balances with a merchant.",
                 style = MaterialTheme.typography.bodySmall,
@@ -126,6 +169,51 @@ internal fun GiftImportScreen(
                 { extracted = extracted.copy(amountIsBalance = it) },
                 "Detected amount is the remaining balance",
             )
+            TraxosTextButton({ reviewDetails = !reviewDetails }) {
+                Text(if (reviewDetails) "Less optional details" else "Optional details")
+            }
+            if (reviewDetails)
+                TraxosInput(
+                    "PIN (optional)",
+                    extracted.pin,
+                    { extracted = extracted.copy(pin = it) },
+                    secret = true,
+                )
+            extracted.candidates
+                .groupBy { it.field }
+                .filter { it.value.distinctBy { v -> v.value }.size > 1 }
+                .forEach { (field, values) ->
+                    TraxosSelector(
+                        "Choose detected $field",
+                        "",
+                        values
+                            .distinctBy { it.value }
+                            .map {
+                                it.value to
+                                    if (field == "code" || field == "pin")
+                                        "Candidate ${values.indexOf(it)+1} · tap to review"
+                                    else it.value.replace('|', ' ')
+                            },
+                        !busy,
+                    ) { value ->
+                        extracted =
+                            when (field) {
+                                "merchant" -> extracted.copy(merchant = value)
+                                "code" -> extracted.copy(code = value)
+                                "pin" -> extracted.copy(pin = value)
+                                "amount" ->
+                                    extracted.copy(
+                                        amount = value.substringBefore('|'),
+                                        amountIsBalance =
+                                            values.firstOrNull { it.value == value }?.isBalance ==
+                                                true,
+                                        currency = value.substringAfter('|', extracted.currency),
+                                    )
+                                "expiry" -> extracted.copy(expiry = value)
+                                else -> extracted
+                            }
+                    }
+                }
             TraxosInput(
                 "Currency (ISO code)",
                 extracted.currency,
@@ -138,17 +226,32 @@ internal fun GiftImportScreen(
             )
             TraxosButton(
                 {
-                    vm.begin(extracted, image)
-                    detected = false
-                    resultReady = false
-                    text = ""
-                    image = null
-                    review()
+                    vm.begin(extracted, image, globalPrefs?.defaultCurrency ?: "INR")
+                    vm.save { id ->
+                        detected = false
+                        resultReady = false
+                        text = ""
+                        image = null
+                        if (saved != null) saved(id) else back()
+                    }
                 },
                 Modifier.fillMaxWidth(),
+                enabled = !busy,
+                busy = busy,
             ) {
-                Text("Add · Review full details")
+                Text("Add gift card")
             }
+            TraxosTextButton(
+                {
+                    vm.begin(extracted, image, globalPrefs?.defaultCurrency ?: "INR")
+                    detected = false
+                    review()
+                },
+                enabled = !busy,
+            ) {
+                Text("More details before saving")
+            }
+            if (error != null) TraxosNotice(error!!, NoticeKind.ERROR)
             TraxosTextButton({
                 detected = false
                 resultReady = false
@@ -212,7 +315,20 @@ internal fun GiftImportScreen(
         TraxosButton(
             {
                 try {
-                    camera.launch(null)
+                    val folder = java.io.File(context.cacheDir, "gift-capture").apply { mkdirs() }
+                    folder
+                        .listFiles()
+                        ?.filter { System.currentTimeMillis() - it.lastModified() > 3600000 }
+                        ?.forEach { it.delete() }
+                    val file = java.io.File.createTempFile("capture-", ".jpg", folder)
+                    cameraPath = file.absolutePath
+                    camera.launch(
+                        androidx.core.content.FileProvider.getUriForFile(
+                            context,
+                            "${context.packageName}.capture",
+                            file,
+                        )
+                    )
                 } catch (_: android.content.ActivityNotFoundException) {
                     vm.action {
                         throw IllegalArgumentException(
@@ -225,12 +341,21 @@ internal fun GiftImportScreen(
             !busy && settings.imageDetection,
             tone = ButtonTone.SECONDARY,
         ) {
-            Text("Scan QR / barcode · Take photo")
+            Text("Scan photo · OCR / QR / barcode")
         }
+        if (sourceBitmap != null)
+            TraxosButton(
+                { cropOpen = true },
+                Modifier.fillMaxWidth(),
+                !busy,
+                tone = ButtonTone.SECONDARY,
+            ) {
+                Text("Crop / rotate / rescan image")
+            }
         if (busy) TraxosNotice("Reading on this phone…", NoticeKind.PROGRESS)
         if (error != null) TraxosNotice(error!!, NoticeKind.ERROR)
         Text(
-            "Camera scanning uses your phone's camera app, then reads the captured frame offline. For small or dense codes, import a cropped full-resolution image. Latin-script OCR is bundled. No SMS, camera or photo-library permission is requested by Traxos; no links are opened.",
+            "Camera scanning uses a full-resolution photo. Rotation is corrected from image metadata; crop/rotate and rescan if text is faint or outside the card. Latin-script OCR is bundled. No SMS, camera or photo-library permission is requested by Traxos; no links are opened.",
             style = MaterialTheme.typography.bodySmall,
         )
         TraxosTextButton(back) { Text("Back to wallet") }
@@ -272,7 +397,7 @@ internal fun GiftSettingsScreen(vm: GiftViewModel) {
         Text("Gift wallet preferences", style = MaterialTheme.typography.headlineSmall)
         TraxosCard {
             GiftToggle("Expiry reminders", prefs.reminders, !busy) {
-                vm.settings(prefs.copy(reminders = it))
+                vm.changeSettings { current -> current.copy(reminders = it) }
             }
             Text(
                 "Local reminders around 09:00. Android battery settings may delay delivery. Notification text never includes codes, PINs or balances.",
@@ -285,7 +410,7 @@ internal fun GiftSettingsScreen(vm: GiftViewModel) {
                 enabled = !busy,
             )
             TraxosButton(
-                { vm.settings(prefs.copy(intervals = intervals)) },
+                { vm.changeSettings { current -> current.copy(intervals = intervals) } },
                 enabled = !busy,
                 tone = ButtonTone.SECONDARY,
             ) {
@@ -321,20 +446,20 @@ internal fun GiftSettingsScreen(vm: GiftViewModel) {
         }
         TraxosCard {
             GiftToggle("Hide codes until Reveal", prefs.hideCodes, !busy) {
-                vm.settings(prefs.copy(hideCodes = it))
+                vm.changeSettings { current -> current.copy(hideCodes = it) }
             }
             Text(
                 "Codes and images are always omitted from lists and notifications. Hide is a display preference, not an app lock.",
                 style = MaterialTheme.typography.bodySmall,
             )
             GiftToggle("Detect shared / pasted text", prefs.textDetection, !busy) {
-                vm.settings(prefs.copy(textDetection = it))
+                vm.changeSettings { current -> current.copy(textDetection = it) }
             }
             GiftToggle("Offline image / barcode detection", prefs.imageDetection, !busy) {
-                vm.settings(prefs.copy(imageDetection = it))
+                vm.changeSettings { current -> current.copy(imageDetection = it) }
             }
             GiftToggle("Open import confirmation automatically", prefs.autoReview, !busy) {
-                vm.settings(prefs.copy(autoReview = it))
+                vm.changeSettings { current -> current.copy(autoReview = it) }
             }
             Text(
                 "Turning this off leaves shared-item results waiting for Review. Every mode requires confirmation and Save; unconfirmed cards are never stored. Direct SMS reading is unavailable: no SMS permission is requested.",
@@ -346,7 +471,7 @@ internal fun GiftSettingsScreen(vm: GiftViewModel) {
                 GiftRules.sorts.map { it to it.lowercase().replaceFirstChar(Char::titlecase) },
                 !busy,
             ) {
-                vm.settings(prefs.copy(sort = it))
+                vm.changeSettings { current -> current.copy(sort = it) }
             }
         }
         if (error != null) TraxosNotice(error!!, NoticeKind.ERROR)
@@ -385,6 +510,7 @@ internal fun MoreScreen(navigate: (String) -> Unit) {
                 "transactions" to "Transactions",
                 "accounts" to "Accounts",
                 "gifts" to "Gift Cards",
+                "smart" to "Smart Add",
                 "settings" to "Settings",
             )
             .forEach { (id, label) ->

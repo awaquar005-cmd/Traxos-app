@@ -4,21 +4,25 @@ Offline-first Kotlin/Jetpack Compose personal finance application. Development m
 
 ## Download for phone testing
 
-**0.4.0-gift-wallet adds the local Gift Card & Voucher Wallet and keeps all existing UI/finance fixes. Install as an update over the existing app; do not uninstall or clear storage.**
+**0.5.0-smart-security adds improved gift image review, an encrypted Smart Add inbox, optional offline app locking and organized Settings while preserving existing finance/UI features. Install as an update over the existing app; do not uninstall or clear storage.**
 
-[Download the test APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.4.0-gift-wallet.apk) · [APK folder and installation help](downloads/README.md).
+[Download the test APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.5.0-smart-security.apk) · [APK folder and installation help](downloads/README.md).
 
 The repository is available at https://github.com/awaquar005-cmd/Traxos-app. `/workspace/...` paths in development records refer to the cloud workspace, not your laptop. Use the GitHub link to download.
 
 Gift Wallet: manual cards/vouchers, encrypted codes/PINs/notes/images, reviewed text/share imports, bundled offline OCR and QR/barcode photo scanning, exact redemption/history/Undo/refunds and local expiry reminders. Gift Cards and More are optional navigation destinations; your default layout and independent center shortcut are kept. Codes are masked until Reveal; financial gift value stays separate from bank/cash accounting. [Wallet usage, accounting and security limits](docs/GIFT_WALLET.md).
 
-All four screen slots support changing, reordering and reset in Settings → Navigation Customization. Existing dashboard, transactions, account forms, Undo, theme/masking and local persistence are retained. Explicit Room migrations preserve shipped records/preferences. [Gift wallet host previews and validation](docs/validation/gift-wallet/README.md).
+All four screen slots support changing, reordering and reset in Settings → Appearance & Navigation → Navigation Customization. Existing dashboard, transactions, account forms, Undo, theme/masking and local persistence are retained. Explicit Room migrations preserve shipped records/preferences. [Gift wallet host previews and validation](docs/validation/gift-wallet/README.md).
+
+[Current smart import/security guide, recovery limits and actual validation](docs/SMART_SECURITY.md). Native OCR accuracy and physical biometric/device acceptance remain unmeasured; the standard APK does not request SMS access.
 
 ## Structure
 
 - `app/src/main/java/app/traxos/finance/domain`: exact money validation/formatting and entry signs.
 - `data`: Room entities, indexed queries, paging, repository, atomic immutable operation journal.
 - `ui`: branded Compose themes/components, navigation, Home, Transactions, Accounts, Settings and lifecycle ViewModels.
+- `security`: encrypted PIN configuration, throttling, app gate and native biometric challenge.
+- `smart`: local classification, encrypted review inbox, atomic approval and policy-gated receive-only adapter.
 - `gifts`: gift rules/parser, encrypted payloads, Room/repository, transient ViewModel, bundled detection and WorkManager reminders.
 - `app/src/test`: money, Room/repository, migration, crypto envelope, WorkManager and native Compose host tests (no emulator).
 - `app/schemas`: generated Room schema history after a successful KSP build. Commit every schema; require tested forward migration for changes.

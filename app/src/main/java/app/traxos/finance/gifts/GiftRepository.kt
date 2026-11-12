@@ -5,6 +5,7 @@ import app.traxos.finance.data.TraxosDatabase
 import app.traxos.finance.domain.Money
 import java.time.LocalDate
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -38,6 +39,21 @@ class GiftRepository(
             GiftSecret.read(cipher.open(stored.id, stored.secret))
         }
 
+    suspend fun hasDuplicate(code: String, id: String, kind: String, merchant: String): Boolean =
+        withContext(Dispatchers.IO) {
+            if (code.isBlank()) false
+            else {
+                if (dao.count() > 0) cipher.verifyExisting()
+                val token =
+                    cipher.fingerprint(
+                        if (kind == "DISCOUNT")
+                            "discount:${merchant.trim().lowercase(java.util.Locale.ROOT)}:$code"
+                        else "value:$code"
+                    )
+                dao.duplicate(token, id) != null
+            }
+        }
+
     suspend fun save(card: GiftCard, secret: GiftSecret, expectedRevision: Long): GiftCard =
         withContext(Dispatchers.IO) {
             mutex.withLock {
@@ -64,9 +80,6 @@ class GiftRepository(
                         LocalDate.of(1900, 1, 1).toEpochDay()..LocalDate.now().toEpochDay()
                 ) {
                     "Received date must be between 1900 and today"
-                }
-                require(card.expiryDay == null || card.expiryDay >= card.receivedDay) {
-                    "Expiry must not precede the received date"
                 }
                 require(
                     card.expiryDay == null ||
@@ -253,11 +266,18 @@ class GiftRepository(
             }
         }
 
-    suspend fun updateSettings(value: GiftSettings) =
+    suspend fun updateSettings(value: GiftSettings) = changeSettings { value }
+
+    suspend fun changeSettings(update: (GiftSettings) -> GiftSettings) =
         withContext(Dispatchers.IO) {
-            GiftRules.intervals(value.intervals)
-            require(value.sort in GiftRules.sorts)
-            dao.settings(value)
-            scheduler.reconcile()
+            mutex.withLock {
+                db.withTransaction {
+                    val value = update(dao.settings().first() ?: GiftSettings())
+                    GiftRules.intervals(value.intervals)
+                    require(value.sort in GiftRules.sorts)
+                    dao.settings(value)
+                }
+                scheduler.reconcile()
+            }
         }
 }

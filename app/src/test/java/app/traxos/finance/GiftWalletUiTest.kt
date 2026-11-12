@@ -64,6 +64,7 @@ class GiftWalletUiTest {
         }
         assertEquals(0, runBlocking { db.gifts().all().size })
         compose.onNodeWithTag("input_gift_merchant").performScrollTo().performTextInput("Amazon")
+        compose.onNodeWithText("More details").performScrollTo().performClick()
         compose.onNodeWithTag("input_gift_name").performScrollTo().performTextInput("Birthday card")
         compose.onNodeWithTag("input_gift_code").performScrollTo().performTextInput("UI-CODE-123")
         compose.onNodeWithTag("input_gift_original").performScrollTo().performTextInput("1000")
@@ -98,7 +99,7 @@ class GiftWalletUiTest {
         compose.onNodeWithText("Reject").performScrollTo().performClick()
         assertEquals(0, runBlocking { db.gifts().all().size })
         compose.onNodeWithText("Detect gift card").performScrollTo().performClick()
-        compose.onNodeWithText("Add · Review full details").performScrollTo().performClick()
+        compose.onNodeWithText("More details before saving").performScrollTo().performClick()
         compose.waitUntil(5000) { review }
         assertEquals("Amazon", vm.draft.value!!.merchant)
         assertEquals("IMPORT-1234", vm.draft.value!!.code)

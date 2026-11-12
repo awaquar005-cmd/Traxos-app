@@ -153,7 +153,7 @@ internal fun GiftWalletScreen(
                             it to it.lowercase().replaceFirstChar(Char::titlecase)
                         },
                     ) {
-                        vm.settings(prefs.copy(sort = it))
+                        vm.changeSettings { current -> current.copy(sort = it) }
                     }
                 }
             }
@@ -224,10 +224,27 @@ internal fun GiftFormScreen(
     id: String,
     back: () -> Unit,
     saved: (String) -> Unit,
+    scan: () -> Unit = {},
 ) {
     val draft by vm.draft.collectAsStateWithLifecycle()
     val busy by vm.busy.collectAsStateWithLifecycle()
     val error by vm.error.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    var details by remember { mutableStateOf(false) }
+    var duplicate by remember { mutableStateOf(false) }
+    LaunchedEffect(draft?.code, draft?.merchant, draft?.kind) {
+        delay(300)
+        val d = draft
+        if (d != null) {
+            try {
+                duplicate = vm.duplicate(d.code, d.id, d.kind, d.merchant)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                duplicate = false
+            }
+        }
+    }
     var discard by remember { mutableStateOf(false) }
     LaunchedEffect(id) {
         if (id == "new") {
@@ -271,24 +288,37 @@ internal fun GiftFormScreen(
                 enabled = !busy,
                 id = "gift_merchant",
             )
-            TraxosInput(
-                "Card name",
-                d.name,
-                { v -> vm.update { it.copy(name = v) } },
-                enabled = !busy,
-                id = "gift_name",
-            )
-            TraxosSelector(
-                "Card type",
-                d.kind,
-                listOf(
-                    "STORED_VALUE" to "Stored-value card",
-                    "SINGLE_USE" to "Single-use voucher",
-                    "DISCOUNT" to "Discount / promotional code",
-                ),
-                !busy && !d.historyLocked,
-            ) { v ->
-                vm.update { it.copy(kind = v, partial = false) }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TraxosButton(scan, Modifier.weight(1f), !busy, tone = ButtonTone.SECONDARY) {
+                    Text("Scan image")
+                }
+                TraxosButton(
+                    {
+                        val clip =
+                            context
+                                .getSystemService(ClipboardManager::class.java)
+                                .primaryClip
+                                ?.getItemAt(0)
+                                ?.coerceToText(context)
+                                ?.toString()
+                                .orEmpty()
+                        val e = GiftParser.parse(clip)
+                        if (e.code.isNotBlank()) vm.applyExtraction(e, null)
+                        else if (!ImportTextSafety.isLink(clip) && !ImportTextSafety.isOtp(clip))
+                            vm.update { it.copy(code = clip.take(512)) }
+                        else
+                            vm.action {
+                                throw IllegalArgumentException(
+                                    "Links and one-time passwords cannot be gift codes"
+                                )
+                            }
+                    },
+                    Modifier.weight(1f),
+                    !busy,
+                    tone = ButtonTone.SECONDARY,
+                ) {
+                    Text("Paste code")
+                }
             }
             TraxosInput(
                 "Gift card code",
@@ -298,33 +328,10 @@ internal fun GiftFormScreen(
                 id = "gift_code",
                 secret = true,
             )
-            TraxosInput(
-                "PIN (optional)",
-                d.pin,
-                { v -> vm.update { it.copy(pin = v) } },
-                enabled = !busy,
-                id = "gift_pin",
-                secret = true,
-            )
+            if (duplicate) TraxosNotice("This code is already in your wallet", NoticeKind.WARNING)
             if (d.kind != "DISCOUNT") {
-                TraxosSelector(
-                    "Currency",
-                    d.currency,
-                    Money.currencies.map { it to it },
-                    !busy && !d.historyLocked,
-                ) { v ->
-                    vm.update { it.copy(currency = v) }
-                }
                 TraxosInput(
-                    "Original value (optional)",
-                    d.original,
-                    { v -> vm.update { it.copy(original = v) } },
-                    enabled = !busy && !d.historyLocked,
-                    number = true,
-                    id = "gift_original",
-                )
-                TraxosInput(
-                    "Remaining balance (optional)",
+                    "Amount · remaining value, if known",
                     d.remaining,
                     { v -> vm.update { it.copy(remaining = v) } },
                     enabled = !busy && !d.historyLocked,
@@ -332,37 +339,9 @@ internal fun GiftFormScreen(
                     id = "gift_remaining",
                 )
                 Text(
-                    if (d.historyLocked)
-                        "Use redemption and refund actions to change balances once history exists."
-                    else "Leave unknown balances blank. Traxos cannot verify merchant balances.",
+                    "${d.currency} · Leave blank if unknown",
                     style = MaterialTheme.typography.bodySmall,
                 )
-                if (d.kind == "STORED_VALUE")
-                    TraxosCheckbox(
-                        d.partial,
-                        { v -> vm.update { it.copy(partial = v) } },
-                        "Merchant permits partial redemption",
-                        enabled = !busy,
-                    )
-            } else
-                Text(
-                    "Discount vouchers are not money and are excluded from wallet totals.",
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            TraxosSelector(
-                "Acquired by",
-                d.source,
-                listOf(
-                    "PURCHASED" to "Purchased",
-                    "RECEIVED" to "Received as gift",
-                    "PROMOTIONAL" to "Promotional",
-                ),
-                !busy,
-            ) { v ->
-                vm.update { it.copy(source = v) }
-            }
-            TraxosDateField("Purchase / received date", d.received, !busy) { v ->
-                vm.update { it.copy(received = v) }
             }
             TraxosInput(
                 "Expiry (optional · YYYY-MM-DD)",
@@ -371,15 +350,107 @@ internal fun GiftFormScreen(
                 enabled = !busy,
                 id = "gift_expiry",
             )
-            TraxosInput(
-                "Notes (optional)",
-                d.notes,
-                { v -> vm.update { it.copy(notes = v) } },
-                enabled = !busy,
-                multiline = true,
-                id = "gift_notes",
-            )
-            GiftAttachment(vm, d, busy)
+            TraxosTextButton({ vm.update { it.copy(expiry = "") } }, enabled = !busy) {
+                Text("No expiry")
+            }
+            TraxosButton(
+                { details = !details },
+                Modifier.fillMaxWidth(),
+                !busy,
+                tone = ButtonTone.GHOST,
+            ) {
+                Text(if (details) "Less details" else "More details")
+            }
+            if (details)
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    TraxosInput(
+                        "Card name",
+                        d.name,
+                        { v -> vm.update { it.copy(name = v) } },
+                        enabled = !busy,
+                        id = "gift_name",
+                    )
+                    TraxosSelector(
+                        "Card type",
+                        d.kind,
+                        listOf(
+                            "STORED_VALUE" to "Stored-value card",
+                            "SINGLE_USE" to "Single-use voucher",
+                            "DISCOUNT" to "Discount / promotional code",
+                        ),
+                        !busy && !d.historyLocked,
+                    ) { v ->
+                        vm.update { it.copy(kind = v, partial = false) }
+                    }
+                    TraxosInput(
+                        "PIN (optional)",
+                        d.pin,
+                        { v -> vm.update { it.copy(pin = v) } },
+                        enabled = !busy,
+                        id = "gift_pin",
+                        secret = true,
+                    )
+                    if (d.kind != "DISCOUNT") {
+                        TraxosSelector(
+                            "Currency",
+                            d.currency,
+                            Money.currencies.map { it to it },
+                            !busy && !d.historyLocked,
+                        ) { v ->
+                            vm.update { it.copy(currency = v) }
+                        }
+                        TraxosInput(
+                            "Original value (optional)",
+                            d.original,
+                            { v -> vm.update { it.copy(original = v) } },
+                            enabled = !busy && !d.historyLocked,
+                            number = true,
+                            id = "gift_original",
+                        )
+                        Text(
+                            if (d.historyLocked)
+                                "Use redemption and refund actions to change balances once history exists."
+                            else
+                                "Leave unknown balances blank. Traxos cannot verify merchant balances.",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        if (d.kind == "STORED_VALUE")
+                            TraxosCheckbox(
+                                d.partial,
+                                { v -> vm.update { it.copy(partial = v) } },
+                                "Merchant permits partial redemption",
+                                enabled = !busy,
+                            )
+                    } else
+                        Text(
+                            "Discount vouchers are not money and are excluded from wallet totals.",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    TraxosSelector(
+                        "Acquired by",
+                        d.source,
+                        listOf(
+                            "PURCHASED" to "Purchased",
+                            "RECEIVED" to "Received as gift",
+                            "PROMOTIONAL" to "Promotional",
+                        ),
+                        !busy,
+                    ) { v ->
+                        vm.update { it.copy(source = v) }
+                    }
+                    TraxosDateField("Purchase / received date", d.received, !busy) { v ->
+                        vm.update { it.copy(received = v) }
+                    }
+                    TraxosInput(
+                        "Notes (optional)",
+                        d.notes,
+                        { v -> vm.update { it.copy(notes = v) } },
+                        enabled = !busy,
+                        multiline = true,
+                        id = "gift_notes",
+                    )
+                    GiftAttachment(vm, d, busy)
+                }
             Text(
                 "Saved only on this phone. Losing app data or Keystore keys can make codes unrecoverable. No encrypted backup is available yet.",
                 style = MaterialTheme.typography.bodySmall,
@@ -397,7 +468,7 @@ internal fun GiftFormScreen(
                         vm.save(saved)
                     },
                     Modifier.fillMaxWidth().testTag("gift_save"),
-                    !busy,
+                    !busy && !duplicate,
                     busy,
                 ) {
                     Text(if (busy) "Saving…" else "Save gift card")

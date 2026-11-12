@@ -59,3 +59,8 @@ Before release: encrypted storage/Keystore/PIN/biometrics, tested portable resto
 - Set expiry/intervals around today on a test card. Grant/deny notification permission, disable channel, reboot, force-stop/reopen and apply battery restrictions. Confirm private wording, no duplicate alerts and rescheduling/cancellation after edit, archive, delete or redemption. Delivery is deferrable, not exact. Restore normal dates afterward.
 - Pin Gift Cards to any nav slot, remove Settings then use fallback, open More and Gift Cards, reorder/reset, restart; center quick action independent.
 - Light/dark, narrow phone and enlarged fonts: scroll long merchant/code/notes/history, verify custom sheets, persistent Save above keyboard, validation, Back/discard and no ghosting. Test TalkBack reading/focus and physical camera permission/cancellation.
+
+
+## 0.5.0 acceptance additions — NOT EXECUTED
+
+Upgrade0.4→0.5 without uninstall: verify ledger/gift codes/history/navigation. Run real redacted OCR corpus offline, camera EXIF/full-resolution/gallery/crop/rescan, multiple amounts/missing expiry. Check duplicate image/shared SMS approvals, declined/revoked SMS/notification permissions on eligible build; default build must not request SMS. Test PIN mismatch/change/disable, five failures/restart/clock delay, no-enrollment and eligible strong fingerprint/face/API30 device credential, immediate/timed background/cold-process locking, previews/lock Back/modal suppression and in-flight OCR. Verify settings/defaults after restart, light/dark320dp/200% text/TalkBack/IME. Existing transaction/account/delete/Undo and reminders must pass. Do not simulate key loss or uninstall against valuable unbacked-up data.

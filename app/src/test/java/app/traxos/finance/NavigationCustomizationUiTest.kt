@@ -41,6 +41,7 @@ class NavigationCustomizationUiTest {
             compose.onNodeWithContentDescription("Open settings").assertDoesNotExist()
             compose.onNodeWithContentDescription("Quick add transaction").assertDoesNotExist()
             compose.onNodeWithTag("nav_settings").performClick()
+            compose.onNodeWithText("Appearance & Navigation").performScrollTo().performClick()
             compose.onNodeWithText("Customize navigation").performScrollTo().performClick()
             compose
                 .onNodeWithContentDescription("Move slot 4 earlier")

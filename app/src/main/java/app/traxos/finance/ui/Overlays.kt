@@ -148,6 +148,8 @@ internal fun TraxosDialog(
     destructive: Boolean = false,
     enabled: Boolean = true,
 ) {
+    if (!LocalAppInteractionAllowed.current) return
+
     val keyboard = LocalSoftwareKeyboardController.current
     val parentFocus = LocalFocusManager.current
     LaunchedEffect(Unit) {
@@ -212,6 +214,8 @@ internal fun TraxosSheet(
     scrollable: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    if (!LocalAppInteractionAllowed.current) return
+
     val maximumHeight = overlayMaxHeight()
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -396,7 +400,7 @@ internal fun TraxosDateField(
         }
         Icon(TraxosIcons.ledger, null, Modifier.size(18.dp))
     }
-    if (open) {
+    if (open && LocalAppInteractionAllowed.current) {
         var draft by rememberSaveable { mutableStateOf(value) }
         var error by rememberSaveable { mutableStateOf<String?>(null) }
         TraxosSheet("Choose date", { open = false }) {
@@ -479,7 +483,7 @@ internal fun TraxosActionMenu(options: List<Pair<String, String>>, onSelect: (St
                 modifier = Modifier.semantics { contentDescription = "More actions" },
             )
         }
-        if (open)
+        if (open && LocalAppInteractionAllowed.current)
             Popup(
                 popupPositionProvider = FittingPopup(with(density) { 8.dp.roundToPx() }),
                 onDismissRequest = { open = false },

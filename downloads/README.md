@@ -1,13 +1,9 @@
 # Test APK download
 
-[Download TRAXOS 0.4.0 Gift Wallet development APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.4.0-gift-wallet.apk).
+[Download TRAXOS0.5.0 Smart Import & Security APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.5.0-smart-security.apk).
 
-Open on your Android 8.0+ phone. If a file page appears, select **Download raw file**. Open the downloaded APK and allow **Install unknown apps** for your browser/files app if prompted. The universal APK is approximately 74 MiB because OCR/barcode models are bundled for offline first use.
+Open on Android8.0+; if GitHub shows a file page choose **Download raw file**. Allow installing from your browser/files app if prompted. **Choose Update; do not uninstall or clear storage.** Package/signature match previous builds; version code6 and explicit Room4→5 migration preserve data. Older schemas use the retained forward migration chain.
 
-**Choose Update over the existing app. Do not uninstall or clear storage.** Package and debug signing identity match previous builds; version code 5 and explicit Room v3→v4 migration preserve records/navigation. Older schemas follow the existing forward migration chain. Local data has no portable backup or recovery.
+More tools → Smart Add offers reviewed share/paste suggestions. Gift Cards remains optional. Settings → Security & Privacy configures PIN/biometrics; Appearance & Navigation configures slots and independent center action. Standard build has no SMS permission. Native OCR/biometric/phone acceptance remains pending. There is no portable recovery; losing authentication/Keystore access can make protected data inaccessible. Ledger/gift metadata remain plaintext in app-private Room.
 
-Open **More tools → Gift Cards** or add Gift Cards to a navigation slot in Settings → Navigation Customization. More is also an optional slot. Gift preferences are under Settings → Gift card settings. The center quick action stays independent. [Wallet guide](../docs/GIFT_WALLET.md) · [validation and previews](../docs/validation/gift-wallet/README.md).
-
-Gift codes/PINs/notes/images use device-bound encryption, but merchant/balance/date metadata and the existing ledger are not encrypted. There is no app lock or encrypted backup. This remains a debug-signed development build; physical-phone acceptance is pending. Older APKs are historical and should not be installed over this update.
-
-The APK is committed here because Git pushes are available and release-asset uploads previously returned HTTP 401. SHA-256 checksums are in SHA256SUMS.txt. Future release automation should use a scoped artifact uploader rather than retain successive APKs in Git history.
+[What's working and important limits](../docs/SMART_SECURITY.md) · [actual validation](../docs/validation/smart-security/README.md). SHA-256 checksums are in SHA256SUMS.txt. APK is in Git because release uploads previously returned401. Older APKs are historical, not downgrade candidates. This is a debug-signed development build.
