@@ -200,14 +200,13 @@ internal fun BrandMark(
 internal fun TraxosToolbar(
     title: String,
     back: (() -> Unit)? = null,
-    settings: (() -> Unit)? = null,
-    add: (() -> Unit)? = null,
+    actions: (@Composable () -> Unit)? = null,
 ) {
     Row(
         Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (back != null) IconButton(onClick = back) { Icon(TraxosIcons.back, "Back") }
+        if (back != null) TraxosIconButton(onClick = back) { Icon(TraxosIcons.back, "Back") }
         else {
             BrandMark()
             Spacer(Modifier.width(10.dp))
@@ -226,14 +225,7 @@ internal fun TraxosToolbar(
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        if (add != null)
-            IconButton(onClick = add) {
-                Icon(TraxosIcons.plus, "Quick add transaction", Modifier.size(22.dp))
-            }
-        if (settings != null)
-            IconButton(onClick = settings) {
-                Icon(TraxosIcons.settings, "Open settings", Modifier.size(22.dp))
-            }
+        actions?.invoke()
     }
 }
 
@@ -287,7 +279,7 @@ internal fun SectionHeader(title: String, action: String? = null, onClick: () ->
             fontWeight = FontWeight.SemiBold,
         )
         if (action != null)
-            TextButton(onClick = onClick, contentPadding = PaddingValues(horizontal = 8.dp)) {
+            TraxosTextButton(onClick = onClick, contentPadding = PaddingValues(horizontal = 8.dp)) {
                 Text(action, style = MaterialTheme.typography.labelMedium)
             }
     }
@@ -314,7 +306,8 @@ internal fun Message(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        if (action != null) Button(onClick = onAction, shape = Radius.control) { Text(action) }
+        if (action != null)
+            TraxosButton(onClick = onAction, shape = Radius.control) { Text(action) }
     }
 }
 
@@ -413,7 +406,7 @@ internal fun LedgerSearch(value: String, onChange: (String) -> Unit, requester: 
                 },
             )
             if (value.isNotEmpty())
-                TextButton(onClick = { onChange("") }, contentPadding = PaddingValues(4.dp)) {
+                TraxosTextButton(onClick = { onChange("") }, contentPadding = PaddingValues(4.dp)) {
                     Text("Clear", style = MaterialTheme.typography.labelSmall)
                 }
         }

@@ -56,7 +56,7 @@ class UiAppearanceTest {
         compose.setContent {
             ScaledTheme(mode, fontScale) {
                 Scaffold(
-                    topBar = { TraxosToolbar("Dashboard", settings = {}, add = {}) },
+                    topBar = { TraxosToolbar("Dashboard") },
                     bottomBar = { TraxosBottomBar("home", CenterShortcut.ADD_TRANSACTION, {}) {} },
                 ) { padding ->
                     Box(Modifier.fillMaxSize().padding(padding)) {

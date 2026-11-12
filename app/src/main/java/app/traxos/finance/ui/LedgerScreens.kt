@@ -119,7 +119,7 @@ internal fun TransactionsScreen(
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text("Your activity", Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
-            IconButton(onClick = add) { Icon(TraxosIcons.plus, "Add transaction") }
+            TraxosIconButton(onClick = add) { Icon(TraxosIcons.plus, "Add transaction") }
         }
         LedgerSearch(search, vm::search, requester)
         LazyColumn(
@@ -158,7 +158,7 @@ internal fun TransactionsScreen(
             }
             if (list.loadState.append is LoadState.Loading) item { RowSkeleton() }
             if (list.loadState.append is LoadState.Error)
-                item { TextButton(onClick = list::retry) { Text("Retry loading more") } }
+                item { TraxosTextButton(onClick = list::retry) { Text("Retry loading more") } }
         }
     }
 }

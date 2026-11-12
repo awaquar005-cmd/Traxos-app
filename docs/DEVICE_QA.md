@@ -38,3 +38,13 @@ Before release: encrypted storage/Keystore/PIN/biometrics, tested portable resto
 - Check System/Light/Dark and small phones, 200% text, long names/large amounts, landscape, TalkBack and keyboard Save reachability. Only safe touch targets (48dp+) and system insets may increase chrome height.
 - Test cold Room loading/empty data and retry/error states; cached data must not receive fake loading delays. Save/Delete/Undo, archive/restore, financial arithmetic and paging/search remain functional offline.
 - Compare actual phone render with host previews (synthetic fixture values only); host rendering is not OEM/device certification.
+
+## 0.3.0 custom components/navigation — physical checks pending
+
+- Install over 0.2.0 using Update, without uninstalling or clearing data. Verify accounts, balances, notes and theme/masking/quick action after migration.
+- Change each of the four slots; used destinations swap, no duplicates. Move every slot in both directions, reset/cancel reset, rotate/relaunch and verify. Center quick action stays independent and Settings/creation remain accessible.
+- Default header has no duplicated Add/Settings. With a non-Add center action, overflow must open real transaction creation and dismiss cleanly.
+- Exercise custom account/category sheets, currency dropdown and date picker. Back/outside/close/select must dismiss the correct overlay, preserve drafts and avoid keyboard overlap.
+- Create/edit transaction and account, reject invalid amount/date, repeat Save rapidly, cancel discard/delete, delete then Undo, archive/restore. Create an account while composing a transaction; amount/note must survive.
+- Check 320dp/landscape/200% text, long names/error text/large exact amounts, TalkBack roles/focus order/announcements, physical IME animation and fixed Save reachability. Verify all custom visual states in light/dark. No page ghosting.
+- Host Canvas previews use synthetic fixture data; only real phone testing can certify keyboard, predictive Back, window focus, OEM and process-death behavior.

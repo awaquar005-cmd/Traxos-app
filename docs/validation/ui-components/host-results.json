@@ -1,0 +1,120 @@
+{
+  "version": "0.3.0-ui-components",
+  "versionCode": 4,
+  "build": "passed",
+  "tests": 49,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "suites": [
+    {
+      "name": "app.traxos.finance.BrandedControlsUiTest",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "app.traxos.finance.CustomFormsUiTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "app.traxos.finance.FormViewModelTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "app.traxos.finance.HomeStartupTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "app.traxos.finance.LedgerRepositoryTest",
+      "tests": "15",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "app.traxos.finance.LoadingUiTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "app.traxos.finance.MoneyTest",
+      "tests": "8",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "app.traxos.finance.NavigationCustomizationUiTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "app.traxos.finance.NavigationLayoutTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "app.traxos.finance.NavigationPreferencesTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "app.traxos.finance.NavigationUiTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "app.traxos.finance.PreferencesMigrationTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "app.traxos.finance.SavedLedgerLaunchTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "app.traxos.finance.UiAppearanceTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    }
+  ],
+  "lint": {
+    "errors": 0,
+    "warnings": 14,
+    "kind": "dependency version update advisories"
+  },
+  "signatureMatchesPrevious": true,
+  "zipAlignment16KiB": true,
+  "roomSchema": 3,
+  "physicalDeviceTested": false,
+  "emulatorUsed": false,
+  "apkSha256": "db37d6d06b29fd35b68c958c877d684acca6662980913eec7a1d59aabfbdb1d0"
+}

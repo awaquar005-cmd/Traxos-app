@@ -86,7 +86,7 @@ class NavigationUiTest {
             compose
                 .onAllNodesWithText(Money.format(7500, "INR"), substring = true)
                 .assertCountEquals(0)
-            compose.onNodeWithContentDescription("Open settings").performClick()
+            compose.onNodeWithTag("nav_settings").performClick()
             compose.onNodeWithTag("choice_Accounts").performScrollTo().performClick()
             compose.waitUntil(5000) {
                 runBlocking {
@@ -115,7 +115,8 @@ class NavigationUiTest {
             compose.onNodeWithTag("center_action").performClick()
             compose.onNodeWithTag("page_accounts").assertExists()
             compose.onNodeWithTag("page_home").assertDoesNotExist()
-            compose.onNodeWithContentDescription("Quick add transaction").performClick()
+            compose.onNodeWithContentDescription("More actions").performClick()
+            compose.onNodeWithText("Add transaction").performClick()
             compose.onNodeWithTag("page_transaction_form").assertExists()
             runBlocking {
                 assertEquals(1L, app.repository.dao.recordCount())

@@ -69,7 +69,7 @@ internal fun HomeScreen(
                                 style = MaterialTheme.typography.labelMedium,
                                 color = Color(0xFFC0CDE5),
                             )
-                            IconButton(
+                            TraxosIconButton(
                                 onClick = toggleVisibility,
                                 enabled = visibilityEnabled,
                                 modifier = Modifier.size(48.dp),

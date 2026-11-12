@@ -22,3 +22,11 @@
 - 0.1.1 crash patch: reproduce duplicate `INR` LazyColumn keys before fixing; namespace keys by Home section. No Room/financial/schema change. Add host Compose graphics tests for populated Home and file-backed ledger startup/Activity recreation. Compile, 28 tests and lint passed. Use original development keystore via `ANDROID_USER_HOME=/workspace/tools/android-user`; certificate match with published 0.1.0 verified before publishing update. Milestone 2 attachment is context, not scope for this maintenance patch.
 
 - UI-only 0.2.0 (code 3): no transfers/cards/groups/cloud features. Preserve financial tables and calculations. Room v2 adds two independent preference columns, tested from published v1 schema. Custom line vectors/no icon/font SDK; 60dp nominal bottom chrome/20dp logo. Explicit no-transition NavHost and opaque pages resolve default crossfade ghosting. Static skeletons only for genuine loading; preference successes use local selected/saving/haptic feedback to avoid snackbar-covered settings rows. Financial Undo/error snackbars retained. 35 host tests and lint pass, signing identity/16KiB alignment verified. Host PNGs use synthetic test data and do not certify physical-device rendering.
+
+## 0.3.0 custom controls and configurable navigation
+
+Use Foundation inputs/buttons and custom dialog/popup content, retaining native Compose accessibility and Material modal window behavior internally. Share compact pressed/disabled/loading/validation styles rather than adding a UI library. Keep the approved dashboard structure.
+
+Model screen slots separately from center quick actions. Four unique implemented destinations include Settings, ensuring permanent Settings access; replacement swaps occupied positions. Defaults remain explicit when future destinations register. Contextual creation access appears when the center does not create transactions. Store only a validated slot string in preferences with explicit schema 2→3 migration; financial tables are unchanged.
+
+Forms retain existing ViewModels, exact money rules, operation identities and single-flight guards. Save/delete readiness waits for required loaded data. Host verification: build and 49 tests passed, lint has no errors and 14 dependency advisories. Physical acceptance remains pending; no emulator or new finance module.

@@ -2,6 +2,12 @@
 
 Source of truth: [complete V3 blueprint](Traxos_Native_Android_Product_Blueprint_v3.md). Read in full before project code was written. User initialization instructions override infrastructure recommendations and milestone scope. This is a development roadmap, not a release-completion statement.
 
+## Component refinement — 0.3.0-ui-components
+
+UI-only scope. Preserve approved dashboard and all M1 finance semantics. Required delivery: reusable fully branded controls/overlays/forms/feedback; four valid unique configurable screen slots with change/swap/reorder/reset; an independent center quick action; no redundant top Add/Settings icons; persistent Settings/creation routes; safe v2→v3 preference migration; native modal Back/focus behavior; protected Save/Undo and responsive IME-aware forms. No new finance, backup, cloud, authentication or paid library.
+
+Acceptance: existing full suite and lint, policy validation, v1/v2 migration, navigation persistence/restoration, custom menu/sheet/dialog/checkbox/switch/notice actions, real create/edit/archive/delete/Undo form flows, rapid-save gate and draft retention when creating an account from a transaction. Light/dark/small-screen host checks plus documented device IME/TalkBack/OEM/process-death validation.
+
 ## UI-only milestone — 0.2.0-ui-pass
 
 P0 refinement, with no additional finance module. Deliver custom navy dashboard (per-currency balance hero/watermark, search, inflow/outflow, active account cards, recent ledger), compact custom top/bottom navigation, Settings-configured center action (Add Transaction/Accounts/Transactions/Home), global list/dashboard amount masking, and static genuine-loading skeletons. Remove overlapping NavHost fades. Preserve existing transactions, account management, Undo, search/paging, dirty forms and financial rules.

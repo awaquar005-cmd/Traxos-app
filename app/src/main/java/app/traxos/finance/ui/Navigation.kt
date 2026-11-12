@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import app.traxos.finance.domain.NavigationLayout
 
 internal enum class CenterShortcut(val label: String) {
     ADD_TRANSACTION("Add Transaction"),
@@ -36,12 +37,26 @@ internal enum class CenterShortcut(val label: String) {
     }
 }
 
+internal data class ScreenEntry(val id: String, val label: String, val icon: ImageVector)
+
+internal val screenRegistry =
+    listOf(
+        ScreenEntry("home", "Home", TraxosIcons.home),
+        ScreenEntry("transactions", "Activity", TraxosIcons.ledger),
+        ScreenEntry("accounts", "Accounts", TraxosIcons.wallet),
+        ScreenEntry("settings", "Settings", TraxosIcons.settings),
+    )
+
+internal fun screenLabel(id: String) =
+    if (id == "transactions") "Transactions" else screenRegistry.first { it.id == id }.label
+
 @Composable
 internal fun TraxosBottomBar(
     route: String,
     shortcut: CenterShortcut,
     navigate: (String) -> Unit,
     shortcutEnabled: Boolean = true,
+    slots: List<String> = NavigationLayout.defaults,
     launchShortcut: () -> Unit,
 ) {
     Surface(color = MaterialTheme.colorScheme.surfaceContainerLowest) {
@@ -51,15 +66,11 @@ internal fun TraxosBottomBar(
                 .padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            NavItem("home", "Home", TraxosIcons.home, route, navigate, Modifier.weight(1f))
-            NavItem(
-                "transactions",
-                "Activity",
-                TraxosIcons.ledger,
-                route,
-                navigate,
-                Modifier.weight(1f),
-            )
+            val entries =
+                NavigationLayout.validate(slots).map { id -> screenRegistry.first { it.id == id } }
+            entries.take(2).forEach { item ->
+                NavItem(item.id, item.label, item.icon, route, navigate, Modifier.weight(1f))
+            }
             Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 Surface(
                     onClick = launchShortcut,
@@ -74,22 +85,9 @@ internal fun TraxosBottomBar(
                     }
                 }
             }
-            NavItem(
-                "accounts",
-                "Accounts",
-                TraxosIcons.wallet,
-                route,
-                navigate,
-                Modifier.weight(1f),
-            )
-            NavItem(
-                "settings",
-                "Settings",
-                TraxosIcons.settings,
-                route,
-                navigate,
-                Modifier.weight(1f),
-            )
+            entries.drop(2).forEach { item ->
+                NavItem(item.id, item.label, item.icon, route, navigate, Modifier.weight(1f))
+            }
         }
     }
 }

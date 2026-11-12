@@ -34,6 +34,7 @@ data class Feedback(
     val undoRevision: Long? = null,
     val undoDeleted: Boolean = true,
     val preferenceChange: Boolean = false,
+    val kind: NoticeKind = NoticeKind.SUCCESS,
 )
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
@@ -75,7 +76,10 @@ class MainViewModel(val repository: LedgerRepository, private val saved: SavedSt
                     .catch { e ->
                         if (e is CancellationException) throw e
                         events.send(
-                            Feedback("Could not read preferences. Reopen the app to retry.")
+                            Feedback(
+                                "Could not read preferences. Reopen the app to retry.",
+                                kind = NoticeKind.ERROR,
+                            )
                         )
                         emit(Preferences(balancesHidden = true))
                     }
@@ -124,7 +128,9 @@ class MainViewModel(val repository: LedgerRepository, private val saved: SavedSt
                 events.send(Feedback(message, preferenceChange = true))
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
-                events.send(Feedback("Could not save preference. Please retry."))
+                events.send(
+                    Feedback("Could not save preference. Please retry.", kind = NoticeKind.ERROR)
+                )
             } finally {
                 busy.value = false
             }
@@ -141,11 +147,18 @@ class MainViewModel(val repository: LedgerRepository, private val saved: SavedSt
             repository.setBalancesHidden(hidden)
         }
 
+    fun navigationSlots(slots: List<String>) =
+        preferenceChange("Navigation updated") { repository.setNavigationSlots(slots) }
+
     fun undo(feedback: Feedback) {
         if (busy.value) {
             viewModelScope.launch {
                 events.send(
-                    feedback.copy(text = "Another change is saving. Try Undo again.", close = false)
+                    feedback.copy(
+                        text = "Another change is saving. Try Undo again.",
+                        close = false,
+                        kind = NoticeKind.WARNING,
+                    )
                 )
             }
             return
@@ -166,7 +179,8 @@ class MainViewModel(val repository: LedgerRepository, private val saved: SavedSt
                 events.send(
                     Feedback(
                         if (e is IllegalArgumentException) e.message ?: "Unable to undo"
-                        else "Could not undo. Your records are unchanged."
+                        else "Could not undo. Your records are unchanged.",
+                        kind = NoticeKind.ERROR,
                     )
                 )
             } finally {

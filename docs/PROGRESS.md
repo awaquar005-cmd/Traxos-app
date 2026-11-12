@@ -1,5 +1,17 @@
 # Progress
 
+## Custom components and navigation — 0.3.0-ui-components (code 4)
+
+**BUILT AND AUTOMATED VALIDATION PASSED.** Finance scope and the approved dashboard structure are unchanged. Shared branded controls now cover confirmation/destructive dialogs, dropdown popups, option/date sheets, success/error/warning/Undo/progress feedback, basic and premium amount inputs, buttons, selection rows, switches and a reusable tested checkbox. No system toast or stock-looking AlertDialog/TextField/Radio/Switch widget is used in application screens. Native Compose/Material surfaces, sheet window behavior and accessibility plumbing remain the internal foundation; no new library was added.
+
+All four outer navigation slots are configurable among implemented Home, Transactions, Accounts and Settings. Picking an already-used screen swaps positions; buttons reorder slots; a custom confirmation restores default tabs. The center quick action is a separate preference and is not reset. Only implemented routes are offered. Future screens require registration and real route implementation. Top Add/Settings icons are removed. A contextual overflow offers transaction creation when the center no longer provides it; Settings remains reachable in the bottom layout. The navigation customization page shows the updated bar immediately.
+
+Schema v3 adds only `preferences.navigationSlots` using explicit 2→3 migration, with the existing 1→2 path retained. Financial tables, integer money, operation IDs, repository single-flight/revision guards and journal behavior remain unchanged. Existing slot, theme, amount-mask and quick-action preferences survive independent updates.
+
+Transaction/account create/edit forms now use reusable custom selectors, date sheet, inputs and a fixed Save footer. Content scrolls above the footer and IME insets are respected. Selection overlays close the keyboard first; Save closes it before validation/navigation. Required account/category selection and loaded revision gate submission/delete controls. Custom discard/delete confirmations retain native Back/dismiss behavior. Financial snackbar Undo remains real and errors preserve the form. Feedback is hidden while editing so an earlier success cannot cover the Save footer.
+
+Final validation: assembleDebug passed; **49 tests passed, zero failures/errors/skips**; lint passed with zero errors and 14 dependency-update advisories. Signing certificate matches the previous APK, version code 4 and 16 KiB ZIP alignment verified. Host light/dark dashboard and narrow form renders inspected. Evidence: `docs/validation/ui-components/`. No emulator or physical-device certification. Real keyboard, TalkBack, large fonts, OEM Back and process death remain device checks. APK: `downloads/TRAXOS-0.3.0-ui-components.apk`, also `/workspace/releases/TRAXOS-0.3.0-ui-components.apk`. Install as an update; do not uninstall or clear storage.
+
 ## UI-only pass — 0.2.0-ui-pass (version code 3)
 
 **BUILT, TESTED AND PUBLISHED.** No new finance module. Dashboard/custom compact chrome, neutral/blue surfaces, smaller 20dp mark, five-square hero watermark, per-currency balance hero/visibility toggle, monthly mini summaries, search shortcut, active account rail and recent activity implemented. Lists, empty states, settings and forms use shared components. Center action choices persist in Room and dispatch real existing routes. Header Quick Add stays available when the center is reassigned.
@@ -38,7 +50,7 @@ Milestone 1 implementation BUILT and AUTOMATED TESTS PASSED. Physical-phone acce
 - Persisted System/Light/Dark; deep-navy/cobalt palettes, explicit typography/spacing/shapes, system-bar contrast, transparent provisional SVG/native VectorDrawable.
 - Atomic financial/account + immutable journal writes, operation-ID primary key, repository mutex, UI single-flight gate, stale revision checks, soft deletion/restoration events and SHA-256 payload hashes (not encryption).
 - Room-indexed paging (40-row target), 300ms debounced escaped-literal search, SQL aggregates, saved form inputs and operation ID, Back discard protection, IME-aware scrollable forms, untruncated amounts and haptic/snackbar feedback.
-- Exported Room schemas v1/v2 committed; explicit preference-only migration from shipped v1 is tested. No destructive migration fallback; future changes require forward migration plus tests.
+- Exported Room schemas v1/v2/v3 committed; explicit preference-only migration from shipped v1 is tested. No destructive migration fallback; future changes require forward migration plus tests.
 
 ## Executed validation — original 0.1.0 build
 

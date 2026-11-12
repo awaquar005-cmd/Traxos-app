@@ -2,21 +2,18 @@ package app.traxos.finance.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.traxos.finance.BuildConfig
 
 @Composable
-internal fun SettingsScreen(vm: MainViewModel) {
+internal fun SettingsScreen(vm: MainViewModel, openNavigation: () -> Unit) {
     val loadedPreferences by vm.preferences.collectAsStateWithLifecycle()
     if (loadedPreferences == null) {
         ScreenSkeleton("settings")
@@ -35,7 +32,18 @@ internal fun SettingsScreen(vm: MainViewModel) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         TraxosCard {
-            Text("Center action button", style = MaterialTheme.typography.titleMedium)
+            Text("Navigation customization", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "Reorder or change the four screen slots. The center quick action is configured separately.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            TraxosButton(openNavigation, Modifier.fillMaxWidth(), tone = ButtonTone.SECONDARY) {
+                Text("Customize navigation")
+            }
+        }
+        TraxosCard {
+            Text("Center quick action", style = MaterialTheme.typography.titleMedium)
             Text(
                 "Choose the shortcut in the middle of the bottom bar.",
                 style = MaterialTheme.typography.bodySmall,
@@ -57,7 +65,7 @@ internal fun SettingsScreen(vm: MainViewModel) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                Switch(
+                TraxosSwitch(
                     checked = preferences.balancesHidden,
                     onCheckedChange = vm::balancesHidden,
                     enabled = !busy,
@@ -108,25 +116,5 @@ internal fun SettingsScreen(vm: MainViewModel) {
 
 @Composable
 private fun ChoiceRow(label: String, selected: Boolean, enabled: Boolean, onClick: () -> Unit) {
-    Row(
-        Modifier.fillMaxWidth()
-            .testTag("choice_$label")
-            .heightIn(min = 48.dp)
-            .selectable(
-                selected = selected,
-                enabled = enabled,
-                role = Role.RadioButton,
-                onClick = onClick,
-            ),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        RadioButton(
-            selected = selected,
-            onClick = null,
-            enabled = enabled,
-            modifier = Modifier.size(24.dp),
-        )
-        Text(label, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-    }
+    TraxosChoiceRow(label, selected, enabled = enabled, onClick = onClick)
 }

@@ -2,6 +2,7 @@ package app.traxos.finance.data
 
 import androidx.room.withTransaction
 import app.traxos.finance.domain.Money
+import app.traxos.finance.domain.NavigationLayout
 import java.security.MessageDigest
 import java.time.LocalDate
 import java.time.ZoneId
@@ -202,5 +203,9 @@ class LedgerRepository(private val db: TraxosDatabase) {
 
     suspend fun setBalancesHidden(hidden: Boolean) {
         dao.setBalancesHidden(hidden)
+    }
+
+    suspend fun setNavigationSlots(slots: List<String>) {
+        dao.setNavigationSlots(NavigationLayout.encode(slots))
     }
 }

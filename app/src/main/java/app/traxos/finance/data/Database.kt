@@ -67,6 +67,8 @@ data class Preferences(
     val theme: String = "SYSTEM",
     @ColumnInfo(defaultValue = "'ADD_TRANSACTION'") val centerAction: String = "ADD_TRANSACTION",
     @ColumnInfo(defaultValue = "0") val balancesHidden: Boolean = false,
+    @ColumnInfo(defaultValue = "'home,transactions,accounts,settings'")
+    val navigationSlots: String = "home,transactions,accounts,settings",
 )
 
 @Entity(
@@ -159,6 +161,9 @@ interface LedgerDao {
     @Query("UPDATE preferences SET balancesHidden = :hidden WHERE id = 1")
     suspend fun setBalancesHidden(hidden: Boolean)
 
+    @Query("UPDATE preferences SET navigationSlots = :slots WHERE id = 1")
+    suspend fun setNavigationSlots(slots: String)
+
     @Upsert suspend fun preferences(preferences: Preferences)
 }
 
@@ -171,7 +176,7 @@ interface LedgerDao {
             Preferences::class,
             OutboxOperation::class,
         ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class TraxosDatabase : RoomDatabase() {
@@ -190,9 +195,18 @@ abstract class TraxosDatabase : RoomDatabase() {
                 }
             }
 
+        val MIGRATION_2_3 =
+            object : Migration(2, 3) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "ALTER TABLE preferences ADD COLUMN navigationSlots TEXT NOT NULL DEFAULT 'home,transactions,accounts,settings'"
+                    )
+                }
+            }
+
         fun open(context: Context, name: String = "traxos.db"): TraxosDatabase =
             Room.databaseBuilder(context, TraxosDatabase::class.java, name)
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .addCallback(
                     object : Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
