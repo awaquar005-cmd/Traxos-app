@@ -5,6 +5,9 @@ ksp = "2.1.20-1.0.32"
 compose = "2025.04.01"
 room = "2.7.1"
 lifecycle = "2.9.0"
+work = "2.10.1"
+mlkit-text = "16.0.1"
+mlkit-barcode = "17.3.0"
 [libraries]
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose" }
 compose-test = { module = "androidx.compose.ui:ui-test-junit4" }
@@ -29,6 +32,10 @@ coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", ve
 junit = { module = "junit:junit", version = "4.13.2" }
 robolectric = { module = "org.robolectric:robolectric", version = "4.14.1" }
 android-test-core = { module = "androidx.test:core", version = "1.6.1" }
+work-runtime = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
+work-testing = { module = "androidx.work:work-testing", version.ref = "work" }
+mlkit-text = { module = "com.google.mlkit:text-recognition", version.ref = "mlkit-text" }
+mlkit-barcode = { module = "com.google.mlkit:barcode-scanning", version.ref = "mlkit-barcode" }
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

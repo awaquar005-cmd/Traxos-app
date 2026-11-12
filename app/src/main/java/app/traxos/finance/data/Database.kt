@@ -5,6 +5,7 @@ import androidx.paging.PagingSource
 import androidx.room.*
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import app.traxos.finance.gifts.*
 import kotlinx.coroutines.flow.Flow
 
 @Entity(tableName = "accounts", indices = [Index("profileId")])
@@ -175,12 +176,18 @@ interface LedgerDao {
             LedgerRecord::class,
             Preferences::class,
             OutboxOperation::class,
+            GiftCard::class,
+            GiftRedemption::class,
+            GiftSettings::class,
+            GiftNotification::class,
         ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 abstract class TraxosDatabase : RoomDatabase() {
     abstract fun ledger(): LedgerDao
+
+    abstract fun gifts(): GiftDao
 
     companion object {
         val MIGRATION_1_2 =
@@ -204,9 +211,36 @@ abstract class TraxosDatabase : RoomDatabase() {
                 }
             }
 
+        val MIGRATION_3_4 =
+            object : Migration(3, 4) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS gift_cards (id TEXT NOT NULL, merchant TEXT NOT NULL, name TEXT NOT NULL, kind TEXT NOT NULL, secret BLOB NOT NULL, fingerprint TEXT NOT NULL, originalMinor INTEGER, remainingMinor INTEGER, currency TEXT NOT NULL, receivedDay INTEGER NOT NULL, expiryDay INTEGER, partialAllowed INTEGER NOT NULL, redeemed INTEGER NOT NULL, archived INTEGER NOT NULL, deleted INTEGER NOT NULL, manuallyExpired INTEGER NOT NULL, revision INTEGER NOT NULL, createdAt INTEGER NOT NULL, source TEXT NOT NULL, PRIMARY KEY(id))"
+                    )
+                    db.execSQL(
+                        "CREATE UNIQUE INDEX IF NOT EXISTS index_gift_cards_fingerprint ON gift_cards(fingerprint)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_gift_cards_deleted_expiryDay ON gift_cards(deleted, expiryDay)"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS gift_redemptions (id TEXT NOT NULL, cardId TEXT NOT NULL, kind TEXT NOT NULL, amountMinor INTEGER, createdAt INTEGER NOT NULL, cardRevision INTEGER NOT NULL, undoesId TEXT, PRIMARY KEY(id), FOREIGN KEY(cardId) REFERENCES gift_cards(id) ON UPDATE NO ACTION ON DELETE RESTRICT)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_gift_redemptions_cardId ON gift_redemptions(cardId)"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS gift_settings (id INTEGER NOT NULL, reminders INTEGER NOT NULL, intervals TEXT NOT NULL, hideCodes INTEGER NOT NULL, textDetection INTEGER NOT NULL, imageDetection INTEGER NOT NULL, sort TEXT NOT NULL, autoReview INTEGER NOT NULL, PRIMARY KEY(id))"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS gift_notifications (token TEXT NOT NULL, deliveredAt INTEGER NOT NULL, PRIMARY KEY(token))"
+                    )
+                }
+            }
+
         fun open(context: Context, name: String = "traxos.db"): TraxosDatabase =
             Room.databaseBuilder(context, TraxosDatabase::class.java, name)
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                 .addCallback(
                     object : Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {

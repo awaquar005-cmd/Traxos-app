@@ -1998,3 +1998,9 @@ Every non-empty source block is retained below with a stable requirement identif
 **R0333 · §41 · P2 · M7 · PLANNED/reference · source L1164**
 
 > **Final note:** This specification represents a prioritized product and engineering contract, **not** a claim that every Android device, store policy, and OEM will support every experimental feature. Correctness, transparency and recoverability are more important than adding every imaginable toggle.
+
+## Gift Card & Voucher Wallet — 0.4.0
+
+One complete new local feature. P0: separate Room card/redemption/preferences/notification tables with v3→v4 migration; manual CRUD/archive; stored-value/single-use/discount distinctions; exact minor-unit balances, full/partial redemption, last-redemption Undo and merchant-refund history; no cash ledger writes. P1: Keystore AES-GCM secrets and keyed duplicate fingerprints; masked detail, sensitive timed clipboard, encrypted image attachment; conservative text/share parsing and bundled offline OCR/barcode capture; mandatory editable confirmation; local WorkManager expiry reminders with permission handling, customized intervals, cancellation/revision checks and deduplication. UI: wallet per-currency known active totals, unknown counts, search/filter/sort, detail/form/import/settings/More routes, optional configured tab. Existing nav defaults and preferences preserved.
+
+Acceptance: tests for malformed/duplicate imports, unknown balance, discount exclusion, exact partial redemption and reversal, expiry/no-expiry, idempotency/stale revision, migration and restart, reminder scheduling/deduplication rules, crypto envelope tamper resistance, parser uncertainty and active UI flows; build/tests/lint. Device-only OCR/camera/Keystore/notification/IME acceptance must be explicitly separated from host tests. No SMS permissions, cloud, auto-import saves or other finance modules.

@@ -1,5 +1,17 @@
 # Progress
 
+## Gift wallet — 0.4.0-gift-wallet (code 5)
+
+**BUILT AND AUTOMATED VALIDATION PASSED.** Separate local gift card/voucher tables, manual CRUD/archive/expiry marking, exact stored-value redemption/history/last Undo and refund, Keystore-encrypted secrets/attachments, conservative mandatory-reviewed imports, bundled offline OCR/barcode capture, local reminder settings/workers and optional Gift Cards/More navigation routes. Existing default navigation and ledger records are preserved through explicit schema v3→v4 migration.
+
+Validation: **assembleDebug passed; 78 tests passed (49 original + 29 gift), zero failures/errors/skips; lint passed, zero errors and 16 dependency/tool update advisories**. Integration fixes cover on-demand WorkManager initialization, scrollable import/redemption sheets, Android 8 clipboard compatibility, explicit non-exported initialization provider and loaded preference handling. Test execution/host renders and final packaging evidence are in `docs/validation/gift-wallet/`. Existing v3 entities are structurally unchanged; real migration/restart tests preserve ledger, operation journal and customized navigation. APK signature matches 0.3.0, version code 5 and 16 KiB ZIP/64-bit ELF alignment verified. Merged APK has no internet/SMS/camera/media permissions.
+
+Automatic confirmation opening is a persisted working preference; disabled means detected shares wait for Review, never automatic saving. Originals and remaining value are not conflated. Secret list payloads are omitted from metadata queries; standard AES-GCM/HMAC keys never silently reset around existing data. Full/partial redemption, last Undo and merchant refund history do not mutate cash/bank accounting.
+
+APK: `downloads/TRAXOS-0.4.0-gift-wallet.apk`, also `/workspace/releases/TRAXOS-0.4.0-gift-wallet.apk`; source output `app/build/outputs/apk/debug/app-debug.apk`. Universal APK approximately 74 MiB due to bundled models; no emulator and existing conservative Gradle/test memory settings retained. Install in place; do not uninstall or clear data.
+
+Physical acceptance remains pending: actual hardware Keystore, first-use offline OCR/camera quality, system notification/channel delivery, battery restrictions, real keyboard/TalkBack, process death and full phone workflow checks. Host crypto tests replace only key provisioning with JCE test keys. No SMS access, cloud backup, app lock or whole-database encryption is claimed. Sensitive unsaved drafts remain memory-only. Device-bound secrets have no portable recovery; metadata and the ledger remain unencrypted app-private Room. See `docs/GIFT_WALLET.md` and DEVICE_QA. Next task is physical acceptance of this feature before another module.
+
 ## Custom components and navigation — 0.3.0-ui-components (code 4)
 
 **BUILT AND AUTOMATED VALIDATION PASSED.** Finance scope and the approved dashboard structure are unchanged. Shared branded controls now cover confirmation/destructive dialogs, dropdown popups, option/date sheets, success/error/warning/Undo/progress feedback, basic and premium amount inputs, buttons, selection rows, switches and a reusable tested checkbox. No system toast or stock-looking AlertDialog/TextField/Radio/Switch widget is used in application screens. Native Compose/Material surfaces, sheet window behavior and accessibility plumbing remain the internal foundation; no new library was added.

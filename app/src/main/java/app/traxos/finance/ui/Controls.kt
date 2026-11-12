@@ -196,18 +196,44 @@ internal fun TraxosInput(
     focus: Boolean = false,
     error: String? = null,
     id: String = label,
+    secret: Boolean = false,
 ) {
     val requester = remember { FocusRequester() }
     var focused by remember { mutableStateOf(false) }
+    var revealed by remember { mutableStateOf(false) }
+    val owner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    DisposableEffect(owner, secret) {
+        val observer =
+            androidx.lifecycle.LifecycleEventObserver { _, event ->
+                if (event == androidx.lifecycle.Lifecycle.Event.ON_PAUSE) revealed = false
+            }
+        if (secret) owner.lifecycle.addObserver(observer)
+        onDispose { if (secret) owner.lifecycle.removeObserver(observer) }
+    }
     val keyboard = LocalSoftwareKeyboardController.current
     LaunchedEffect(focus) { if (focus) requester.requestFocus() }
     Column(modifier, verticalArrangement = Arrangement.spacedBy(7.dp)) {
-        Text(
-            label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                label,
+                Modifier.weight(1f),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            if (secret)
+                TraxosIconButton({ revealed = !revealed }, enabled = enabled) {
+                    Icon(
+                        if (revealed) TraxosIcons.eyeOff else TraxosIcons.eye,
+                        if (revealed) "Hide $label" else "Reveal $label",
+                        Modifier.size(20.dp),
+                    )
+                }
+        }
         BasicTextField(
+            visualTransformation =
+                if (secret && !revealed)
+                    androidx.compose.ui.text.input.PasswordVisualTransformation()
+                else androidx.compose.ui.text.input.VisualTransformation.None,
             value = value,
             onValueChange = onChange,
             enabled = enabled,
@@ -220,7 +246,9 @@ internal fun TraxosInput(
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
             keyboardOptions =
                 KeyboardOptions(
-                    keyboardType = if (number) KeyboardType.Decimal else KeyboardType.Text,
+                    keyboardType =
+                        if (secret) KeyboardType.Password
+                        else if (number) KeyboardType.Decimal else KeyboardType.Text,
                     imeAction = if (multiline) ImeAction.Default else ImeAction.Done,
                 ),
             keyboardActions = KeyboardActions(onDone = { keyboard?.hide() }),

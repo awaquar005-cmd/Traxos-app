@@ -13,7 +13,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.traxos.finance.BuildConfig
 
 @Composable
-internal fun SettingsScreen(vm: MainViewModel, openNavigation: () -> Unit) {
+internal fun SettingsScreen(
+    vm: MainViewModel,
+    openNavigation: () -> Unit,
+    openGifts: () -> Unit = {},
+) {
     val loadedPreferences by vm.preferences.collectAsStateWithLifecycle()
     if (loadedPreferences == null) {
         ScreenSkeleton("settings")
@@ -40,6 +44,12 @@ internal fun SettingsScreen(vm: MainViewModel, openNavigation: () -> Unit) {
             )
             TraxosButton(openNavigation, Modifier.fillMaxWidth(), tone = ButtonTone.SECONDARY) {
                 Text("Customize navigation")
+            }
+        }
+        TraxosCard {
+            Text("Gift Card Wallet", style = MaterialTheme.typography.titleMedium)
+            TraxosButton(openGifts, Modifier.fillMaxWidth(), tone = ButtonTone.SECONDARY) {
+                Text("Gift card settings")
             }
         }
         TraxosCard {
@@ -106,7 +116,7 @@ internal fun SettingsScreen(vm: MainViewModel, openNavigation: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
-                "Development build. App-private storage; encrypted storage and backup are not implemented. No advertising, analytics or cloud SDKs.",
+                "Development build. Gift secrets are encrypted; ledger and metadata are app-private, not encrypted. Backup and app lock are not implemented. No advertising or analytics.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

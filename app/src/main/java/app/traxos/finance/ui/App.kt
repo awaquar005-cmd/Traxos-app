@@ -15,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
@@ -22,18 +23,54 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.compose.*
 import app.traxos.finance.data.*
 import app.traxos.finance.domain.NavigationLayout
+import app.traxos.finance.gifts.*
 import kotlinx.coroutines.launch
 
 @Composable
 fun TraxosApp(vm: MainViewModel) {
+    val app = LocalContext.current.applicationContext as app.traxos.finance.TraxosApplication
+    val gifts: GiftViewModel =
+        viewModel(factory = viewModelFactory { initializer { GiftViewModel(app.gifts) } })
+    val incoming by GiftInbox.pending.collectAsState()
     val nav = rememberNavController()
+    LaunchedEffect(incoming) {
+        when (incoming) {
+            GiftIncoming.Open -> {
+                nav.navigate("gifts") { launchSingleTop = true }
+                GiftInbox.pending.value = null
+            }
+            null -> Unit
+            else -> nav.navigate("gift_import") { launchSingleTop = true }
+        }
+    }
+    val snackbarGiftEvents = remember {
+        kotlinx.coroutines.channels.Channel<String>(kotlinx.coroutines.channels.Channel.BUFFERED)
+    }
+    LaunchedEffect(gifts) {
+        for (message in gifts.events) {
+            snackbarGiftEvents.send(message)
+        }
+    }
+
     val entry by nav.currentBackStackEntryAsState()
     val route = entry?.destination?.route ?: "home"
-    val form = route.startsWith("transaction/") || route.startsWith("account/")
+    val form =
+        route.startsWith("transaction/") ||
+            route.startsWith("account/") ||
+            route.startsWith("gift_edit/")
     val snackbar = remember { SnackbarHostState() }
+    LaunchedEffect(Unit) {
+        for (message in snackbarGiftEvents) {
+            snackbar.currentSnackbarData?.dismiss()
+            snackbar.showSnackbar(TraxosSnackbarVisuals(message, NoticeKind.SUCCESS))
+        }
+    }
     val scope = rememberCoroutineScope()
     val haptic = LocalHapticFeedback.current
     val reads by vm.reads.collectAsStateWithLifecycle()
@@ -46,7 +83,10 @@ fun TraxosApp(vm: MainViewModel) {
     val owner = LocalLifecycleOwner.current
     DisposableEffect(owner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) vm.refresh()
+            if (event == Lifecycle.Event.ON_RESUME) {
+                vm.refresh()
+                app.giftScheduler.reconcile()
+            }
         }
         owner.lifecycle.addObserver(observer)
         onDispose { owner.lifecycle.removeObserver(observer) }
@@ -105,10 +145,19 @@ fun TraxosApp(vm: MainViewModel) {
                                 "accounts" -> "Accounts"
                                 "settings" -> "Settings"
                                 "navigation_settings" -> "Navigation"
+                                "gifts" -> "Gift Cards"
+                                "gift_import" -> "Smart import"
+                                "gift_settings" -> "Gift settings"
+                                "gift/{id}" -> "Gift card"
+                                "more" -> "More"
                                 else -> "Dashboard"
                             },
                             back =
-                                if (route == "settings" || route == "navigation_settings") {
+                                if (
+                                    route == "settings" ||
+                                        route == "navigation_settings" ||
+                                        route.startsWith("gift")
+                                ) {
                                     {
                                         nav.popBackStack()
                                         Unit
@@ -116,7 +165,9 @@ fun TraxosApp(vm: MainViewModel) {
                                 } else null,
                             actions =
                                 if (
-                                    prefs.centerAction != "ADD_TRANSACTION" || "settings" !in slots
+                                    prefs.centerAction != "ADD_TRANSACTION" ||
+                                        "settings" !in slots ||
+                                        "more" !in slots
                                 ) {
                                     {
                                         TraxosActionMenu(
@@ -125,9 +176,10 @@ fun TraxosApp(vm: MainViewModel) {
                                                     add("add" to "Add transaction")
                                                 if ("settings" !in slots)
                                                     add("settings" to "Settings")
+                                                if ("more" !in slots) add("more" to "More tools")
                                             }
                                         ) { id ->
-                                            if (id == "add") add() else mainNav("settings")
+                                            if (id == "add") add() else mainNav(id)
                                         }
                                     }
                                 } else null,
@@ -207,13 +259,72 @@ fun TraxosApp(vm: MainViewModel) {
             }
             composable("settings") {
                 RoutePage("settings") {
-                    SettingsScreen(vm) {
-                        nav.navigate("navigation_settings") { launchSingleTop = true }
-                    }
+                    SettingsScreen(
+                        vm,
+                        { nav.navigate("navigation_settings") { launchSingleTop = true } },
+                        { nav.navigate("gift_settings") { launchSingleTop = true } },
+                    )
                 }
             }
             composable("navigation_settings") {
                 RoutePage("navigation_settings") { NavigationSettingsScreen(vm) }
+            }
+            composable("more") { RoutePage("more") { MoreScreen(mainNav) } }
+            composable("gifts") {
+                RoutePage("gifts") {
+                    GiftWalletScreen(
+                        gifts,
+                        { nav.navigate("gift/$it") { launchSingleTop = true } },
+                        {
+                            gifts.begin()
+                            nav.navigate("gift_edit/new") { launchSingleTop = true }
+                        },
+                        { nav.navigate("gift_import") { launchSingleTop = true } },
+                        { nav.navigate("gift_settings") { launchSingleTop = true } },
+                        hidden = prefs.balancesHidden,
+                    )
+                }
+            }
+            composable("gift_settings") { RoutePage("gift_settings") { GiftSettingsScreen(gifts) } }
+            composable("gift_import") {
+                RoutePage("gift_import") {
+                    GiftImportScreen(
+                        gifts,
+                        incoming,
+                        { GiftInbox.pending.value = null },
+                        { nav.popBackStack() },
+                        { nav.navigate("gift_edit/new") { launchSingleTop = true } },
+                    )
+                }
+            }
+            composable("gift_edit/{id}") { e ->
+                RoutePage("gift_form") {
+                    GiftFormScreen(
+                        gifts,
+                        e.arguments?.getString("id") ?: "new",
+                        { nav.popBackStack() },
+                        { id ->
+                            nav.popBackStack()
+                            if (nav.currentDestination?.route == "gift_import") nav.popBackStack()
+                            if (nav.currentDestination?.route != "gift/{id}")
+                                nav.navigate("gift/$id") { launchSingleTop = true }
+                        },
+                    )
+                }
+            }
+            composable("gift/{id}") { e ->
+                RoutePage("gift_detail") {
+                    val id = e.arguments?.getString("id") ?: ""
+                    GiftDetailScreen(
+                        gifts,
+                        id,
+                        {
+                            gifts.draft.value = null
+                            nav.navigate("gift_edit/$id") { launchSingleTop = true }
+                        },
+                        { nav.popBackStack() },
+                    )
+                }
             }
             composable("transaction/{id}") {
                 RoutePage("transaction_form") { FormDestination(vm, false, nav, reads, feedback) }

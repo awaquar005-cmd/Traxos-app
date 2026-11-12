@@ -13,8 +13,8 @@ android {
         applicationId = "app.traxos.finance"
         minSdk = 26
         targetSdk = 36
-        versionCode = 4
-        versionName = "0.3.0-ui-components"
+        versionCode = 5
+        versionName = "0.4.0-gift-wallet"
     }
     sourceSets.getByName("test").resources.srcDir("schemas")
     buildFeatures {
@@ -65,6 +65,10 @@ dependencies {
     implementation(libs.room.paging)
     ksp(libs.room.compiler)
     implementation(libs.paging)
+    implementation(libs.work.runtime)
+    implementation(libs.mlkit.text)
+    implementation(libs.mlkit.barcode)
+    testImplementation(libs.work.testing)
     testImplementation(libs.compose.test)
     testImplementation(libs.coroutines.test)
     testImplementation(libs.junit)

@@ -1,15 +1,13 @@
 # Test APK download
 
-[Download TRAXOS 0.3.0 custom components development APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.3.0-ui-components.apk).
+[Download TRAXOS 0.4.0 Gift Wallet development APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.4.0-gift-wallet.apk).
 
-Open the link on your Android 8.0+ phone. If it shows a file page, select **Download raw file**. Open the downloaded APK and allow **Install unknown apps** for your browser/files app if prompted.
+Open on your Android 8.0+ phone. If a file page appears, select **Download raw file**. Open the downloaded APK and allow **Install unknown apps** for your browser/files app if prompted. The universal APK is approximately 74 MiB because OCR/barcode models are bundled for offline first use.
 
-This is a debug-signed development build. Use test data: database encryption, app PIN/biometrics and encrypted backups are not implemented. Uninstalling/clearing storage deletes local records. Physical-phone UI acceptance remains pending. Build and 49 automated tests passed.
+**Choose Update over the existing app. Do not uninstall or clear storage.** Package and debug signing identity match previous builds; version code 5 and explicit Room v3→v4 migration preserve records/navigation. Older schemas follow the existing forward migration chain. Local data has no portable backup or recovery.
 
-The APK is committed here because the connected GitHub integration accepted Git pushes but rejected release-asset uploads (HTTP 401). Checksum is in SHA256SUMS.txt. Later release automation should use an appropriately scoped release uploader and avoid storing successive APKs in Git history.
+Open **More tools → Gift Cards** or add Gift Cards to a navigation slot in Settings → Navigation Customization. More is also an optional slot. Gift preferences are under Settings → Gift card settings. The center quick action stays independent. [Wallet guide](../docs/GIFT_WALLET.md) · [validation and previews](../docs/validation/gift-wallet/README.md).
 
-0.1.1 fixes Home row-key collisions that caused the app to close with saved financial data. **Install this APK over the existing app (Update); do not uninstall or clear storage.** 0.1.1 used schema v1; the current UI pass upgrades it safely to v2 for preferences. The old APK is retained only as a historical build.
+Gift codes/PINs/notes/images use device-bound encryption, but merchant/balance/date metadata and the existing ledger are not encrypted. There is no app lock or encrypted backup. This remains a debug-signed development build; physical-phone acceptance is pending. Older APKs are historical and should not be installed over this update.
 
-Current 0.2.0-ui-pass release: custom dashboard/chrome, configurable center shortcut, persisted amount visibility, static loading states and non-overlapping navigation. No new finance modules. Same signing identity and package; explicit preference-only Room v1→v2 migration preserves financial records. **Choose Update; do not uninstall/clear data.**
-
-Current 0.3.0: custom dialogs, selectors, sheets, feedback and forms; all four screen slots support changing, reordering and reset. Center quick action remains independent. Schema v3 explicitly migrates preferences from v2; financial records are preserved. Build/tests/lint passed; physical-device acceptance is pending.
+The APK is committed here because Git pushes are available and release-asset uploads previously returned HTTP 401. SHA-256 checksums are in SHA256SUMS.txt. Future release automation should use a scoped artifact uploader rather than retain successive APKs in Git history.

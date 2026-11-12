@@ -48,3 +48,14 @@ Before release: encrypted storage/Keystore/PIN/biometrics, tested portable resto
 - Create/edit transaction and account, reject invalid amount/date, repeat Save rapidly, cancel discard/delete, delete then Undo, archive/restore. Create an account while composing a transaction; amount/note must survive.
 - Check 320dp/landscape/200% text, long names/error text/large exact amounts, TalkBack roles/focus order/announcements, physical IME animation and fixed Save reachability. Verify all custom visual states in light/dark. No page ghosting.
 - Host Canvas previews use synthetic fixture data; only real phone testing can certify keyboard, predictive Back, window focus, OEM and process-death behavior.
+
+## Gift wallet 0.4.0 physical acceptance (pending)
+
+- Install as update from 0.3.0 with saved accounts/transactions/custom navigation; verify all remain. Do not uninstall/clear data. No emulator.
+- Airplane mode before first gift use: create/rename/archive/restore/delete/mark-expired; scan QR/barcode through native camera app and import a cropped screenshot. Verify bundled Latin OCR without download; ensure code/amount/date mistakes stay editable and unknown values blank. Reject import and verify no saved row.
+- Share message text and an image from another app; disable each detection setting and repeat; disable automatic confirmation opening and verify results wait for Review without saving. No SMS/camera/media library permission request from Traxos. Check two barcodes, URLs, unsupported/corrupt/large images and no installed camera app handling.
+- Reveal code/PIN/image, background/return to mask; copy into merchant app, verify Android sensitive clipboard preview suppression and timed clearing. Confirm no codes in recents, notifications, work-data or logs. Test real Keystore encryption after process kill/reboot; recovery is unavailable if keys/data are lost.
+- Stored value ₹1,000 → ₹300 used → ₹700; repeat-tap confirmation and Undo/refund; one history write per operation. Single-use rejects partial; discount has no cash total. Unknown balance cannot be redeemed until confirmed. Bank/cash totals stay unchanged.
+- Set expiry/intervals around today on a test card. Grant/deny notification permission, disable channel, reboot, force-stop/reopen and apply battery restrictions. Confirm private wording, no duplicate alerts and rescheduling/cancellation after edit, archive, delete or redemption. Delivery is deferrable, not exact. Restore normal dates afterward.
+- Pin Gift Cards to any nav slot, remove Settings then use fallback, open More and Gift Cards, reorder/reset, restart; center quick action independent.
+- Light/dark, narrow phone and enlarged fonts: scroll long merchant/code/notes/history, verify custom sheets, persistent Save above keyboard, validation, Back/discard and no ghosting. Test TalkBack reading/focus and physical camera permission/cancellation.

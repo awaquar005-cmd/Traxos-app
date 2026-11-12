@@ -209,6 +209,7 @@ internal fun TraxosDialog(
 internal fun TraxosSheet(
     title: String,
     onDismiss: () -> Unit,
+    scrollable: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val maximumHeight = overlayMaxHeight()
@@ -246,7 +247,14 @@ internal fun TraxosSheet(
                     )
                 }
             }
-            content()
+            if (scrollable)
+                Column(
+                    Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    content()
+                }
+            else content()
         }
     }
 }
