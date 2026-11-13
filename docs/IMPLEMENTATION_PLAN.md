@@ -1,3 +1,7 @@
+## 0.13.0 account/Drive durability
+
+P1: independent Android Drive consent/one-owner link, app folder selection, encrypted resumable snapshot/verified download/restore and verified SAF selection; real Firebase email/password and same-UID Google provider link, with runtime public configuration. Preserve local-only use and schema. Acceptance: fixed-owner collisions, unverified/revoked/recent-auth/password fallback, encrypted credential persistence/AtomicFile interruption, denied/read-only SAF, upload loss/retry/host validation/tampering/restore and full baseline suite/build/lint. Owner Firebase configuration and real Google/phone acceptance remain explicit prerequisites, not mocked completed service tests. No shared ledger sync or new finance modules.
+
 ## 0.12.0 local durability slice
 
 P0: deliver SAF-selected password-encrypted snapshots, authenticated preview/additive restore and clear recovery exclusions; separate explicit CSV report. Native screenshot refinement keeps existing features and hero. Acceptance: encryption/cross-device key/duplicate/conflict/failure/financial tests, native routes/form journeys, full regression/build/lint; physical provider/OEM acceptance remains a separate gate. P1: actual native Google authorization and verified Drive transport using provided public configuration; no Supabase dependency for personal backup. Shared-group authorization/backend choice remains later, not omitted.

@@ -1,3 +1,7 @@
+# 0.13.0 — current account/Drive setup
+
+See [OAUTH_DRIVE.md](OAUTH_DRIVE.md) for exact activation and acceptance steps. Drive-only authorization uses the already registered Android OAuth client and can link a local user without Firebase. Email/password and Credential Manager Google sign-up/sign-in are implemented but require the owner's public Firebase Android configuration (`google-services.json`, with Email/Password + Google enabled and a Web client ID). That file has not been supplied; these account providers are **not preconfigured or live-tested**. No private secret is requested or embedded. Supabase/shared groups remain separate.
+
 # Google OAuth, Drive and Supabase setup
 
 Google project `micro-atrium-514609-u5` has now been provided; the user reports Drive API enabled and Android package/SHA-1 registered. Supabase has not been created. Native Drive authorization/upload is not wired into this release yet. The uploaded JSON contained public client configuration only, no client secret.

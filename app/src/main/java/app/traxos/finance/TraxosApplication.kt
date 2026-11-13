@@ -12,6 +12,31 @@ open class TraxosApplication : Application(), androidx.work.Configuration.Provid
                 .setMinimumLoggingLevel(android.util.Log.ERROR)
                 .build()
 
+    val cloudFiles by lazy {
+        app.traxos.finance.cloud.CloudFiles(noBackupFilesDir, KeystoreGiftCipher("traxos.cloud"))
+    }
+    val cloudHttp by lazy { app.traxos.finance.cloud.GoogleHttps(this) }
+
+    fun cloudConfig(): app.traxos.finance.cloud.CloudConfig {
+        val p = getSharedPreferences("cloud_config", 0)
+        return app.traxos.finance.cloud.CloudConfig(
+            p.getString("project", "micro-atrium-514609-u5").orEmpty(),
+            p.getString("apiKey", "").orEmpty(),
+            p.getString("web", "").orEmpty(),
+        )
+    }
+
+    val cloudAccounts by lazy {
+        app.traxos.finance.cloud.CloudAccounts(cloudFiles, cloudHttp, ::cloudConfig)
+    }
+    val driveBackups by lazy {
+        app.traxos.finance.cloud.DriveBackups(
+            this,
+            app.traxos.finance.backup.PortableBackup(this, database, KeystoreGiftCipher()),
+            cloudFiles,
+            cloudHttp,
+        )
+    }
     open val lockStore by lazy {
         app.traxos.finance.security.LockStore(
             noBackupFilesDir,

@@ -294,7 +294,7 @@ fun TraxosApp(vm: MainViewModel) {
                                 "smart" -> "Smart Add"
                                 "plans" -> "Plans"
                                 "voice" -> "Voice entry"
-                                "cloud_setup" -> "Sync & recovery"
+                                "cloud_setup" -> "Account & Drive"
                                 "backup" -> "Backups & recovery"
                                 "reports" -> "Monthly reports"
                                 "deleted" -> "Deleted transactions"
@@ -345,6 +345,7 @@ fun TraxosApp(vm: MainViewModel) {
                                         add("smart" to "Smart review")
                                         if (route != "settings") add("settings" to "Settings")
                                         add("backup" to "Backup")
+                                        add("cloud_setup" to "Account & Drive")
                                         if (route == "transactions") {
                                             add("reports" to "Monthly reports")
                                             add("deleted" to "Deleted transactions")
@@ -425,9 +426,11 @@ fun TraxosApp(vm: MainViewModel) {
                             pendingReview = { HomeSmartReview(smart) { mainNav("smart") } },
                             backupCaption =
                                 if (
-                                    app.getSharedPreferences("local_folder", 0).contains("verified")
+                                    app.getSharedPreferences("local_folder", 0).let {
+                                        it.contains("verified") || it.contains("drive_verified_at")
+                                    }
                                 )
-                                    "Local snapshot verified · Back up new changes"
+                                    "Snapshot verified · Back up new changes"
                                 else "On this phone only · Not backed up",
                         )
                     }
@@ -500,6 +503,7 @@ fun TraxosApp(vm: MainViewModel) {
                             }
                         },
                         { destination -> nav.navigate(destination) { launchSingleTop = true } },
+                        openCloud = { nav.navigate("cloud_setup") { launchSingleTop = true } },
                     )
                 }
             }
@@ -507,7 +511,11 @@ fun TraxosApp(vm: MainViewModel) {
                 RoutePage("navigation_settings") { NavigationSettingsScreen(vm) }
             }
             composable("backup") { RoutePage("backup") { BackupScreen() } }
-            composable("cloud_setup") { RoutePage("cloud_setup") { CloudSetupScreen() } }
+            composable("cloud_setup") {
+                RoutePage("cloud_setup") {
+                    CloudSetupScreen { nav.navigate("backup") { launchSingleTop = true } }
+                }
+            }
             composable("plans") {
                 RoutePage("plans") {
                     PlansScreen(

@@ -34,7 +34,7 @@ class LocalDeliveryUiTest {
 
     private fun await(tag: String) {
         compose.waitUntil(15000) {
-            compose.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty()
+            compose.onAllNodes(hasTestTag(tag) and isEnabled()).fetchSemanticsNodes().isNotEmpty()
         }
     }
 
@@ -115,10 +115,13 @@ class LocalDeliveryUiTest {
             compose.onNodeWithTag("choice_First bank · INR").performClick()
             compose.onNodeWithTag("selector_To account").performScrollTo().performClick()
             compose.onNodeWithTag("choice_Pocket cash · INR").performClick()
-            compose
-                .onNode(hasTestTag("input_amount") and hasAnyAncestor(hasTestTag("traxos_sheet")))
-                .performScrollTo()
-                .performTextInput("50")
+            val transferAmount =
+                compose.onNode(
+                    hasTestTag("input_amount") and hasAnyAncestor(hasTestTag("traxos_sheet"))
+                )
+            transferAmount.performScrollTo().performTextReplacement("50")
+            transferAmount.assertTextContains("50")
+            await("transfer_save")
             compose.onNodeWithTag("transfer_save").performClick()
             await("page_home")
             compose.waitUntil(10000) { runBlocking { app.repository.dao.recordCount() == 2L } }

@@ -13,8 +13,8 @@ android {
         applicationId = "app.traxos.finance"
         minSdk = 26
         targetSdk = 36
-        versionCode = 16
-        versionName = "0.12.0-local-personal"
+        versionCode = 17
+        versionName = "0.13.0-cloud-personal"
     }
     flavorDimensions += "distribution"
     productFlavors {
@@ -58,6 +58,10 @@ android {
 ksp { arg("room.schemaLocation", "$projectDir/schemas") }
 
 dependencies {
+    implementation(libs.credentials)
+    implementation(libs.credentials.google)
+    implementation(libs.google.id)
+    implementation(libs.google.authorization)
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.preview)

@@ -1,7 +1,6 @@
 package app.traxos.finance.ui
 
 import android.app.Application
-import android.content.Intent
 import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -44,18 +43,29 @@ internal class BackupViewModel(application: Application) : AndroidViewModel(appl
     val preview = MutableStateFlow<PortableBackup.Preview?>(null)
     private var job: Job? = null
 
-    fun folder(uri: Uri) {
+    fun folder(uri: Uri, flags: Int) = run {
         try {
-            app.contentResolver.takePersistableUriPermission(
-                uri,
-                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
-            )
-            folder.value = uri.toString()
-            store.edit { putString("tree", folder.value) }
-            status.value = "Folder selected. Create a backup to protect your records."
-        } catch (_: SecurityException) {
-            status.value = "This provider did not grant lasting access. Choose another folder."
+            val selected = FolderStorage(app.contentResolver).select(uri, flags)
+            folder.value = selected.uri.toString()
+            store.edit {
+                putString("tree", folder.value)
+                putString("folder_name", selected.name)
+            }
+            status.value =
+                "${selected.name} selected and tested. Create a backup to save your records."
+        } catch (e: SecurityException) {
+            status.value =
+                "Android did not grant lasting write access. Use the system Files picker and choose a writable subfolder."
+        } catch (e: IllegalArgumentException) {
+            status.value = e.message ?: "Choose a writable local subfolder."
+        } catch (e: Exception) {
+            status.value =
+                "The folder could not create, read and remove a test file. Choose a writable local folder and retry."
         }
+    }
+
+    fun folderFailure(message: String) {
+        status.value = message
     }
 
     private fun run(block: suspend () -> Unit) {
@@ -211,8 +221,17 @@ internal fun BackupScreen(vm: BackupViewModel = viewModel()) {
     var selected by remember { mutableStateOf<Uri?>(null) }
     var csv by remember { mutableStateOf(false) }
     val tree =
-        rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) {
-            it?.let(vm::folder)
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result
+            ->
+            if (result.resultCode == android.app.Activity.RESULT_OK) {
+                val data = result.data
+                val uri = data?.data
+                if (uri != null) vm.folder(uri, data.flags)
+                else
+                    vm.folderFailure(
+                        "The picker did not return a folder. Try the system Files app."
+                    )
+            }
         }
     val file =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { selected = it }
@@ -283,11 +302,29 @@ internal fun BackupScreen(vm: BackupViewModel = viewModel()) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         SettingsGroup("LOCAL STORAGE") {
+            Text(
+                "Choose a subfolder inside Documents or Downloads. Android can disable selection of storage roots; create a TRAXOS folder there first.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             SettingsRow(
                 "Backup folder",
                 if (folder.isBlank()) "Not selected" else Uri.decode(folder.substringAfterLast('/')),
             ) {
-                if (!busy) tree.launch(null)
+                if (!busy)
+                    try {
+                        tree.launch(
+                            FolderStorage.picker(folder.takeIf { it.isNotBlank() }?.toUri())
+                        )
+                    } catch (_: android.content.ActivityNotFoundException) {
+                        vm.folderFailure(
+                            "Android's folder picker is unavailable. Enable the system Files/Documents app, then retry."
+                        )
+                    } catch (_: SecurityException) {
+                        vm.folderFailure(
+                            "Android blocked folder access. Choose a different folder."
+                        )
+                    }
             }
             TraxosNotice(status, NoticeKind.INFO)
         }

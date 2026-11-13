@@ -32,3 +32,7 @@ The user provided Google project `micro-atrium-514609-u5` and Android OAuth clie
 ## Physical acceptance
 
 Install as Update. Select a writable local/removable folder, back up, reopen the archive, review and restore into a separate test installation with a different Keystore; verify gift image/code, exact balances, paired movements and repeated restore. Exercise wrong password, read-only/revoked provider, cancelled picker, insufficient space, backgrounding/rotation and USB copy. Do not clear the real application's data for testing. Host test results are reported separately in validation/local-recovery.
+
+## 0.13.0 update
+
+Folder selection now requests/uses actual granted capabilities, checks modern DocumentsProvider metadata and probes create/read/delete before persisting a new selection. Android root-folder restrictions and picker/provider failures have visible guidance. Optional Drive encrypted snapshots/local mirroring are described in OAUTH_DRIVE.md; they use this same archive/restore contract. Cloud identity/tokens/bindings remain excluded. Only a downloaded/authenticated Drive round trip produces a Drive verified timestamp. Email/password and Google sign-in activation require the owner's public Firebase Android configuration; Drive-only local-user linking does not.

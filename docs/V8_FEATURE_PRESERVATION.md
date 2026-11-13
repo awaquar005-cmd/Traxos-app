@@ -1,3 +1,7 @@
+# 0.13.0 account and recovery addendum
+
+Native Drive consent, fixed-owner linking, encrypted resumable snapshots with remote read-back/restore, local-copy support and probed SAF selection are implemented. Email/password/Google account-login/provider linking use real Firebase endpoints with encrypted session storage, but owner configuration is still required; no Firebase API key/Web client was supplied and no real account/backend/phone result is claimed tested. Drive-only linking is independent of that setup. See OAUTH_DRIVE.md and the final validation report. All previous feature routes and schema11 remain; the older snapshots below are historical when superseded.
+
 # 0.12.0 preservation addendum
 
 See LOCAL_DELIVERY_MANIFEST.json for the0.11.0→0.12.0 route/source/schema audit. All prior routes remain; backup is added. Core financial/gift/QR/images/security/recurring/voice and brand assets remain unchanged. Home uses the existing hero geometry with a truthful optional local-snapshot caption; current selection/default/Undo/navigation functionality remains. Local recovery/CSV are now real features, excluding the entire card vault, app lock, pending SMS and device preferences. Google configuration is received; native Drive/group backend transports remain future work. The map below describes the preceding V8 delivery and is retained as a cumulative inventory.

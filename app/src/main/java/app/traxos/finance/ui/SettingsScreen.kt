@@ -47,6 +47,11 @@ internal fun SettingsScreen(vm: MainViewModel, openSection: (String) -> Unit) {
     }
     val busy by vm.busy.collectAsStateWithLifecycle()
     val preference = prefs!!
+    val cloud =
+        (LocalContext.current.applicationContext as? app.traxos.finance.TraxosApplication)
+            ?.cloudAccounts
+    val identity = cloud?.state?.collectAsStateWithLifecycle()?.value
+    LaunchedEffect(cloud) { cloud?.load() }
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -54,14 +59,16 @@ internal fun SettingsScreen(vm: MainViewModel, openSection: (String) -> Unit) {
         SettingsGroup("PROFILE") {
             SettingsRow(
                 preference.displayName.ifBlank { "Local profile" },
-                "On this phone · no cloud identity",
+                identity?.profile?.email
+                    ?: identity?.binding?.email?.let { "Linked to $it" }
+                    ?: "On this phone · local profile",
                 id = "Profile",
             ) {
                 openSection("profile")
             }
         }
         SettingsGroup("SYNC & RECOVERY") {
-            SettingsRow("Sync center", "Not configured · Google setup guide") {
+            SettingsRow("Sync center", "Account linking and encrypted Drive snapshots") {
                 openSection("cloud_setup")
             }
             SettingsRow("Backups & recovery", "Encrypted snapshots · your chosen folder") {
@@ -205,6 +212,7 @@ internal fun SettingsDetailScreen(
     openAccounts: () -> Unit,
     openData: () -> Unit,
     openCatalog: (String) -> Unit = {},
+    openCloud: () -> Unit = {},
 ) {
     val p by vm.preferences.collectAsStateWithLifecycle()
     val busy by vm.busy.collectAsStateWithLifecycle()
@@ -223,13 +231,13 @@ internal fun SettingsDetailScreen(
     if (privacy)
         TraxosSheet("Privacy information", { privacy = false }, scrollable = true) {
             Text(
-                "Personal records stay on this phone. The app has no internet permission, cloud AI, advertising or analytics upload. Imported content is untrusted: links and OTPs are ignored."
+                "Personal records work offline. Optional Firebase Authentication and Google Drive use the internet only for account and backup actions. Backups are password-encrypted before upload; the card vault is excluded. No cloud AI or advertising is used. Traxos adds no analytics SDK; Google services may process operational diagnostics under their own policies. Imported links and OTPs are ignored."
             )
             Text(
                 "Gift secrets and Smart Add suggestions are encrypted with separate Android Keystore keys. Security state is encrypted; the existing bank/cash ledger and metadata are app-private but not encrypted. App lock gates access; it is not full database encryption. Screenshot protection is disabled in development builds for UI review."
             )
             Text(
-                "Password-encrypted local backups exclude the card vault and app lock. No PIN reset is available. Uninstalling, clearing data or losing keys can lose records or access. No online profile, email change or photo upload is implemented."
+                "Password-encrypted local backups exclude the card vault and app lock. No PIN reset is available. Uninstalling, clearing data or losing keys can lose records or access. Account linking is optional; online email changes and profile-photo uploads are not implemented here."
             )
             TraxosButton({ privacy = false }, Modifier.fillMaxWidth()) { Text("Done") }
         }
@@ -277,8 +285,13 @@ internal fun SettingsDetailScreen(
                     Text("Save display name")
                 }
                 Text(
-                    "No online account is connected. Email changes and profile photo uploads are unavailable; this local name does not authenticate an account.",
+                    "This display name stays local. Use Account & Drive to sign in, verify email and link this phone without replacing existing records.",
                     style = MaterialTheme.typography.bodySmall,
+                )
+                SettingsRow(
+                    "Sign in & account linking",
+                    "Email/password and the same Google identity",
+                    openCloud,
                 )
                 SettingsRow("Account preferences", "Choose default currency and entry accounts") {
                     openData()

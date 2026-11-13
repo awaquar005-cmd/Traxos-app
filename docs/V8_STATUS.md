@@ -1,3 +1,7 @@
+# 0.13.0 account and recovery addendum
+
+Native Drive consent, fixed-owner linking, encrypted resumable snapshots with remote read-back/restore, local-copy support and probed SAF selection are implemented. Email/password/Google account-login/provider linking use real Firebase endpoints with encrypted session storage, but owner configuration is still required; no Firebase API key/Web client was supplied and no real account/backend/phone result is claimed tested. Drive-only linking is independent of that setup. See OAUTH_DRIVE.md and the final validation report. All previous feature routes and schema11 remain; the older snapshots below are historical when superseded.
+
 # 0.12.0 update
 
 Local SAF folder selection, password-encrypted financial snapshots with staged additive restore and explicit CSV reports are implemented; validation/delivery evidence is in validation/local-recovery. Card vault, lock state, pending Smart Add and device preferences remain excluded. Native screenshot refinements preserve existing routes and the balance hero. Google public OAuth configuration is received and Android registration user-confirmed, but native Drive authorization/transport remains pending; Supabase is not configured. The0.11.0 status snapshot below remains historical where superseded; see LOCAL_RECOVERY.md and PROGRESS.md for current limits.

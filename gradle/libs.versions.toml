@@ -8,6 +8,10 @@ lifecycle = "2.9.0"
 work = "2.10.1"
 mlkit-barcode = "17.3.0"
 [libraries]
+credentials = { module = "androidx.credentials:credentials", version = "1.6.0" }
+credentials-google = { module = "androidx.credentials:credentials-play-services-auth", version = "1.6.0" }
+google-id = { module = "com.google.android.libraries.identity.googleid:googleid", version = "1.1.1" }
+google-authorization = { module = "com.google.android.gms:play-services-auth", version = "22.0.0" }
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose" }
 compose-test = { module = "androidx.compose.ui:ui-test-junit4" }
 compose-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }

@@ -1,3 +1,24 @@
+# Current delivery
+
+- `downloads/TRAXOS-0.13.0-cloud-personal.apk` — Personal version17; hash in SHA256SUMS.txt.
+- `docs/CLOUD_DELIVERY_MANIFEST.json` — source/route/schema preservation and current service configuration boundaries.
+- `docs/validation/oauth-drive/` — successful build log, suite/lint/signature report and synthetic native account/folder PNGs.
+
+# 0.13.0 files
+
+- `cloud/CloudAccounts.kt`: public config importer, encrypted AtomicFile session/owner storage, Firebase auth/refresh/link/verification/reset/password operations.
+- `cloud/CloudHttp.kt`: bounded fixed-host TLS requests/streaming files, certificate/package headers and sanitized status handling.
+- `cloud/DriveBackups.kt`: stable Google owner, app folders, reserved-ID resumable snapshots/local copy/read-back/restore.
+- `backup/FolderStorage.kt`: real SAF grant/provider/probe validation; `ui/BackupScreen.kt` handles actual picker result flags/errors.
+- `ui/CloudScreen.kt`, `CloudViewModel.kt`, `CloudSetupScreen.kt`: functional account/provider/Drive setup, binding and recovery flows with custom Traxos controls.
+- `TraxosApplication.kt`, `ui/App.kt`, `SettingsScreen.kt`: manual DI, existing profile/Settings entry points and privacy text; local finance remains independent.
+- `res/drawable/google_g.png`: official Google asset from https://developers.google.com/static/identity/images/g-logo.png; no Traxos brand asset changed.
+- `CloudAccountsTest.kt`, `DriveBackupsTest.kt`, `FolderStorageTest.kt`, `CloudScreenUiTest.kt`: server-contract/security/retry/provider/native UI fixtures. Existing permission assertion now expects INTERNET; transfer test uses dialog-scoped semantic text replacement to avoid host IME focus races.
+- `app/build.gradle.kts`, `gradle/libs.versions.toml`, `AndroidManifest.xml`: version17/0.13.0-cloud-personal, verified native auth dependencies, explicit internet, CCT backend removal. Room11 unchanged.
+- `docs/OAUTH_DRIVE.md`, `CLOUD_SETUP.md`, architecture/decisions/progress: configuration gate, scope/security/limits and exact phone acceptance.
+
+Java/Kotlin paths above are relative to `app/src/main/java/app/traxos/finance/` or `app/src/test/java/app/traxos/finance/`.
+
 # Delivered artifact and validation
 
 - `downloads/TRAXOS-0.12.0-local-personal.apk` — Personal update APK; hash in SHA256SUMS.txt.

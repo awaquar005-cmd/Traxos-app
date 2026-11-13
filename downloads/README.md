@@ -1,3 +1,13 @@
+# Current Personal APK
+
+**[Download TRAXOS 0.13.0 Personal APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.13.0-cloud-personal.apk)**
+
+Install as **Update**, never uninstall/clear data. Version17, same signing identity, Room11 unchanged. Only Personal built. **232 tests passed; lint0 errors,23 warnings,1 hint(s).** [Evidence](../docs/validation/oauth-drive/README.md).
+
+Settings → Sync center / Account & Drive → Authorize connects the original Google account for Drive-only local-user backups; create/select an app-owned folder, keep the password and select an optional tested local folder. Uploads resume with fixed file IDs and are downloaded/authenticated before verified status. No automatic data upload/restore. [Instructions and exclusions](../docs/OAUTH_DRIVE.md).
+
+Email/password and Google account sign-in/linking require the owner's public Firebase Android configuration, not supplied yet. Those providers remain setup-required until imported; no real login/cloud acceptance is claimed. Live Google consent, provider permission and cross-phone hardware acceptance still need the physical phone. Historical downloads below are not recommended downgrades.
+
 # Current Personal test APK
 
 **[Download TRAXOS 0.12.0 Personal APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.12.0-local-personal.apk)**
