@@ -30,6 +30,12 @@ class SmartViewModel(val repository: SmartRepository, val ledger: LedgerReposito
                     }
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    val homeSuggestion =
+        repository.dao
+            .observe("PENDING", 1)
+            .map { rows -> rows.firstOrNull()?.let { it to repository.read(it) } }
+            .catch { emit(null) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
     val pending =
         repository.dao
             .pendingCount()

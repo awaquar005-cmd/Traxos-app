@@ -72,6 +72,12 @@ class V8EntryUiTest {
             compose.waitUntil(10000) {
                 compose.onAllNodesWithText("Test goal").fetchSemanticsNodes().isNotEmpty()
             }
+            compose.waitUntil(10000) {
+                compose
+                    .onAllNodes(hasText("Add") and isEnabled())
+                    .fetchSemanticsNodes()
+                    .isNotEmpty()
+            }
             compose.onNodeWithText("Add").performScrollTo().performClick()
             compose.onNodeWithTag("input_goal_progress").performScrollTo().performTextInput("250")
             compose.onNodeWithTag("goal_progress_save").performScrollTo().performClick()

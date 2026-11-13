@@ -191,6 +191,8 @@ fun TraxosApp(vm: MainViewModel) {
                 current == "settings" ||
                     current.startsWith("settings/") ||
                     current == "navigation_settings" ||
+                    current == "backup" ||
+                    current == "cloud_setup" ||
                     current == "categories" ||
                     current.startsWith("labels/")
             if (current != "settings" && (!inSettings || !nav.popBackStack("settings", false))) {
@@ -274,7 +276,7 @@ fun TraxosApp(vm: MainViewModel) {
                     Box(Modifier.statusBarsPadding()) {
                         TraxosToolbar(
                             when (route) {
-                                "transactions" -> "Transactions"
+                                "transactions" -> "Activity"
                                 "accounts" -> "Accounts"
                                 "settings" -> "Settings"
                                 "settings/{section}" ->
@@ -293,6 +295,7 @@ fun TraxosApp(vm: MainViewModel) {
                                 "plans" -> "Plans"
                                 "voice" -> "Voice entry"
                                 "cloud_setup" -> "Sync & recovery"
+                                "backup" -> "Backups & recovery"
                                 "reports" -> "Monthly reports"
                                 "deleted" -> "Deleted transactions"
                                 "transfer" -> "Own-account transfer"
@@ -306,6 +309,7 @@ fun TraxosApp(vm: MainViewModel) {
                                     route == "transfer" ||
                                         route == "deleted" ||
                                         route == "cloud_setup" ||
+                                        route == "backup" ||
                                         (route == "transactions" &&
                                             nav.previousBackStackEntry?.destination?.route ==
                                                 "reports") ||
@@ -332,34 +336,25 @@ fun TraxosApp(vm: MainViewModel) {
                                     }
                                 } else null,
                             home = { mainNav("home") },
-                            actions =
-                                if (
-                                    route != "transfer" &&
-                                        (route == "transactions" ||
-                                            prefs.centerAction != "ADD_TRANSACTION" ||
-                                            "settings" !in slots ||
-                                            "home" !in slots ||
-                                            "more" !in slots)
-                                ) {
-                                    {
-                                        TraxosActionMenu(
-                                            buildList {
-                                                if (route == "transactions") {
-                                                    add("reports" to "Monthly reports")
-                                                    add("deleted" to "Deleted transactions")
-                                                }
-                                                if ("home" !in slots) add("home" to "Home")
-                                                if (prefs.centerAction != "ADD_TRANSACTION")
-                                                    add("add" to "Add transaction")
-                                                if ("settings" !in slots)
-                                                    add("settings" to "Settings")
-                                                if ("more" !in slots) add("more" to "More tools")
-                                            }
-                                        ) { id ->
-                                            if (id == "add") add() else mainNav(id)
+                            actions = {
+                                TraxosActionMenu(
+                                    buildList {
+                                        if (route != "home") add("home" to "Dashboard")
+                                        add("add" to "Quick add")
+                                        if (route != "accounts") add("accounts" to "Accounts")
+                                        add("smart" to "Smart review")
+                                        if (route != "settings") add("settings" to "Settings")
+                                        add("backup" to "Backup")
+                                        if (route == "transactions") {
+                                            add("reports" to "Monthly reports")
+                                            add("deleted" to "Deleted transactions")
                                         }
+                                        add("more" to "More tools")
                                     }
-                                } else null,
+                                ) { id ->
+                                    if (id == "add") add() else mainNav(id)
+                                }
+                            },
                         )
                     }
                 }
@@ -367,7 +362,11 @@ fun TraxosApp(vm: MainViewModel) {
         bottomBar = {
             if (!form && route != "transfer")
                 TraxosBottomBar(
-                    if (route == "navigation_settings" || route.startsWith("settings/")) "settings"
+                    if (
+                        route in setOf("navigation_settings", "backup", "cloud_setup") ||
+                            route.startsWith("settings/")
+                    )
+                        "settings"
                     else route,
                     CenterShortcut.from(prefs.centerAction),
                     mainNav,
@@ -422,6 +421,14 @@ fun TraxosApp(vm: MainViewModel) {
                                 startVoice()
                             },
                             { recurringOpen = true },
+                            report = { mainNav("reports") },
+                            pendingReview = { HomeSmartReview(smart) { mainNav("smart") } },
+                            backupCaption =
+                                if (
+                                    app.getSharedPreferences("local_folder", 0).contains("verified")
+                                )
+                                    "Local snapshot verified · Back up new changes"
+                                else "On this phone only · Not backed up",
                         )
                     }
                 }
@@ -437,6 +444,7 @@ fun TraxosApp(vm: MainViewModel) {
                         add,
                         smart.pending.collectAsStateWithLifecycle().value,
                         { nav.navigate("smart") { launchSingleTop = true } },
+                        report = { mainNav("reports") },
                     )
                 }
             }
@@ -463,7 +471,11 @@ fun TraxosApp(vm: MainViewModel) {
                                 "navigation" -> "navigation_settings"
                                 "deleted" -> "deleted"
                                 "cloud_setup" -> "cloud_setup"
+                                "backup" -> "backup"
                                 "reports" -> "reports"
+                                "accounts" -> "accounts"
+                                "voice" -> "voice"
+                                "gift_settings" -> "gift_settings"
                                 else -> "settings/$section"
                             }
                         nav.navigate(destination) {
@@ -494,6 +506,7 @@ fun TraxosApp(vm: MainViewModel) {
             composable("navigation_settings") {
                 RoutePage("navigation_settings") { NavigationSettingsScreen(vm) }
             }
+            composable("backup") { RoutePage("backup") { BackupScreen() } }
             composable("cloud_setup") { RoutePage("cloud_setup") { CloudSetupScreen() } }
             composable("plans") {
                 RoutePage("plans") {

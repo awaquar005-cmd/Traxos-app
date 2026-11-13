@@ -1,3 +1,9 @@
+# 0.12.0 local recovery boundary
+
+PortableBackup streams a fixed-schema typed snapshot inside a versioned PBKDF2/AES-GCM/GZIP envelope. Android SAF stores uniquely named files with persisted per-folder access; Room remains the live source. Restore authenticates and validates a temporary Room database before exposing counts, then performs a conflict-aborting additive transaction against the current database. Gift secrets are resealed with the target device key; the entire card vault, lock state, pending Smart Add and device preferences are excluded. LedgerCsv is an explicit non-backup plaintext report. BackupViewModel owns operations/single-flight state across rotation; passwords are transient. No new Room migration, cloud SDK or broad storage permission. Details: LOCAL_RECOVERY.md.
+
+Native screenshot refinements retain opaque transition-free RoutePages and existing form/repository ownership. Transaction optional date/note/merchant fields share the retained draft; Transfer opens the established paired-transfer editor and closes the parent draft only after success. Main navigation and Settings entry semantics are unchanged. Home only renders the first five active accounts, with all accounts reachable in Manage.
+
 # Architecture
 
 ## 0.11.0 native V8 entry and Plans

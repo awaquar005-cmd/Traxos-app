@@ -1,3 +1,7 @@
+# 0.12.0 preservation addendum
+
+See LOCAL_DELIVERY_MANIFEST.json for the0.11.0→0.12.0 route/source/schema audit. All prior routes remain; backup is added. Core financial/gift/QR/images/security/recurring/voice and brand assets remain unchanged. Home uses the existing hero geometry with a truthful optional local-snapshot caption; current selection/default/Undo/navigation functionality remains. Local recovery/CSV are now real features, excluding the entire card vault, app lock, pending SMS and device preferences. Google configuration is received; native Drive/group backend transports remain future work. The map below describes the preceding V8 delivery and is retained as a cumulative inventory.
+
 # V8 preservation and implementation map
 
 User overrides: native Kotlin/Compose; current dashboard hero remains; slightly shorter chrome/search, cobalt center Add in dark mode; microphone home action and hold/release voice; preserve current functionality/defaults. OCR alone stays removed. QR/barcode and encrypted gift-image attachments remain. V3 attachment SHA-256 matches the already adopted source exactly. V8 HTMLs are visual/interaction references, never production authentication/storage or an exhaustive feature inventory. Original references are in references/v8; they are not APK assets.

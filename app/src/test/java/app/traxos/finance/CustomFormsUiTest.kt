@@ -66,10 +66,10 @@ class CustomFormsUiTest {
             compose.onNodeWithTag("selector_Category").performScrollTo().performClick()
             compose.onNodeWithTag("choice_Food & drink").performClick()
             compose.onNodeWithTag("traxos_sheet").assertDoesNotExist()
+            compose.onNodeWithTag("transaction_details").performScrollTo().performClick()
             compose.onNodeWithTag("date_selector").performScrollTo().performClick()
             compose.onNodeWithText("Yesterday").performClick()
             compose.onNodeWithText("Use date").performClick()
-            compose.onNodeWithTag("transaction_details").performScrollTo().performClick()
             compose
                 .onNodeWithTag("input_note")
                 .performScrollTo()

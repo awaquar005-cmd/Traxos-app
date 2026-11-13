@@ -1,6 +1,10 @@
 # Google OAuth, Drive and Supabase setup
 
-No project is currently configured. This guide prepares the real integration; it is not a claim that login, Drive backup or backend sync already works. Offline ledger, app lock, QR/images and existing features work without these services. Never paste passwords, private signing keys, OAuth client secrets or Supabase service-role keys into chat or commit them.
+Google project `micro-atrium-514609-u5` has now been provided; the user reports Drive API enabled and Android package/SHA-1 registered. Supabase has not been created. Native Drive authorization/upload is not wired into this release yet. The uploaded JSON contained public client configuration only, no client secret.
+
+Android OAuth client ID: `349564032175-ijp6aekrsig6gg24vcmjdft9b92e7r2s.apps.googleusercontent.com`. Keep the original download outside source. Configuration is recorded, not a connected session.
+
+ This guide prepares the real integration; it is not a claim that login, Drive backup or backend sync already works. Offline ledger, app lock, QR/images and existing features work without these services. Never paste passwords, private signing keys, OAuth client secrets or Supabase service-role keys into chat or commit them.
 
 ## Android identity — enter these exact values
 
@@ -10,7 +14,9 @@ No project is currently configured. This guide prepares the real integration; it
 
 These identify the existing update-compatible debug APK. A later production signing key needs its own OAuth registration/fingerprints; do not change the current signing key to test this update. App version names do not go into OAuth package fields.
 
-## 1. Create Supabase
+## 1. Optional later: shared backend (Supabase)
+
+Skip this section for personal Drive/local backups. A shared-expense schema can keep many groups and membership records in one project; it does not need one Supabase project per group. Storage, traffic, authentication and other service quotas still need review before production. No group backend is implemented by entering these identifiers.
 
 1. Create a Supabase account, organization and project on the free tier. Choose a nearby region; save the database password privately.
 2. In project settings/API, note the **project URL** (`https://<project-ref>.supabase.co`) and **publishable key** (or legacy anon key). These are public client configuration, not server privileges.
@@ -39,7 +45,7 @@ You may share the Google project ID, Android OAuth client ID, Web OAuth client I
 ## 4. Keep recovery separate
 
 - Drive snapshot: password-encrypted portable archive in your Google Drive.
-- Chosen folder: separate Storage Access Framework destination with verified encrypted round-trip restore.
+- Chosen folder: Storage Access Framework snapshots and additive restore are implemented in 0.12.0; use a password and retain the file outside the phone. Cloud upload remains separate.
 - Supabase: authenticated ledger/shared-group synchronization with server acknowledgment and conflict handling.
 
 All future portable exports/backups/sync exclude the protected on-device card vault, including CVV. Current encrypted card data is preserved by explicit user instruction; this overrides the V8 document's proposed CVV removal. App lock is not full ledger encryption, and present device-bound keys do not provide portable recovery. Never show “backed up” or “synced” based on local browser state or an unacknowledged request.

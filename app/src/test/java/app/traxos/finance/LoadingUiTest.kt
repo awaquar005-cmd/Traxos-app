@@ -33,8 +33,8 @@ class LoadingUiTest {
             state.value = ReadState.Ready(emptyList(), emptyList(), emptyList(), emptyList())
         }
         compose.onNodeWithContentDescription("Loading local records").assertDoesNotExist()
-        compose.onNodeWithTag("dashboard_list").performScrollToNode(hasText("Create account"))
-        compose.onNodeWithText("Create account").performClick()
+        compose.onNodeWithTag("dashboard_list").performScrollToNode(hasText("Create"))
+        compose.onNodeWithText("Create").performClick()
         assertEquals(1, createCalls)
         compose.onAllNodesWithText("₹", substring = true).assertCountEquals(0)
     }

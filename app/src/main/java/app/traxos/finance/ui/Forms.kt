@@ -1,6 +1,7 @@
 package app.traxos.finance.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -87,6 +88,22 @@ internal fun FormDestination(
                 vm.set("note", draft.note)
             }
     }
+    var transfer by rememberSaveable { mutableStateOf(false) }
+    var closeTransfer by remember { mutableStateOf(false) }
+    if (transfer)
+        TraxosSheet("Transfer", { closeTransfer = true }) {
+            TransferScreen(
+                main.repository,
+                back = { transfer = false },
+                closeRequested = closeTransfer,
+                closeHandled = { closeTransfer = false },
+            ) {
+                transfer = false
+                latestFeedback(
+                    Feedback("Transfer saved", close = true, undoId = it, undoRevision = 1)
+                )
+            }
+        }
     var discard by rememberSaveable { mutableStateOf(false) }
     var delete by rememberSaveable { mutableStateOf(false) }
     val leave: () -> Unit = {
@@ -209,6 +226,10 @@ internal fun FormDestination(
                                     preferences ?: Preferences(),
                                     vm::default,
                                     main.repository,
+                                    transfer =
+                                        if (vm.isNew) {
+                                            { transfer = true }
+                                        } else null,
                                 ) {
                                     nav.navigate("account/new") { launchSingleTop = true }
                                 }
@@ -235,23 +256,30 @@ internal fun FormDestination(
                         if (fields.isEmpty())
                             TraxosTextButton(vm::load) { Text("Retry opening record") }
                     }
-                    TraxosButton(
-                        {
-                            keyboard?.hide()
-                            focusManager.clearFocus()
-                            vm.save()
-                        },
-                        Modifier.fillMaxWidth().testTag("form_save"),
-                        enabled = ready && fields["linkId"].isNullOrBlank(),
-                        busy = busy,
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        Text(if (busy) "Saving…" else if (account) "Save" else "Save")
+                        Text(
+                            "Saved on device",
+                            Modifier.weight(.4f),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        TraxosButton(
+                            {
+                                keyboard?.hide()
+                                focusManager.clearFocus()
+                                vm.save()
+                            },
+                            Modifier.weight(.6f).testTag("form_save"),
+                            enabled = ready && fields["linkId"].isNullOrBlank(),
+                            busy = busy,
+                        ) {
+                            Text(if (busy) "Saving…" else "Save")
+                        }
                     }
-                    Text(
-                        "Records stay on this phone · No cloud backup",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
                 }
             }
         }
@@ -268,6 +296,7 @@ private fun TransactionFormFields(
     preferences: Preferences,
     initial: (String, String) -> Unit,
     repository: LedgerRepository,
+    transfer: (() -> Unit)? = null,
     addAccount: () -> Unit,
 ) {
     val accounts =
@@ -322,12 +351,17 @@ private fun TransactionFormFields(
     }
     TraxosSegment(
         if (account?.type == "CREDIT_CARD") listOf("EXPENSE" to "Purchase", "REFUND" to "Refund")
-        else listOf("EXPENSE" to "Expense", "INCOME" to "Income"),
+        else
+            listOf("EXPENSE" to "Expense", "INCOME" to "Income") +
+                if (transfer != null) listOf("TRANSFER" to "Transfer") else emptyList(),
         f["type"].orEmpty(),
         enabled,
     ) {
-        set("type", it)
-        set("categoryId", "")
+        if (it == "TRANSFER") transfer?.invoke()
+        else {
+            set("type", it)
+            set("categoryId", "")
+        }
     }
     TraxosAmountInput(
         f["amount"].orEmpty(),
@@ -343,15 +377,30 @@ private fun TransactionFormFields(
             Text("Create account")
         }
     }
-    AccountPicker(repository, f["accountId"].orEmpty(), accounts, enabled) { set("accountId", it) }
-    CategoryPicker(
-        repository,
-        f["categoryId"].orEmpty(),
-        state.categories,
-        f["type"].orEmpty(),
-        enabled,
+    Surface(
+        shape = Radius.card,
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        border =
+            androidx.compose.foundation.BorderStroke(
+                .5.dp,
+                MaterialTheme.colorScheme.outlineVariant,
+            ),
     ) {
-        set("categoryId", it)
+        Column {
+            AccountPicker(repository, f["accountId"].orEmpty(), accounts, enabled, flat = true) {
+                set("accountId", it)
+            }
+            CategoryPicker(
+                repository,
+                f["categoryId"].orEmpty(),
+                state.categories,
+                f["type"].orEmpty(),
+                enabled,
+                flat = true,
+            ) {
+                set("categoryId", it)
+            }
+        }
     }
     if (account?.type == "CREDIT_CARD")
         Text(
@@ -359,12 +408,31 @@ private fun TransactionFormFields(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-    TraxosDateField("Transaction date", f["day"].orEmpty(), enabled) { set("day", it) }
+    val quick = state.categories.filter { it.type == categoryType && !it.archived }.take(4)
+    Text(
+        "QUICK CATEGORY",
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Row(
+        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        quick.forEach { category ->
+            CompactAction(
+                category.name,
+                { set("categoryId", category.id) },
+                enabled = enabled,
+                active = f["categoryId"] == category.id,
+            )
+        }
+    }
     var details by rememberSaveable { mutableStateOf(!isNew || !f["note"].isNullOrBlank()) }
     TraxosTextButton({ details = !details }, Modifier.testTag("transaction_details"), enabled) {
-        Text(if (details) "Less details" else "More details")
+        Text(if (details) "Less details" else "+ Add a note, merchant or date")
     }
     if (details) {
+        TraxosDateField("Transaction date", f["day"].orEmpty(), enabled) { set("day", it) }
         val labels by repository.dao.labels().collectAsStateWithLifecycle(emptyList())
         SavedLabelPicker(repository, "MERCHANT") { set("merchantId", it.id) }
         labels.firstOrNull { it.id == f["merchantId"] }?.let { Text("Merchant: ${it.name}") }

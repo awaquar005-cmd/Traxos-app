@@ -53,63 +53,72 @@ internal fun SettingsScreen(vm: MainViewModel, openSection: (String) -> Unit) {
     ) {
         SettingsGroup("PROFILE") {
             SettingsRow(
-                "Profile",
-                preference.displayName.ifBlank { "Local profile · on this phone" },
+                preference.displayName.ifBlank { "Local profile" },
+                "On this phone · no cloud identity",
+                id = "Profile",
             ) {
                 openSection("profile")
             }
         }
         SettingsGroup("SYNC & RECOVERY") {
-            SettingsRow("Sync center", "Not configured · Google and Supabase setup required") {
+            SettingsRow("Sync center", "Not configured · Google setup guide") {
                 openSection("cloud_setup")
             }
-            SettingsRow(
-                "Backups & recovery",
-                "Google Drive and chosen-folder recovery · setup guide",
-            ) {
-                openSection("cloud_setup")
+            SettingsRow("Backups & recovery", "Encrypted snapshots · your chosen folder") {
+                openSection("backup")
+            }
+            SettingsRow("Card vault protection", "Full card details stay on this device") {
+                openSection("security")
             }
         }
         SettingsGroup("PREFERENCES") {
-            SettingsRow("Appearance & Navigation", "Theme, accent, dock and display preferences") {
+            SettingsRow("Appearance & Navigation", "Theme, accent, dock and layout") {
                 openSection("appearance")
             }
-            SettingsRow("Bottom navigation", "Preview, reorder and choose your screen slots") {
-                openSection("navigation")
-            }
-            SettingsRow("Currency & region", "Default currency; no automatic conversions") {
+            SettingsRow("Currency & region", "Default currency · no automatic conversion") {
                 openSection("data")
             }
         }
-        SettingsGroup("SECURITY & TRACKING") {
-            SettingsRow("Security & Privacy", "PIN, biometrics, auto-lock and masking") {
-                openSection("security")
+        SettingsGroup("MONEY & TOOLS") {
+            SettingsRow("Accounts & balances", "Cash, bank, wallet and card liabilities") {
+                openSection("accounts")
             }
-            SettingsRow("Smart Tracking", "SMS, text import and QR/barcode preferences") {
+            SettingsRow(
+                "Transaction defaults",
+                "Recent account, category and shortcuts",
+                id = "Accounts & Data",
+            ) {
+                openSection("data")
+            }
+            SettingsRow(
+                "Categories & merchants",
+                "Custom categories, saved names and descriptions",
+            ) {
+                openSection("data")
+            }
+            SettingsRow("Smart Tracking", "SMS, QR, share and payment review") {
                 openSection("smart")
+            }
+            SettingsRow("Voice & shortcuts", "On-device entry and typed fallback") {
+                openSection("voice")
+            }
+            SettingsRow("Monthly reports", "Category totals and matching activity") {
+                openSection("reports")
+            }
+            SettingsRow("Deleted transactions", "Restore retained history") {
+                openSection("deleted")
+            }
+        }
+        SettingsGroup("SECURITY & NOTIFICATIONS") {
+            SettingsRow("Security & Privacy", "Biometrics, PIN, masking and auto-lock") {
+                openSection("security")
             }
             SettingsRow("Notifications", "Gift expiry and suggestion alerts") {
                 openSection("notifications")
             }
-        }
-        SettingsGroup("MONEY & TOOLS") {
-            SettingsRow("Monthly reports", "Category totals and matching activity") {
-                openSection("reports")
+            SettingsRow("Reminder schedules", "Gift expiry lead times and local delivery") {
+                openSection("gift_settings")
             }
-            SettingsRow("Deleted transactions", "Restore saved history; no automatic purge") {
-                openSection("deleted")
-            }
-            SettingsRow(
-                "Accounts & Data",
-                "Accounts, categories, currency and saved entry options",
-            ) {
-                openSection("data")
-            }
-            Text(
-                "Saved on this phone · no portable backup yet",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
         }
         SettingsGroup("HELP & DESIGN REVIEW") {
             SettingsRow("Full UI review", "Explore the V3 page flows · sample data only") {
@@ -126,26 +135,30 @@ internal fun SettingsScreen(vm: MainViewModel, openSection: (String) -> Unit) {
 }
 
 @Composable
-internal fun SettingsRow(title: String, summary: String, onClick: () -> Unit) {
+internal fun SettingsRow(title: String, summary: String, onClick: () -> Unit) =
+    SettingsRow(title, summary, title, onClick)
+
+@Composable
+internal fun SettingsRow(title: String, summary: String, id: String, onClick: () -> Unit) {
     TraxosButton(
         onClick,
-        Modifier.fillMaxWidth().testTag("setting_$title"),
+        Modifier.fillMaxWidth().testTag("setting_$id"),
         tone = ButtonTone.GHOST,
         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
     ) {
-        Icon(
-            settingsIcon(title),
-            null,
-            Modifier.size(18.dp),
-            tint = MaterialTheme.colorScheme.primary,
-        )
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text(title, style = MaterialTheme.typography.labelLarge)
+            Text(
+                title,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
             Text(
                 summary,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
+                maxLines =
+                    if (androidx.compose.ui.platform.LocalDensity.current.fontScale > 1.3f) 2
+                    else 1,
                 overflow = TextOverflow.Ellipsis,
             )
         }
@@ -216,7 +229,7 @@ internal fun SettingsDetailScreen(
                 "Gift secrets and Smart Add suggestions are encrypted with separate Android Keystore keys. Security state is encrypted; the existing bank/cash ledger and metadata are app-private but not encrypted. App lock gates access; it is not full database encryption. Screenshot protection is disabled in development builds for UI review."
             )
             Text(
-                "No portable backup or PIN reset is available. Uninstalling, clearing data or losing keys can lose records or access. No online profile, email change or photo upload is implemented."
+                "Password-encrypted local backups exclude the card vault and app lock. No PIN reset is available. Uninstalling, clearing data or losing keys can lose records or access. No online profile, email change or photo upload is implemented."
             )
             TraxosButton({ privacy = false }, Modifier.fillMaxWidth()) { Text("Done") }
         }

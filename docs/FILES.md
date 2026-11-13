@@ -1,3 +1,24 @@
+# Delivered artifact and validation
+
+- `downloads/TRAXOS-0.12.0-local-personal.apk` — Personal update APK; hash in SHA256SUMS.txt.
+- `docs/LOCAL_DELIVERY_MANIFEST.json` — preserved routes/core sources/schema and explicit additions.
+- `docs/validation/local-recovery/` — successful log, actual suite/lint/signature metadata and synthetic native PNGs.
+
+# 0.12.0 local recovery and reference UI changes
+
+- `backup/PortableBackup.kt`: authenticated snapshot envelope, portable gift payloads, validated staged/idempotent additive restore and safe CSV writer.
+- `ui/BackupScreen.kt`: actual SAF folder/file pickers, persisted grant, password/review/restore/export flow and single-flight ViewModel.
+- `ui/App.kt`: recovery route, contextual overflow and preserved native navigation; public cloud setup remains separate.
+- `ui/Dashboard.kt`, `LedgerScreens.kt`, `SettingsScreen.kt`: grouped compact reference layout, retained hero, useful icons, live pending review and structured Settings.
+- `ui/Forms.kt`, `Controls.kt`, `CatalogComponents.kt`, `Overlays.kt`, `Components.kt`: full-screen entry, flat selectors, quick categories, expandable optional fields, compact footer and bounded scrollable menu.
+- `smart/SmartViewModel.kt`: read-only first-pending summary for Home; existing explicit approval writer is reused.
+- `ui/CloudSetupScreen.kt`, `docs/CLOUD_SETUP.md`: truthful configuration/transport status; uploaded JSON not committed.
+- `PortableBackupTest.kt`, `LocalDeliveryUiTest.kt`: encrypted cross-key round-trip, failures/conflicts/exclusions/CSV and native recovery/UI journeys. Existing journey tests follow the new labels/optional-details location.
+- `docs/LOCAL_RECOVERY.md`: coverage, exclusions, cryptography, limits and phone acceptance.
+- `app/build.gradle.kts`: version16 /0.12.0-local-personal. Schema11 and dependencies unchanged.
+
+Paths above are relative to `app/src/main/java/app/traxos/finance/` or `app/src/test/java/app/traxos/finance/` where appropriate. Historical file inventories follow.
+
 # Created files
 
 ## 0.11.0 changed files

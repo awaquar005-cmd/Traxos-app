@@ -1,3 +1,7 @@
+# 0.12.0 update
+
+Local SAF folder selection, password-encrypted financial snapshots with staged additive restore and explicit CSV reports are implemented; validation/delivery evidence is in validation/local-recovery. Card vault, lock state, pending Smart Add and device preferences remain excluded. Native screenshot refinements preserve existing routes and the balance hero. Google public OAuth configuration is received and Android registration user-confirmed, but native Drive authorization/transport remains pending; Supabase is not configured. The0.11.0 status snapshot below remains historical where superseded; see LOCAL_RECOVERY.md and PROGRESS.md for current limits.
+
 # V8 implementation status — native Personal build
 
 This is a native Compose adaptation of the supplied V8 visual reference, not the HTML running in a wrapper and not completion of the entire V3/V8 roadmap. Current user instructions preserve the existing hero and encrypted CVV fields. Production sample-data/authentication bypasses are not implemented.

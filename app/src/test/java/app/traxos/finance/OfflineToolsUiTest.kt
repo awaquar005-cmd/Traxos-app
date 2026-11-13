@@ -183,7 +183,14 @@ class OfflineToolsUiTest {
             scenario.recreate()
             awaitTag("nav_transactions")
             compose.onNodeWithTag("nav_transactions").performClick()
-            compose.onNodeWithTag("activity_sort").assertTextContains("Oldest first")
+            compose
+                .onNodeWithTag("activity_sort")
+                .assert(
+                    SemanticsMatcher.expectValue(
+                        androidx.compose.ui.semantics.SemanticsProperties.StateDescription,
+                        "Oldest first",
+                    )
+                )
             openTool("settings")
             compose.onNodeWithTag("setting_Accounts & Data").performScrollTo().performClick()
             compose.onNodeWithTag("selector_Activity order").performScrollTo().performClick()
@@ -194,7 +201,14 @@ class OfflineToolsUiTest {
                 }
             }
             compose.onNodeWithTag("nav_transactions").performClick()
-            compose.onNodeWithTag("activity_sort").assertTextContains("Newest first")
+            compose
+                .onNodeWithTag("activity_sort")
+                .assert(
+                    SemanticsMatcher.expectValue(
+                        androidx.compose.ui.semantics.SemanticsProperties.StateDescription,
+                        "Newest first",
+                    )
+                )
         }
     }
 

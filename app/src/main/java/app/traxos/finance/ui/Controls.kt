@@ -322,20 +322,18 @@ internal fun TraxosAmountInput(
     LaunchedEffect(focus) { if (focus) requester.requestFocus() }
     Surface(
         shape = Radius.card,
-        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        color = MaterialTheme.colorScheme.background,
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(
+            Modifier.padding(vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(
-                    "AMOUNT",
+                    "AMOUNT · $currency",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    currency,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
                 )
             }
             BasicTextField(
@@ -344,7 +342,7 @@ internal fun TraxosAmountInput(
                 enabled = enabled,
                 singleLine = true,
                 textStyle =
-                    MaterialTheme.typography.headlineMedium.copy(
+                    MaterialTheme.typography.displaySmall.copy(
                         color = MaterialTheme.colorScheme.onSurface,
                         fontFeatureSettings = "tnum",
                     ),
@@ -361,8 +359,8 @@ internal fun TraxosAmountInput(
                     Box {
                         if (value.isEmpty())
                             Text(
-                                "0.00",
-                                style = MaterialTheme.typography.headlineMedium,
+                                "0",
+                                style = MaterialTheme.typography.displaySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         field()

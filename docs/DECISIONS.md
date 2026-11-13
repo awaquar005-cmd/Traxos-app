@@ -1,3 +1,9 @@
+## 0.12.0 — local snapshots before cloud transport
+
+Use Android SAF and standard JCA to keep local recovery independent of OAuth/backend availability and avoid broad storage permission/new dependencies. Preserve current data and app PIN/vault: restore is additive and aborts conflicts, not replacement/destructive import. Exclude the entire card vault by the preservation contract; portable gift secrets use the password envelope and new device keys. Keep device preferences/consents outside the archive. Exact schema compatibility and explicit bounded imports are safer than interpreting unknown financial formats. CSV is clearly labelled plaintext/report-only. See LOCAL_RECOVERY.md for limits and recovery tradeoffs.
+
+Google public project/client configuration is now supplied and the Android package/SHA-1 registration is user-confirmed. Record setup identifiers without pretending a successful native Drive session. Supabase is unnecessary for personal Drive snapshots and can remain separate from a future membership-authorized shared expense backend.
+
 # Decisions
 
 ## 0.11.0 V8 authority and service gates

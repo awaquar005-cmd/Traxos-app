@@ -306,6 +306,7 @@ internal fun TraxosSelector(
     enabled: Boolean = true,
     sheet: Boolean = true,
     onCreate: (() -> Unit)? = null,
+    flat: Boolean = false,
     onSelect: (String) -> Unit,
 ) {
     val keyboard = LocalSoftwareKeyboardController.current
@@ -323,8 +324,8 @@ internal fun TraxosSelector(
             { open = true },
             Modifier.fillMaxWidth().testTag("selector_$label"),
             enabled && (options.isNotEmpty() || onCreate != null),
-            tone = ButtonTone.SECONDARY,
-            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+            tone = if (flat) ButtonTone.GHOST else ButtonTone.SECONDARY,
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
         ) {
             Row(
                 Modifier.weight(1f),
@@ -517,7 +518,17 @@ internal fun TraxosActionMenu(options: List<Pair<String, String>>, onSelect: (St
                     shadowElevation = 4.dp,
                     modifier = Modifier.width(208.dp).testTag("traxos_menu"),
                 ) {
-                    Column(Modifier.padding(4.dp)) {
+                    Column(
+                        Modifier.heightIn(
+                                max =
+                                    (androidx.compose.ui.platform.LocalConfiguration.current
+                                            .screenHeightDp - 96)
+                                        .coerceIn(144, 500)
+                                        .dp
+                            )
+                            .verticalScroll(rememberScrollState())
+                            .padding(4.dp)
+                    ) {
                         options.forEach { (id, label) ->
                             TraxosTextButton(
                                 {

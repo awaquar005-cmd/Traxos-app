@@ -1,3 +1,11 @@
+# Current: 0.12.0 local recovery and screenshot UI refinement
+
+Implementation added: SAF folder selection/persistent access, password-encrypted financial snapshots with verified staged/additive restore, and explicit plaintext CSV export. Room schema11 and signing identity retained. Native Activity grouped rows, Home monthly/recent/accounts groups, compact Settings hierarchy, optional transaction details/quick categories/real transfer selector and expanded functional overflow are aligned with the supplied screenshots. Current balance hero/logo/watermark geometry retained; backup caption becomes truthful when a local snapshot exists. Existing financial, gift, QR/image, recurring, Plans, Smart Add, lock, defaults, navigation and Undo paths remain.
+
+Public Google Android OAuth project/client configuration received and user confirmed package/SHA-1 registration. No client secret was present. Native Drive authorization/upload remains pending; Supabase is not configured. Local recovery needs neither. See LOCAL_RECOVERY.md for archive exclusions (especially card vault), conflicts, passwords/size limits and physical-device checks.
+
+Personal assemble, **207 tests (zero failures/errors/skips)** and lint passed:0 errors,21 warnings,1 hint(s). Signing matches0.11.0;16KiB ZIP/64-bit ELF alignment verified. APK: `downloads/TRAXOS-0.12.0-local-personal.apk`. [Exact validation](validation/local-recovery/README.md). Physical SAF grant/provider/revocation/low-space/USB/process-kill, actual hardware cross-phone keys and OEM/accessibility acceptance remain pending; no emulator/phone certification. Next task is device recovery acceptance, then actual native Drive authorization/verified upload using the provided configuration. Earlier entries are historical.
+
 # Progress
 
 ## 0.11.0 V8 native UI, voice and Plans

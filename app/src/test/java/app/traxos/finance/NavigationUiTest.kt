@@ -119,7 +119,7 @@ class NavigationUiTest {
             compose.onNodeWithTag("page_accounts").assertExists()
             compose.onNodeWithTag("page_home").assertDoesNotExist()
             compose.onNodeWithContentDescription("More actions").performClick()
-            compose.onNodeWithText("Add transaction").performClick()
+            compose.onNodeWithText("Quick add").performClick()
             compose.onNodeWithTag("page_transaction_form").assertExists()
             runBlocking {
                 assertEquals(1L, app.repository.dao.recordCount())

@@ -620,7 +620,7 @@ internal fun LedgerSearch(value: String, onChange: (String) -> Unit, requester: 
                     Box {
                         if (value.isBlank())
                             Text(
-                                "Notes, categories or accounts",
+                                "Search activity",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )

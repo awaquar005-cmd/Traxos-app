@@ -1,3 +1,7 @@
+## 0.12.0 local durability slice
+
+P0: deliver SAF-selected password-encrypted snapshots, authenticated preview/additive restore and clear recovery exclusions; separate explicit CSV report. Native screenshot refinement keeps existing features and hero. Acceptance: encryption/cross-device key/duplicate/conflict/failure/financial tests, native routes/form journeys, full regression/build/lint; physical provider/OEM acceptance remains a separate gate. P1: actual native Google authorization and verified Drive transport using provided public configuration; no Supabase dependency for personal backup. Shared-group authorization/backend choice remains later, not omitted.
+
 # TRAXOS implementation plan
 
 ## 0.11.0 V8 tracked scope

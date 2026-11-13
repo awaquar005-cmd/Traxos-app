@@ -74,7 +74,7 @@ class NavigationCustomizationUiTest {
                 runBlocking { app.repository.dao.preferences().first()!!.centerAction },
             )
             compose.onNodeWithContentDescription("More actions").performClick()
-            compose.onNodeWithText("Add transaction").performClick()
+            compose.onNodeWithText("Quick add").performClick()
             compose.onNodeWithTag("page_transaction_form").assertExists()
         }
     }

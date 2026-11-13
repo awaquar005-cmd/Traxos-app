@@ -20,7 +20,7 @@ internal fun CloudSetupScreen() {
     ) {
         Text("Sync & recovery", style = MaterialTheme.typography.titleLarge)
         TraxosNotice(
-            "Not configured. Your current ledger works offline. No cloud account is linked and no backup or sync has run.",
+            "Not configured. Your current ledger works offline. Google configuration was provided; native cloud connection is pending. No cloud backup or sync has run.",
             NoticeKind.INFO,
         )
         SettingsGroup("GOOGLE SIGN-IN & DRIVE") {
@@ -38,7 +38,7 @@ internal fun CloudSetupScreen() {
         }
         SettingsGroup("SEPARATE RECOVERY LAYERS") {
             Text(
-                "Google Drive snapshots, chosen-folder encrypted backups and backend sync are separate features. A local save is not a verified backup. Protected card-vault data must remain excluded from portable copies.",
+                "Local chosen-folder snapshots now work in Backups & recovery. Google Drive snapshots and backend sync remain separate, pending integrations. A local save is not a verified backup. Protected card-vault data must remain excluded from portable copies.",
                 style = MaterialTheme.typography.bodySmall,
             )
         }

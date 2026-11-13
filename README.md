@@ -4,13 +4,15 @@ Offline-first Kotlin/Jetpack Compose personal finance application. Active native
 
 ## Download for phone testing
 
-**[Download TRAXOS 0.11.0 V8 Personal APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.11.0-v8-personal.apk)**. Choose **Update**, never uninstall or clear storage. Same package/signature, version code15, safe Room schema10→11 migration.
+**[Download TRAXOS 0.12.0 Personal APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.12.0-local-personal.apk)**. Choose **Update**, never uninstall or clear storage. Same package/signature, version code16, Room schema11 unchanged.
 
-Native V8-inspired UI, brighter cobalt Plus, compact chrome/search and mic action; current hero/brand and existing finance/gift/QR/images/Smart Add/security/recurring/defaults retained. Hold Plus and release for on-device speech on supported Android12+ devices; denied/unavailable speech has typed fallback. Every reviewed draft still uses normal transaction Save. New Plans offers real local monthly budgets and separate savings-progress earmarks; these do not change bank balances.
+Two new local features: password-encrypted financial snapshots with preview/additive restore, and explicit CSV transaction reports. Open **Settings → Backups & recovery → Backup folder** to choose your own folder. The live database stays private in the app. Snapshots cover ledger, accounts, categories, recurring, Plans and portable gift secrets/images; the entire card vault, app lock, pending Smart Add and device preferences are excluded. Keep the password and a copy outside the phone. [Recovery details/limits](docs/LOCAL_RECOVERY.md).
 
-**194 tests passed; lint0 errors,21 warnings,1 advisory hint.** [Actual validation](docs/validation/v8-native/README.md) · [Before/after preservation audit](docs/V8_FEATURE_PRESERVATION.md) · [Full scope and pending features](docs/V8_STATUS.md).
+Native screenshot-based Activity, Home monthly/recent/account groups, structured Settings and compact full-screen transaction entry retain the approved hero/logo/watermark, existing features/defaults/Undo and navigation customization. Transfer from Add uses real paired accounting and Undo, without saving the underlying expense draft. No OCR, emulator, cloud SDK or new broad storage/network permission.
 
-Google OAuth, Drive, Supabase/group sync and portable recovery are not configured or implemented transports. [Exact project/package/fingerprint setup](docs/CLOUD_SETUP.md). Current encrypted card fields including CVV remain per user override; general ledger encryption/Keystore recovery limitations remain. Debug screenshots stay enabled. Actual microphone models/accuracy, OEM/IME/TalkBack and phone performance need physical-device acceptance. No emulator used. Preview-only future modules remain labelled and never write production data.
+**207 tests passed; lint0 errors,21 warnings,1 advisory hint(s).** [Actual validation](docs/validation/local-recovery/README.md) · [Preservation audit](docs/LOCAL_DELIVERY_MANIFEST.json). Physical folder-provider/OEM/IME/TalkBack/process-kill and cross-phone Keystore acceptance remain pending.
+
+Google project/Android OAuth configuration is received and package/SHA-1 registration user-confirmed. Native Drive authorization/upload remains pending; no connected/cloud-backed-up status is simulated. Supabase has not been created and is unnecessary for personal Drive backups. [Configuration and next steps](docs/CLOUD_SETUP.md). Existing encrypted card fields including CVV remain by user instruction; current general ledger is still app-private plaintext. Debug screenshots remain enabled.
 
 ## Structure
 

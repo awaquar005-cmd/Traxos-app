@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -30,15 +31,20 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 @Composable
-internal fun RecordItem(row: RecordRow, hidden: Boolean = false, click: () -> Unit) {
+internal fun RecordItem(
+    row: RecordRow,
+    hidden: Boolean = false,
+    shape: androidx.compose.ui.graphics.Shape = androidx.compose.ui.graphics.RectangleShape,
+    click: () -> Unit,
+) {
     val largeFont = LocalDensity.current.fontScale > 1.3f
     Surface(
         onClick = click,
-        shape = Radius.control,
+        shape = shape,
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Row(
                 Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -59,7 +65,10 @@ internal fun RecordItem(row: RecordRow, hidden: Boolean = false, click: () -> Un
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
-                        row.accountName + " · " + row.categoryName,
+                        row.accountName +
+                            " · " +
+                            LocalDate.ofEpochDay(row.record.day)
+                                .format(DateTimeFormatter.ofPattern("d MMM yyyy")),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -96,29 +105,21 @@ internal fun RecordItem(row: RecordRow, hidden: Boolean = false, click: () -> Un
                     hidden = hidden,
                 )
             Text(
-                LocalDate.ofEpochDay(row.record.day)
-                    .format(DateTimeFormatter.ofPattern("d MMM yyyy")) +
-                    " · " +
-                    when (row.record.type) {
-                        "INCOME" -> "Income"
-                        "REFUND" -> "Card refund"
-                        "PAYMENT_IN",
-                        "PAYMENT_OUT" -> "Card payment"
-                        "TRANSFER_IN",
-                        "TRANSFER_OUT" -> "Own-account transfer"
-                        else -> "Expense"
-                    } +
-                    (row.loggedAt?.let { timestamp ->
-                        val zone =
-                            runCatching { java.time.ZoneId.of(row.record.zoneId) }
-                                .getOrDefault(java.time.ZoneId.systemDefault())
+                row.categoryName +
+                    (row.loggedAt?.let {
                         " · Recorded " +
-                            java.time.Instant.ofEpochMilli(timestamp)
-                                .atZone(zone)
-                                .format(DateTimeFormatter.ofPattern("d MMM HH:mm"))
+                            java.time.Instant.ofEpochMilli(it)
+                                .atZone(
+                                    runCatching { java.time.ZoneId.of(row.record.zoneId) }
+                                        .getOrDefault(java.time.ZoneId.systemDefault())
+                                )
+                                .format(DateTimeFormatter.ofPattern("HH:mm"))
                     } ?: ""),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.align(Alignment.End),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }
@@ -134,6 +135,7 @@ internal fun TransactionsScreen(
     add: () -> Unit,
     smartPending: Long = 0,
     openSmart: () -> Unit = {},
+    report: () -> Unit = {},
 ) {
     val search by vm.search.collectAsStateWithLifecycle()
     val filter by vm.recordFilter.collectAsStateWithLifecycle()
@@ -184,40 +186,12 @@ internal fun TransactionsScreen(
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         val largeFont = LocalDensity.current.fontScale > 1.3f
-        if (largeFont) Text("Activity", style = MaterialTheme.typography.titleMedium)
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (!largeFont)
-                Text(
-                    "Activity",
-                    Modifier.weight(1f),
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            if (smartPending > 0)
-                CompactAction(
-                    "SMS · $smartPending",
-                    openSmart,
-                    Modifier.testTag("activity_smart_add"),
-                )
-            CompactAction(
-                if (scope.active) "Filters · On" else "Filters",
-                { filtering = true },
-                (if (largeFont) Modifier.weight(1f) else Modifier).testTag("activity_filters"),
-                reads is ReadState.Ready,
-                scope.active,
-            )
-            CompactAction(
-                if (sort == "OLDEST") "Oldest first" else "Newest first",
-                { sorting = true },
-                (if (largeFont) Modifier.weight(1f) else Modifier).testTag("activity_sort"),
-                preferences != null && !preferenceBusy,
-            )
-        }
+        Text("Every transaction.", style = MaterialTheme.typography.headlineSmall)
+        Text(
+            "Find anything. Fix anything.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         LedgerSearch(search, vm::search, requester)
         if (scope.active) {
             val ready = reads as? ReadState.Ready
@@ -270,10 +244,53 @@ internal fun TransactionsScreen(
                     CompactAction(label, { vm.recordFilter(id) }, active = filter == id)
                 }
         }
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (!largeFont)
+                Text(
+                    "${list.itemCount} " +
+                        if (
+                            (list.loadState.append as? LoadState.NotLoading)
+                                ?.endOfPaginationReached == true
+                        )
+                            "entries"
+                        else "loaded",
+                    Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            if (smartPending > 0)
+                CompactAction(
+                    "SMS · $smartPending",
+                    openSmart,
+                    Modifier.testTag("activity_smart_add"),
+                )
+            CompactAction(
+                if (scope.active) "Filter · On" else "Filter",
+                { filtering = true },
+                (if (largeFont) Modifier.weight(1f) else Modifier).testTag("activity_filters"),
+                reads is ReadState.Ready,
+                scope.active,
+            )
+            CompactAction(
+                "Sort",
+                { sorting = true },
+                (if (largeFont) Modifier.weight(1f) else Modifier)
+                    .testTag("activity_sort")
+                    .semantics {
+                        stateDescription = if (sort == "OLDEST") "Oldest first" else "Newest first"
+                    },
+                preferences != null && !preferenceBusy,
+            )
+        }
         LazyColumn(
             Modifier.weight(1f),
-            contentPadding = PaddingValues(bottom = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(bottom = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(0.dp),
         ) {
             if (list.loadState.refresh is LoadState.Loading && list.itemCount == 0)
                 items(5) { RowSkeleton() }
@@ -304,8 +321,33 @@ internal fun TransactionsScreen(
                     )
                 }
             items(list.itemCount, key = list.itemKey { it.record.id }) { i ->
-                list[i]?.let { r -> RecordItem(r, hidden) { open(r.record.id) } }
+                list[i]?.let { r ->
+                    val top = if (i == 0) 16.dp else 0.dp
+                    val bottom = if (i == list.itemCount - 1) 16.dp else 0.dp
+                    RecordItem(
+                        r,
+                        hidden,
+                        androidx.compose.foundation.shape.RoundedCornerShape(
+                            topStart = top,
+                            topEnd = top,
+                            bottomStart = bottom,
+                            bottomEnd = bottom,
+                        ),
+                    ) {
+                        open(r.record.id)
+                    }
+                }
             }
+            if (
+                list.itemCount > 0 &&
+                    (list.loadState.append as? LoadState.NotLoading)?.endOfPaginationReached == true
+            )
+                item {
+                    TraxosTextButton(report, Modifier.fillMaxWidth()) {
+                        Text("Explore monthly insights", Modifier.weight(1f))
+                        Text("›")
+                    }
+                }
             if (list.loadState.append is LoadState.Loading) item { RowSkeleton() }
             if (list.loadState.append is LoadState.Error)
                 item { TraxosTextButton(onClick = list::retry) { Text("Retry loading more") } }

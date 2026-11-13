@@ -1,3 +1,13 @@
+# Current Personal test APK
+
+**[Download TRAXOS 0.12.0 Personal APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.12.0-local-personal.apk)**
+
+Choose **Update**, never uninstall/clear storage. Same signature/package, version code16, schema11 unchanged. Only Personal built. **207 tests passed; lint0 errors,21 warnings,1 hint(s).** [Evidence](../docs/validation/local-recovery/README.md).
+
+Settings → Backups & recovery → Backup folder selects the Android SAF destination. New password-encrypted financial snapshots/preview/additive restore and separate plaintext CSV export work locally; keep the password and copy off the phone. The live database stays app-private. Vault/PIN/device settings/pending Smart Add are excluded. [Scope and limits](../docs/LOCAL_RECOVERY.md). Updated compact native Activity/Home/Settings/forms preserve the hero and all existing features. Google configuration is recorded; native Drive connection is pending, with no Supabase dependency for personal backup. Actual phone/provider acceptance remains pending.
+
+Earlier versions below are historical; use the current link above rather than downgrade.
+
 # Personal test APK
 
 **[Download TRAXOS 0.11.0 V8 Personal APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.11.0-v8-personal.apk)**

@@ -63,6 +63,7 @@ internal fun AccountPicker(
     label: String = "Account",
     currency: String? = null,
     allowCard: Boolean = true,
+    flat: Boolean = false,
     onSelect: (String) -> Unit,
 ) {
     var create by rememberSaveable { mutableStateOf(false) }
@@ -81,6 +82,7 @@ internal fun AccountPicker(
         },
         enabled,
         onCreate = { create = true },
+        flat = flat,
     ) {
         onSelect(it)
     }
@@ -105,6 +107,7 @@ internal fun CategoryPicker(
     type: String,
     enabled: Boolean = true,
     label: String = "Category",
+    flat: Boolean = false,
     onSelect: (String) -> Unit,
 ) {
     var create by rememberSaveable { mutableStateOf(false) }
@@ -117,6 +120,7 @@ internal fun CategoryPicker(
         choices.map { it.id to it.name },
         enabled,
         onCreate = { create = true },
+        flat = flat,
     ) {
         onSelect(it)
     }
