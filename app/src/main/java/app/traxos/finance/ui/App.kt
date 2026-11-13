@@ -5,6 +5,10 @@
 
 package app.traxos.finance.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.background
@@ -19,6 +23,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -31,6 +36,7 @@ import app.traxos.finance.data.*
 import app.traxos.finance.domain.NavigationLayout
 import app.traxos.finance.gifts.*
 import app.traxos.finance.smart.*
+import app.traxos.finance.voice.*
 import kotlinx.coroutines.launch
 
 @Composable
@@ -45,6 +51,44 @@ fun TraxosApp(vm: MainViewModel) {
         )
     val incoming by GiftInbox.pending.collectAsState()
     val nav = rememberNavController()
+    val voice: VoiceViewModel =
+        viewModel(
+            factory = viewModelFactory { initializer { VoiceViewModel(AndroidOfflineSpeech(app)) } }
+        )
+    val voiceState by voice.state.collectAsStateWithLifecycle()
+    var voiceReview by rememberSaveable { mutableStateOf(false) }
+    val microphonePermission =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            voice.fallback(
+                if (granted) "Microphone allowed. Tap Record or hold Plus again."
+                else "Microphone denied. Type your transaction instead."
+            )
+            voiceReview = true
+        }
+    val startVoice: () -> Unit = {
+        if (!voice.available) voice.start(true)
+        else if (
+            ContextCompat.checkSelfPermission(appContext, Manifest.permission.RECORD_AUDIO) ==
+                PackageManager.PERMISSION_GRANTED
+        )
+            voice.start(true)
+        else {
+            voice.fallback("Allow the microphone or type instead")
+            microphonePermission.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
+    val voiceOwner = LocalLifecycleOwner.current
+    DisposableEffect(voiceOwner, voice) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_PAUSE) voice.interrupt()
+        }
+        voiceOwner.lifecycle.addObserver(observer)
+        onDispose {
+            voiceOwner.lifecycle.removeObserver(observer)
+            voice.interrupt()
+        }
+    }
+
     LaunchedEffect(incoming) {
         when (incoming) {
             GiftIncoming.SmartOpen -> {
@@ -98,6 +142,20 @@ fun TraxosApp(vm: MainViewModel) {
         }
     if (recurringOpen)
         RecurringPanel(app.recurring, { recurringOpen = false }, app.recurringScheduler::kick)
+    if (voiceReview)
+        VoicePanel(
+            voice,
+            vm.preferences.collectAsStateWithLifecycle().value?.defaultCurrency ?: "INR",
+            startVoice,
+            {
+                voiceReview = false
+                voice.dismiss()
+            },
+            {
+                voiceReview = false
+                nav.navigate("transaction/new") { launchSingleTop = true }
+            },
+        )
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(Unit) {
         for (message in snackbarGiftEvents) {
@@ -200,7 +258,16 @@ fun TraxosApp(vm: MainViewModel) {
     Scaffold(
         modifier = Modifier.fillMaxSize().imePadding(),
         containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { if (!form) SnackbarHost(snackbar) { TraxosSnackbar(it) } },
+        snackbarHost = {
+            if (voiceState.phase in setOf("LISTENING", "PROCESSING"))
+                TraxosNotice(
+                    if (voiceState.phase == "LISTENING")
+                        "Listening on device · release Plus to finish"
+                    else "Recognizing on device…",
+                    NoticeKind.PROGRESS,
+                )
+            else if (!form) SnackbarHost(snackbar) { TraxosSnackbar(it) }
+        },
         topBar = {
             if (!form)
                 Surface(color = MaterialTheme.colorScheme.background) {
@@ -223,6 +290,9 @@ fun TraxosApp(vm: MainViewModel) {
                                 "gift/{id}" -> "Gift card"
                                 "more" -> "More"
                                 "smart" -> "Smart Add"
+                                "plans" -> "Plans"
+                                "voice" -> "Voice entry"
+                                "cloud_setup" -> "Sync & recovery"
                                 "reports" -> "Monthly reports"
                                 "deleted" -> "Deleted transactions"
                                 "transfer" -> "Own-account transfer"
@@ -235,6 +305,7 @@ fun TraxosApp(vm: MainViewModel) {
                                 if (
                                     route == "transfer" ||
                                         route == "deleted" ||
+                                        route == "cloud_setup" ||
                                         (route == "transactions" &&
                                             nav.previousBackStackEntry?.destination?.route ==
                                                 "reports") ||
@@ -302,6 +373,14 @@ fun TraxosApp(vm: MainViewModel) {
                     mainNav,
                     loadedPreferences != null,
                     slots,
+                    onQuickAddHold = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        startVoice()
+                    },
+                    onQuickAddRelease = {
+                        voice.stop()
+                        voiceReview = true
+                    },
                 ) {
                     when (CenterShortcut.from(prefs.centerAction)) {
                         CenterShortcut.ADD_TRANSACTION -> add()
@@ -337,6 +416,12 @@ fun TraxosApp(vm: MainViewModel) {
                             { mainNav("accounts") },
                             { id -> nav.navigate("account/$id") { launchSingleTop = true } },
                             !preferenceBusy && loadedPreferences != null,
+                            add,
+                            {
+                                voiceReview = true
+                                startVoice()
+                            },
+                            { recurringOpen = true },
                         )
                     }
                 }
@@ -377,6 +462,7 @@ fun TraxosApp(vm: MainViewModel) {
                                 "review" -> "ui_review"
                                 "navigation" -> "navigation_settings"
                                 "deleted" -> "deleted"
+                                "cloud_setup" -> "cloud_setup"
                                 "reports" -> "reports"
                                 else -> "settings/$section"
                             }
@@ -407,6 +493,24 @@ fun TraxosApp(vm: MainViewModel) {
             }
             composable("navigation_settings") {
                 RoutePage("navigation_settings") { NavigationSettingsScreen(vm) }
+            }
+            composable("cloud_setup") { RoutePage("cloud_setup") { CloudSetupScreen() } }
+            composable("plans") {
+                RoutePage("plans") {
+                    PlansScreen(
+                        app.plans,
+                        prefs.defaultCurrency,
+                        { recurringOpen = true },
+                        prefs.balancesHidden,
+                    )
+                }
+            }
+            composable("voice") {
+                RoutePage("voice") {
+                    VoiceEntryScreen(voice, prefs.defaultCurrency, startVoice) {
+                        nav.navigate("transaction/new") { launchSingleTop = true }
+                    }
+                }
             }
             composable("reports") {
                 RoutePage("reports") {
@@ -531,7 +635,9 @@ fun TraxosApp(vm: MainViewModel) {
                 }
             }
             composable("transaction/{id}") {
-                RoutePage("transaction_form") { FormDestination(vm, false, nav, reads, feedback) }
+                RoutePage("transaction_form") {
+                    FormDestination(vm, false, nav, reads, feedback, voice)
+                }
             }
             composable("account/{id}") {
                 RoutePage("account_form") { FormDestination(vm, true, nav, reads, feedback) }

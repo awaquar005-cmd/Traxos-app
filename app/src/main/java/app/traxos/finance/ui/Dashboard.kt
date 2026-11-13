@@ -29,6 +29,9 @@ internal fun HomeScreen(
     openAccounts: () -> Unit = {},
     openAccount: (String) -> Unit = {},
     visibilityEnabled: Boolean = true,
+    addTransaction: () -> Unit = {},
+    voiceEntry: () -> Unit = {},
+    repeatEntry: () -> Unit = {},
 ) {
     val groups = remember(state.accounts) { state.accounts.groupBy { it.account.currency } }
     val summaries =
@@ -148,6 +151,16 @@ internal fun HomeScreen(
                     MetricCard("Inflow", summaries, true, hidden, Modifier.weight(1f))
                     MetricCard("Net outflow", summaries, false, hidden, Modifier.weight(1f))
                 }
+            }
+        }
+        item(key = "quick_actions") {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TraxosButton(addTransaction, Modifier.weight(1f)) { Text("Add") }
+                TraxosTextButton(voiceEntry, Modifier.weight(1f).testTag("home_voice")) {
+                    Icon(TraxosIcons.mic, "Voice", Modifier.size(18.dp))
+                    Text("Voice")
+                }
+                TraxosTextButton(repeatEntry, Modifier.weight(1f)) { Text("Repeat") }
             }
         }
         item(key = "account_header") {

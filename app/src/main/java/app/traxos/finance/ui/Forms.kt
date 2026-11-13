@@ -28,6 +28,7 @@ internal fun FormDestination(
     nav: NavHostController,
     reads: ReadState,
     feedback: (Feedback) -> Unit,
+    voice: app.traxos.finance.voice.VoiceViewModel? = null,
 ) {
     val vm: FormViewModel =
         viewModel(
@@ -65,6 +66,27 @@ internal fun FormDestination(
     val busy by vm.busy.collectAsStateWithLifecycle()
     val loading by vm.loading.collectAsStateWithLifecycle()
     val error by vm.error.collectAsStateWithLifecycle()
+    LaunchedEffect(vm, loading, reads is ReadState.Ready) {
+        if (!loading && !account && vm.isNew && reads is ReadState.Ready)
+            voice?.takeDraft()?.let { draft ->
+                val eligible =
+                    reads.accounts.filter {
+                        !it.account.archived &&
+                            it.account.currency == draft.currency &&
+                            (draft.type != "INCOME" || it.account.type != "CREDIT_CARD")
+                    }
+                val selected =
+                    eligible.firstOrNull { it.account.id == fields["accountId"] }
+                        ?: eligible.firstOrNull { it.account.id == preferences?.defaultAccountId }
+                        ?: eligible.firstOrNull()
+                vm.set("voiceCurrency", draft.currency)
+                vm.set("accountId", selected?.account?.id.orEmpty())
+                if (fields["type"] != draft.type) vm.set("categoryId", "")
+                vm.set("type", draft.type)
+                vm.set("amount", draft.amount)
+                vm.set("note", draft.note)
+            }
+    }
     var discard by rememberSaveable { mutableStateOf(false) }
     var delete by rememberSaveable { mutableStateOf(false) }
     val leave: () -> Unit = {
@@ -248,7 +270,12 @@ private fun TransactionFormFields(
     repository: LedgerRepository,
     addAccount: () -> Unit,
 ) {
-    val accounts = state.accounts.filter { !it.account.archived || it.account.id == f["accountId"] }
+    val accounts =
+        state.accounts.filter {
+            (!it.account.archived || it.account.id == f["accountId"]) &&
+                (f["voiceCurrency"].isNullOrBlank() || it.account.currency == f["voiceCurrency"]) &&
+                (f["type"] != "INCOME" || it.account.type != "CREDIT_CARD")
+        }
     val categoryType = if (f["type"] == "REFUND") "EXPENSE" else f["type"]
     LaunchedEffect(accounts.map { it.account.id }, f["type"]) {
         if (f["accountId"].isNullOrEmpty() && accounts.isNotEmpty()) {

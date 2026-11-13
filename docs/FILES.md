@@ -1,5 +1,9 @@
 # Created files
 
+## 0.11.0 changed files
+
+Created voice/VoiceEntry.kt, voice/AndroidOfflineSpeech.kt, ui/VoicePanel.kt, data/Plans.kt, ui/PlansScreen.kt, ui/CloudSetupScreen.kt, Room schema11, five new test classes, original V8 references, preservation/baseline/delivery manifests, setup/status docs and validation. Updated App/Forms/Navigation/NavigationLayout/Home/Components/Theme/Settings/UiHierarchy/Activity/Accounts, Application plans DI, Database explicit migration, microphone permission/service visibility and version metadata. LedgerRepository/Money, gift/QR/image, SMS/Smart repositories, lock/security sources, original brand/splash assets unchanged.
+
 ## 0.10.1 UI changes
 
 Also updated BrandedControlsUiTest and NavigationCustomizationUiTest to use concise dialog actions/stable confirmation tags.

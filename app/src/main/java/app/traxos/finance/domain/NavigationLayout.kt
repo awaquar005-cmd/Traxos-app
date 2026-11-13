@@ -3,7 +3,18 @@ package app.traxos.finance.domain
 /** Stable IDs only for screens that exist. UI routes/icons are registered separately. */
 object NavigationLayout {
     val implemented =
-        listOf("home", "transactions", "accounts", "settings", "gifts", "more", "smart", "reports")
+        listOf(
+            "home",
+            "transactions",
+            "accounts",
+            "settings",
+            "gifts",
+            "more",
+            "smart",
+            "reports",
+            "plans",
+            "voice",
+        )
     // Default positions remain stable when new implemented screens join the registry.
     val defaults = listOf("home", "transactions", "accounts", "settings")
     const val SLOT_COUNT = 4

@@ -26,6 +26,7 @@ open class TraxosApplication : Application(), androidx.work.Configuration.Provid
     }
     val recurring by lazy { app.traxos.finance.data.RecurringRepository(database) }
     val recurringScheduler by lazy { app.traxos.finance.recurring.RecurringScheduler(this) }
+    val plans by lazy { app.traxos.finance.data.PlansRepository(database) }
     val database by lazy { TraxosDatabase.open(this) }
     val repository by lazy { LedgerRepository(database) }
     val giftScheduler by lazy { AndroidGiftScheduler(this) }

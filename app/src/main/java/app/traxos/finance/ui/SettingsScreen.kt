@@ -49,7 +49,7 @@ internal fun SettingsScreen(vm: MainViewModel, openSection: (String) -> Unit) {
     val preference = prefs!!
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         SettingsGroup("PROFILE") {
             SettingsRow(
@@ -59,18 +59,29 @@ internal fun SettingsScreen(vm: MainViewModel, openSection: (String) -> Unit) {
                 openSection("profile")
             }
         }
-        SettingsGroup("CUSTOMIZATION") {
-            Text("Theme & display", style = MaterialTheme.typography.titleSmall)
-            ThemePicker(preference.theme, !busy, vm::theme)
-            AccentPicker(preference.accent, !busy, vm::accent)
+        SettingsGroup("SYNC & RECOVERY") {
+            SettingsRow("Sync center", "Not configured · Google and Supabase setup required") {
+                openSection("cloud_setup")
+            }
+            SettingsRow(
+                "Backups & recovery",
+                "Google Drive and chosen-folder recovery · setup guide",
+            ) {
+                openSection("cloud_setup")
+            }
+        }
+        SettingsGroup("PREFERENCES") {
+            SettingsRow("Appearance & Navigation", "Theme, accent, dock and display preferences") {
+                openSection("appearance")
+            }
             SettingsRow("Bottom navigation", "Preview, reorder and choose your screen slots") {
                 openSection("navigation")
             }
-            SettingsRow("Appearance & Navigation", "Display preferences and center action") {
-                openSection("appearance")
+            SettingsRow("Currency & region", "Default currency; no automatic conversions") {
+                openSection("data")
             }
         }
-        SettingsGroup("SECURITY & SMART TRACKING") {
+        SettingsGroup("SECURITY & TRACKING") {
             SettingsRow("Security & Privacy", "PIN, biometrics, auto-lock and masking") {
                 openSection("security")
             }
@@ -81,7 +92,7 @@ internal fun SettingsScreen(vm: MainViewModel, openSection: (String) -> Unit) {
                 openSection("notifications")
             }
         }
-        SettingsGroup("ACCOUNTS & DATA") {
+        SettingsGroup("MONEY & TOOLS") {
             SettingsRow("Monthly reports", "Category totals and matching activity") {
                 openSection("reports")
             }
@@ -120,16 +131,16 @@ internal fun SettingsRow(title: String, summary: String, onClick: () -> Unit) {
         onClick,
         Modifier.fillMaxWidth().testTag("setting_$title"),
         tone = ButtonTone.GHOST,
-        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp),
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
     ) {
         Icon(
             settingsIcon(title),
             null,
-            Modifier.size(22.dp),
+            Modifier.size(18.dp),
             tint = MaterialTheme.colorScheme.primary,
         )
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text(title, style = MaterialTheme.typography.titleSmall)
+            Text(title, style = MaterialTheme.typography.labelLarge)
             Text(
                 summary,
                 style = MaterialTheme.typography.bodySmall,

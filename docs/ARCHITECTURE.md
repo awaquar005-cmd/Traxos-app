@@ -1,5 +1,9 @@
 # Architecture
 
+## 0.11.0 native V8 entry and Plans
+
+Voice uses an injected OfflineSpeechEngine boundary. The Android adapter uses createOnDeviceSpeechRecognizer only under API31+ support checks; no prefer-offline network service fallback. Generation tokens invalidate late callbacks and an approval gate prevents duplicate drafts. The reviewed draft is consumed once by the existing FormViewModel flow, preserving defaults and normal atomic Save/journal. Plans has metadata budget limits plus separate goal/progress tables; exact Money units, revision checks and immutable reversible movements never modify bank balances. Explicit schema10→11 migration preserves all prior tables. No cloud transport added; original HTML is documentation only.
+
 ## 0.10.1 editor presentation
 
 TraxosFormPanel is now a full-screen surface; actual Dialog windows retain their own bounded presentation. This removes the previous floating frame from routed editors while preserving stable loading bounds and keyboard/scroll handling. FLAG_SECURE is applied only outside DEBUG; debug captures are explicitly enabled for UI review. Gift detail data/security contracts are unchanged; presentation is consolidated into one full-width panel.

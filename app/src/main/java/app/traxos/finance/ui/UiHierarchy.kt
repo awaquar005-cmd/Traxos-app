@@ -1,5 +1,6 @@
 package app.traxos.finance.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -25,10 +26,14 @@ internal fun SettingsGroup(title: String, content: @Composable ColumnScope.() ->
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.semantics { heading() },
         )
-        Surface(shape = Radius.control, color = MaterialTheme.colorScheme.surfaceContainerLowest) {
+        Surface(
+            shape = Radius.control,
+            border = BorderStroke(.5.dp, MaterialTheme.colorScheme.outlineVariant),
+            color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        ) {
             Column(
-                Modifier.padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+                Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                verticalArrangement = Arrangement.spacedBy(0.dp),
                 content = content,
             )
         }
@@ -144,6 +149,13 @@ internal fun MoreScreen(navigate: (String) -> Unit) {
                         "Codes, balances and expiry",
                         TraxosIcons.gift,
                     ),
+                    ToolEntry(
+                        "voice",
+                        "Voice entry",
+                        "On-device speech and editable review",
+                        TraxosIcons.mic,
+                    ),
+                    ToolEntry("plans", "Plans", "Budgets and savings progress", TraxosIcons.report),
                     ToolEntry("smart", "Smart Add", "Review shared text and SMS", TraxosIcons.spark),
                 )
                 .forEach { ToolRow(it, false, navigate) }

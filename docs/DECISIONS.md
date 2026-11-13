@@ -1,5 +1,9 @@
 # Decisions
 
+## 0.11.0 V8 authority and service gates
+
+Current user overrides preserve the hero and encrypted CVV despite contrary V8 wording. Keep configurable center actions; hold/release voice applies when the center action is Add, with Home/More Voice always accessible. Restrict real speech to API31+ on-device support, use typed fallback otherwise, and never auto-save. Prefer Supabase per user direction; Google/Supabase projects do not exist yet, so show truthful setup guidance instead of fake login/sync. Retain existing local features absent from HTML. Prototype colors are adapted for native accessibility; light muted text is slightly darker for contrast.
+
 ## 0.10.0 recurring defaults
 
 Default new schedules to paused until explicit automatic-posting consent. Month-end anchoring and100-item resumable batches avoid skipped days/large blocking work. Do not infer bank payment confirmation or SMS matching from a schedule. Keep recurring transfers/card settlements out of this expense/income feature. Clipboard marking/clearing is best-effort and must not remove another clip. Reserve a future long-press callback without implementing fake recording.

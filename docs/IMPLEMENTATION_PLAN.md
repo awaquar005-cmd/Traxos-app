@@ -1,5 +1,11 @@
 # TRAXOS implementation plan
 
+## 0.11.0 V8 tracked scope
+
+V8 native visual pass preserves the current hero/brand and all existing finance/gift/SMS/recurring/security flows. New on-device/typed voice review hands a draft to the existing default-aware transaction form; no automatic posting or cloud recognition fallback. New local Plans provides monthly budgets and separate earmark goals/progress/Undo. Schema10→11 adds only three Plans tables. Compact V8-inspired surfaces/rows, search/dock and bright cobalt center action; no OCR restored, QR/images retained. User explicitly keeps encrypted CVV. Cloud remains unconfigured; exact package/signing/project setup is in CLOUD_SETUP.md. Full V8 roadmap is not claimed complete. See V8_STATUS.md and V8_FEATURE_PRESERVATION.md for every implemented/pending journey and real limitations.
+
+Every V8 journey is mapped in V8_STATUS.md. Remaining service-backed and large offline modules stay in the plan, not silently removed. Credentials/project configuration are a gate, not proof of successful authentication, backup or sync.
+
 ## 0.10.0 scope
 
 Implemented account-owned daily/weekly/monthly recurring expense/income rules, offline bounded automatic catch-up, edit/pause/resume/delete and explicit9→10 preservation. Compact account/report/selector/confirmation hierarchy; transfer moved into Accounts dialog; sensitive per-field card copy; stable form/window behavior. Phone frame-time/IME/background acceptance remains pending. Voice recording remains future work; no new unrelated modules.

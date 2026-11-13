@@ -202,6 +202,22 @@ object TraxosIcons {
             lineTo(9.5f, 9.5f)
             close()
         }
+    val mic =
+        line("Microphone") {
+            moveTo(9f, 5f)
+            curveTo(9f, 1f, 15f, 1f, 15f, 5f)
+            verticalLineTo(11f)
+            curveTo(15f, 15f, 9f, 15f, 9f, 11f)
+            close()
+            moveTo(5f, 10f)
+            verticalLineTo(12f)
+            curveTo(5f, 21f, 19f, 21f, 19f, 12f)
+            verticalLineTo(10f)
+            moveTo(12f, 19f)
+            verticalLineTo(23f)
+            moveTo(8f, 23f)
+            horizontalLineTo(16f)
+        }
     val transfer =
         line("Transfer") {
             moveTo(3f, 7f)
@@ -419,13 +435,15 @@ internal fun TraxosToolbar(
         Column(Modifier.weight(1f)) {
             Text(
                 "TRAXOS",
-                style = MaterialTheme.typography.labelSmall,
+                style =
+                    MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp, lineHeight = 12.sp),
                 letterSpacing = 2.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
                 title,
-                style = MaterialTheme.typography.titleMedium,
+                style =
+                    MaterialTheme.typography.titleLarge.copy(fontSize = 18.sp, lineHeight = 22.sp),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -540,7 +558,7 @@ internal fun SearchShortcut(onClick: () -> Unit) {
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(
-            Modifier.heightIn(min = 50.dp).padding(horizontal = 14.dp),
+            Modifier.heightIn(min = 48.dp).padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {

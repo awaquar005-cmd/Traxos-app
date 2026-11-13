@@ -5,6 +5,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -43,20 +44,13 @@ internal fun RecordItem(row: RecordRow, hidden: Boolean = false, click: () -> Un
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Surface(
-                    shape = Radius.control,
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = .07f),
-                ) {
-                    Box(Modifier.size(36.dp), contentAlignment = Alignment.Center) {
-                        Icon(
-                            if (row.record.type.startsWith("TRANSFER")) TraxosIcons.transfer
-                            else catalogIcon(row.categoryIcon),
-                            null,
-                            Modifier.size(19.dp),
-                            tint = catalogColor(row.categoryColor),
-                        )
-                    }
-                }
+                Icon(
+                    if (row.record.type.startsWith("TRANSFER")) TraxosIcons.transfer
+                    else catalogIcon(row.categoryIcon),
+                    null,
+                    Modifier.size(24.dp),
+                    tint = catalogColor(row.categoryColor),
+                )
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Text(
                         row.merchantName ?: row.record.note.ifBlank { row.categoryName },
@@ -331,7 +325,7 @@ internal fun AccountsScreen(
     LazyColumn(
         Modifier.fillMaxSize(),
         contentPadding = PaddingValues(12.dp, 4.dp, 12.dp, 12.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(0.dp),
     ) {
         item { SectionHeader("Your accounts", "Add account") { open("new") } }
         item {
@@ -355,74 +349,105 @@ internal fun AccountsScreen(
                     open("new")
                 }
             }
-        items(accounts, key = { it.account.id }) { a ->
+        if (accounts.isNotEmpty())
+            item {
+                TraxosCard(Modifier.fillMaxWidth()) {
+                    Text(
+                        "Active money accounts",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    val money =
+                        accounts
+                            .filter { !it.account.archived && it.account.type != "CREDIT_CARD" }
+                            .groupBy { it.account.currency }
+                    if (money.isEmpty())
+                        Text(
+                            "No active cash or bank accounts",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    money.forEach { (currency, rows) ->
+                        MoneyText(rows.sumOf { it.balanceMinor }, currency, hidden = hidden)
+                    }
+                    Text(
+                        "Credit-card debt excluded · currencies stay separate",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(Modifier.height(12.dp))
+            }
+        itemsIndexed(accounts, key = { _, a -> a.account.id }) { index, a ->
             Surface(
                 onClick = { open(a.account.id) },
-                shape = Radius.card,
+                shape =
+                    androidx.compose.foundation.shape.RoundedCornerShape(
+                        topStart = if (index == 0) 11.dp else 0.dp,
+                        topEnd = if (index == 0) 11.dp else 0.dp,
+                        bottomStart = if (index == accounts.lastIndex) 11.dp else 0.dp,
+                        bottomEnd = if (index == accounts.lastIndex) 11.dp else 0.dp,
+                    ),
                 color = MaterialTheme.colorScheme.surfaceContainerLowest,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Column(Modifier.padding(horizontal = 12.dp, vertical = 4.dp)) {
                     Row(
+                        Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Icon(
                             catalogIcon(a.account.icon),
                             null,
-                            Modifier.size(22.dp),
+                            Modifier.size(20.dp),
                             tint = catalogColor(a.account.color),
                         )
-                        Text(
-                            a.account.name,
+                        Column(
                             Modifier.weight(1f)
                                 .heightIn(min = 48.dp)
                                 .wrapContentHeight(Alignment.CenterVertically)
-                                .clickable { open(a.account.id) },
-                            style = MaterialTheme.typography.titleMedium,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        Text(
-                            a.account.currency,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f)) {
-                            if (a.account.type == "CREDIT_CARD")
-                                Text(
-                                    if (a.balanceMinor < 0) "Amount owed" else "Credit balance",
-                                    style = MaterialTheme.typography.labelSmall,
-                                )
+                                .clickable { open(a.account.id) }
+                        ) {
+                            Text(
+                                a.account.name,
+                                style = MaterialTheme.typography.titleMedium,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Text(
+                                accountTypeLabel(a.account.type) +
+                                    (if (a.account.archived) " · Archived" else ""),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Column(horizontalAlignment = Alignment.End) {
                             MoneyText(
                                 if (a.account.type == "CREDIT_CARD") kotlin.math.abs(a.balanceMinor)
                                 else a.balanceMinor,
                                 a.account.currency,
                                 hidden = hidden,
                             )
+                            Text(
+                                if (a.account.type == "CREDIT_CARD")
+                                    (if (a.balanceMinor < 0) "Amount owed" else "Credit balance")
+                                else a.account.currency,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
                         }
-                        if (a.account.type in setOf("CREDIT_CARD", "BANK"))
+                    }
+                    if (a.account.type in setOf("CREDIT_CARD", "BANK"))
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                             CompactAction("Card details", { cardDetails(a.account.id) })
-                    }
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            accountTypeLabel(a.account.type) +
-                                if (a.account.archived) " · Archived" else " · Active",
-                            Modifier.weight(1f),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Icon(
-                            TraxosIcons.arrow,
-                            "Edit account",
-                            Modifier.size(18.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
+                        }
                 }
             }
+            if (index < accounts.lastIndex)
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                    thickness = .5.dp,
+                )
         }
         item {
             Text(

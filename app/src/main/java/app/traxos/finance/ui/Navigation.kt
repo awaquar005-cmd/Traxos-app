@@ -1,16 +1,19 @@
 package app.traxos.finance.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.*
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -50,6 +53,8 @@ internal val screenRegistry =
         ScreenEntry("more", "More", TraxosIcons.tools),
         ScreenEntry("smart", "Smart Add", TraxosIcons.spark),
         ScreenEntry("reports", "Reports", TraxosIcons.report),
+        ScreenEntry("plans", "Plans", TraxosIcons.report),
+        ScreenEntry("voice", "Voice", TraxosIcons.mic),
     )
 
 internal fun screenLabel(id: String) =
@@ -64,8 +69,12 @@ internal fun TraxosBottomBar(
     slots: List<String> = NavigationLayout.defaults,
     systemInsets: Boolean = true,
     onQuickAddHold: (() -> Unit)? = null,
+    onQuickAddRelease: (() -> Unit)? = null,
     launchShortcut: () -> Unit,
 ) {
+    val tap by rememberUpdatedState(launchShortcut)
+    val hold by rememberUpdatedState(onQuickAddHold)
+    val release by rememberUpdatedState(onQuickAddRelease)
     Surface(color = MaterialTheme.colorScheme.surfaceContainerLowest) {
         Row(
             Modifier.fillMaxWidth()
@@ -89,18 +98,48 @@ internal fun TraxosBottomBar(
             Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 Surface(
                     shape = Radius.card,
-                    color = MaterialTheme.colorScheme.primaryContainer,
+                    color = Color(0xFF2851E7),
                     contentColor = Color.White,
                     modifier =
                         Modifier.size(48.dp)
-                            .combinedClickable(
-                                enabled = shortcutEnabled,
-                                role = Role.Button,
-                                onClick = launchShortcut,
-                                onLongClick =
-                                    if (shortcut == CenterShortcut.ADD_TRANSACTION) onQuickAddHold
-                                    else null,
-                            )
+                            .semantics {
+                                role = Role.Button
+                                onClick {
+                                    if (shortcutEnabled) {
+                                        tap()
+                                        true
+                                    } else false
+                                }
+                                if (!shortcutEnabled) disabled()
+                            }
+                            .pointerInput(shortcutEnabled, shortcut) {
+                                if (shortcutEnabled) {
+                                    var held = false
+                                    detectTapGestures(
+                                        onTap = { tap() },
+                                        onLongPress =
+                                            if (
+                                                shortcut == CenterShortcut.ADD_TRANSACTION &&
+                                                    hold != null
+                                            ) {
+                                                {
+                                                    held = true
+                                                    hold?.invoke()
+                                                }
+                                            } else null,
+                                        onPress = {
+                                            try {
+                                                tryAwaitRelease()
+                                            } finally {
+                                                if (held) {
+                                                    held = false
+                                                    release?.invoke()
+                                                }
+                                            }
+                                        },
+                                    )
+                                }
+                            }
                             .testTag(if (systemInsets) "center_action" else "preview_center_action"),
                 ) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -136,7 +175,7 @@ private fun NavItem(
     val selected = key == route
     Column(
         modifier
-            .heightIn(min = 52.dp)
+            .heightIn(min = 48.dp)
             .testTag("${tagPrefix}nav_$key")
             .selectable(selected = selected, role = Role.Tab, onClick = { navigate(key) })
             .padding(vertical = 4.dp),

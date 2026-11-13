@@ -1,5 +1,11 @@
 # Progress
 
+## 0.11.0 V8 native UI, voice and Plans
+
+**BUILT: 194 tests passed in the final full Personal run; zero failures/errors/skips. Lint passed:0 errors,21 existing warnings and1 advisory hint.** Update-compatible signing,16KiB ZIP/64-bit ELF alignment, schema10→11 preservation, old route/core-source preservation and hero-source identity verified. [Validation](validation/v8-native/README.md), [delivery manifest](V8_DELIVERY_MANIFEST.json), [setup guide](CLOUD_SETUP.md). Real microphone/model/device performance and cloud services are not claimed tested. No Play APK or emulator.
+
+V8 native visual pass preserves the current hero/brand and all existing finance/gift/SMS/recurring/security flows. New on-device/typed voice review hands a draft to the existing default-aware transaction form; no automatic posting or cloud recognition fallback. New local Plans provides monthly budgets and separate earmark goals/progress/Undo. Schema10→11 adds only three Plans tables. Compact V8-inspired surfaces/rows, search/dock and bright cobalt center action; no OCR restored, QR/images retained. User explicitly keeps encrypted CVV. Cloud remains unconfigured; exact package/signing/project setup is in CLOUD_SETUP.md. Full V8 roadmap is not claimed complete. See V8_STATUS.md and V8_FEATURE_PRESERVATION.md for every implemented/pending journey and real limitations.
+
 ## 0.10.1 full-screen editors and gift layout
 
 **BUILT: 180 unique host cases verified.** Full regression passed178 cases; corrected two suites with outdated label/page-padding assertions and reran them successfully, without changing production code. Merged results: zero failures/errors/skips. Lint:0 errors,21 existing warnings,1 advisory hint. Debug capture flag checked; release protection remains source-guarded. Signed update/16KiB alignment verified. [Actual validation](validation/fullscreen-gifts/README.md). No Play APK, emulator or phone acceptance claimed.

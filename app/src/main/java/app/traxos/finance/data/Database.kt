@@ -299,11 +299,16 @@ interface LedgerDao {
             EntryLabel::class,
             CardReference::class,
             RecurringRule::class,
+            Budget::class,
+            SavingsGoal::class,
+            GoalMovement::class,
         ],
-    version = 10,
+    version = 11,
     exportSchema = true,
 )
 abstract class TraxosDatabase : RoomDatabase() {
+    abstract fun plans(): PlansDao
+
     abstract fun recurring(): RecurringDao
 
     abstract fun cardReferences(): CardReferenceDao
@@ -475,6 +480,33 @@ abstract class TraxosDatabase : RoomDatabase() {
                 }
             }
 
+        val MIGRATION_10_11 =
+            object : Migration(10, 11) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS budgets (id TEXT NOT NULL, month TEXT NOT NULL, currency TEXT NOT NULL, categoryId TEXT, limitMinor INTEGER NOT NULL, revision INTEGER NOT NULL, operationId TEXT NOT NULL, PRIMARY KEY(id), FOREIGN KEY(categoryId) REFERENCES categories(id) ON UPDATE NO ACTION ON DELETE RESTRICT)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_budgets_categoryId ON budgets(categoryId)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_budgets_month_currency ON budgets(month,currency)"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS savings_goals (id TEXT NOT NULL,name TEXT NOT NULL,currency TEXT NOT NULL,targetMinor INTEGER NOT NULL,savedMinor INTEGER NOT NULL,archived INTEGER NOT NULL,revision INTEGER NOT NULL,operationId TEXT NOT NULL,PRIMARY KEY(id))"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS goal_movements (id TEXT NOT NULL,goalId TEXT NOT NULL,deltaMinor INTEGER NOT NULL,createdAt INTEGER NOT NULL,undoOf TEXT,PRIMARY KEY(id),FOREIGN KEY(goalId) REFERENCES savings_goals(id) ON UPDATE NO ACTION ON DELETE RESTRICT)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_goal_movements_goalId_createdAt ON goal_movements(goalId,createdAt)"
+                    )
+                    db.execSQL(
+                        "CREATE UNIQUE INDEX IF NOT EXISTS index_goal_movements_undoOf ON goal_movements(undoOf)"
+                    )
+                }
+            }
+
         fun open(context: Context, name: String = "traxos.db"): TraxosDatabase =
             Room.databaseBuilder(context, TraxosDatabase::class.java, name)
                 .addMigrations(
@@ -487,6 +519,7 @@ abstract class TraxosDatabase : RoomDatabase() {
                     MIGRATION_7_8,
                     MIGRATION_8_9,
                     MIGRATION_9_10,
+                    MIGRATION_10_11,
                 )
                 .addCallback(
                     object : Callback() {
