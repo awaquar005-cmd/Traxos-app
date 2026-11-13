@@ -14,3 +14,7 @@ key.properties
 .DS_Store
 
 # Real OCR fixtures may contain private material; never commit unreviewed files.
+
+# Host JVM diagnostics are local build artifacts, not application sources.
+hs_err_pid*.log
+replay_pid*.log
