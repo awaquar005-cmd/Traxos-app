@@ -131,6 +131,10 @@ internal val backupTables =
         "goal_preferences",
         "goal_funding",
         "manual_rates",
+        "transaction_splits",
+        "receipt_attachments",
+        "entry_presets",
+        "merchant_rules",
     )
 
 private fun DataOutputStream.text(value: String) {
@@ -204,6 +208,8 @@ class PortableBackup(
     private val context: Context,
     private val db: TraxosDatabase,
     private val secrets: GiftCipher,
+    private val receiptSecrets: GiftCipher =
+        app.traxos.finance.gifts.KeystoreGiftCipher("traxos.receipts"),
 ) {
     class Preview
     internal constructor(
@@ -224,7 +230,7 @@ class PortableBackup(
                 val sql = db.openHelper.writableDatabase
                 BackupEnvelope.write(output, password) { data ->
                     data.writeInt(1)
-                    data.writeInt(15)
+                    data.writeInt(16)
                     data.writeInt(backupTables.size)
                     backupTables.forEach { table ->
                         data.text(table)
@@ -253,6 +259,20 @@ class PortableBackup(
                                     )
                                     item.put("fingerprint", "portable")
                                 }
+                                if (table == "receipt_attachments") {
+                                    val blob = values(item).getAsByteArray("secret")
+                                    item.put(
+                                        "secret",
+                                        JSONObject()
+                                            .put(
+                                                "blob",
+                                                Base64.encodeToString(
+                                                    receiptSecrets.open(item.getString("id"), blob),
+                                                    Base64.NO_WRAP,
+                                                ),
+                                            ),
+                                    )
+                                }
                                 data.text(item.toString())
                             }
                         }
@@ -268,6 +288,7 @@ class PortableBackup(
             return withContext(Dispatchers.IO) {
                 val operationContext = currentCoroutineContext()
                 if (db.gifts().count() > 0) secrets.verifyExisting()
+                if (db.extras().allReceiptCount() > 0) receiptSecrets.verifyExisting()
                 val path = File(context.cacheDir, "traxos-restore-${UUID.randomUUID()}.db")
                 val stage = TraxosDatabase.open(context, path.absolutePath)
                 try {
@@ -278,7 +299,7 @@ class PortableBackup(
                         BackupEnvelope.read(input, password) { data ->
                             require(data.readInt() == 1)
                             val sourceSchema = data.readInt()
-                            require(sourceSchema in 11..15) {
+                            require(sourceSchema in 11..16) {
                                 "This backup needs a compatible Traxos version"
                             }
                             val added13 =
@@ -307,7 +328,15 @@ class PortableBackup(
                                 )
                             val sourceTables =
                                 backupTables.filterNot {
-                                    (sourceSchema < 15 && it == "manual_rates") ||
+                                    (sourceSchema < 16 &&
+                                        it in
+                                            setOf(
+                                                "transaction_splits",
+                                                "receipt_attachments",
+                                                "entry_presets",
+                                                "merchant_rules",
+                                            )) ||
+                                        (sourceSchema < 15 && it == "manual_rates") ||
                                         (sourceSchema < 14 && it in added14) ||
                                         (sourceSchema < 13 && it in added13) ||
                                         (sourceSchema == 11 &&
@@ -410,6 +439,34 @@ class PortableBackup(
                                             if (item.getInt("deleted") == 1)
                                                 "deleted:${item.getString("id")}"
                                             else fingerprint,
+                                        )
+                                    }
+                                    if (expected == "receipt_attachments") {
+                                        val payload = values(item).getAsByteArray("secret")
+                                        app.traxos.finance.entry.ReceiptStore.validate(
+                                            item.getString("mime"),
+                                            payload,
+                                        )
+                                        val hash =
+                                            java.security.MessageDigest.getInstance("SHA-256")
+                                                .digest(payload)
+                                                .joinToString("") { "%02x".format(it) }
+                                        require(hash == item.getString("digest")) {
+                                            "Receipt content does not match its metadata"
+                                        }
+                                        item.put(
+                                            "secret",
+                                            JSONObject()
+                                                .put(
+                                                    "blob",
+                                                    Base64.encodeToString(
+                                                        receiptSecrets.seal(
+                                                            item.getString("id"),
+                                                            payload,
+                                                        ),
+                                                        Base64.NO_WRAP,
+                                                    ),
+                                                ),
                                         )
                                     }
                                     sql.insert(
@@ -528,6 +585,23 @@ class PortableBackup(
                                     existing.remove("secret")
                                     item.remove("secret")
                                 }
+                                if (table == "receipt_attachments") {
+                                    val oldBytes =
+                                        receiptSecrets.open(
+                                            id,
+                                            values(existing).getAsByteArray("secret"),
+                                        )
+                                    val newBytes =
+                                        receiptSecrets.open(
+                                            id,
+                                            values(item).getAsByteArray("secret"),
+                                        )
+                                    require(oldBytes.contentEquals(newBytes)) {
+                                        "Conflicting receipt. Nothing was restored."
+                                    }
+                                    existing.remove("secret")
+                                    item.remove("secret")
+                                }
                                 require(equivalent(existing, item)) {
                                     "Conflicting $table record. Nothing was restored; keep both backups for review."
                                 }
@@ -562,6 +636,23 @@ class PortableBackup(
             sql.query(query).use { require(!it.moveToFirst()) { "Invalid financial backup" } }
         }
         none("SELECT total FROM (SELECT COUNT(*) AS total FROM transactions) WHERE total>1000000")
+        none(
+            "SELECT s.recordId FROM transaction_splits s JOIN transactions t ON t.id=s.recordId GROUP BY s.recordId HAVING COUNT(*)<2 OR COUNT(*)>20 OR SUM(s.amountMinor)!=t.amountMinor"
+        )
+        none(
+            "SELECT s.recordId FROM transaction_splits s JOIN transactions t ON t.id=s.recordId JOIN categories c ON c.id=s.categoryId WHERE s.amountMinor<=0 OR s.amountMinor>${Money.MAX_MINOR} OR t.type NOT IN ('EXPENSE','INCOME','REFUND') OR c.type!=CASE WHEN t.type='REFUND' THEN 'EXPENSE' ELSE t.type END OR t.linkId IS NOT NULL OR EXISTS(SELECT 1 FROM debt_funding d WHERE d.recordId=t.id AND d.active=1) OR EXISTS(SELECT 1 FROM group_ledger_links l WHERE l.recordId=t.id) OR EXISTS(SELECT 1 FROM plan_payments p WHERE p.recordId=t.id AND p.voided=0)"
+        )
+        none("SELECT recordId FROM receipt_attachments GROUP BY recordId HAVING COUNT(*)>5")
+        none(
+            "SELECT id FROM receipt_attachments WHERE revision<1 OR length(secret)>1100000 OR mime NOT IN ('image/jpeg','application/pdf') OR length(name)>100 OR length(digest)!=64"
+        )
+        none(
+            "SELECT p.id FROM entry_presets p JOIN accounts a ON a.id=p.accountId JOIN categories c ON c.id=p.categoryId WHERE p.revision<1 OR p.type NOT IN ('EXPENSE','INCOME') OR p.currency!=a.currency OR c.type!=p.type OR p.amountMinor<=0 OR p.amountMinor>${Money.MAX_MINOR} OR length(p.name)<1 OR length(p.name)>60 OR length(p.note)>500 OR p.position<0 OR p.position>9999 OR (p.type='INCOME' AND a.type='CREDIT_CARD')"
+        )
+        none(
+            "SELECT r.id FROM merchant_rules r JOIN categories c ON c.id=r.categoryId WHERE r.revision<1 OR r.type NOT IN ('EXPENSE','INCOME') OR r.type!=c.type OR r.mode NOT IN ('EXACT','PREFIX','CONTAINS') OR r.priority<0 OR r.priority>1000 OR length(r.pattern)<2 OR length(r.pattern)>80 OR r.scopeKey!=COALESCE(r.accountId,'all')"
+        )
+
         none("SELECT p.debtId FROM debt_preferences p WHERE p.revision<1")
         none(
             "SELECT f.id FROM debt_funding f JOIN debt_threads d ON d.id=f.debtId JOIN transactions t ON t.id=f.recordId LEFT JOIN debt_movements m ON m.id=f.movementId JOIN accounts a ON a.id=t.accountId WHERE (f.active=1 AND (t.deleted=1 OR a.type='CREDIT_CARD' OR a.currency!=d.currency OR t.linkId IS NOT NULL OR f.activeRecordKey!=f.recordId OR f.eventKey!=CASE WHEN f.movementId IS NULL THEN 'opening:'||d.id ELSE 'movement:'||m.id END OR (f.movementId IS NULL AND (t.amountMinor!=d.originalMinor OR t.day!=d.day)) OR (f.movementId IS NOT NULL AND (m.debtId!=d.id OR m.kind!='REPAYMENT' OR t.amountMinor!=-m.deltaMinor OR t.day!=m.day OR EXISTS(SELECT 1 FROM debt_movements u WHERE u.undoOf=m.id))) OR t.type!=CASE WHEN f.createdRecord=1 THEN CASE WHEN (f.movementId IS NULL AND d.direction='BORROWED') OR (f.movementId IS NOT NULL AND d.direction='LENT') THEN 'DEBT_IN' ELSE 'DEBT_OUT' END ELSE CASE WHEN (f.movementId IS NULL AND d.direction='BORROWED') OR (f.movementId IS NOT NULL AND d.direction='LENT') THEN 'INCOME' ELSE 'EXPENSE' END END)) OR (f.active=0 AND (f.activeRecordKey!='void:'||f.id OR f.eventKey!='void:'||f.id OR (f.createdRecord=1 AND t.deleted=0)))"

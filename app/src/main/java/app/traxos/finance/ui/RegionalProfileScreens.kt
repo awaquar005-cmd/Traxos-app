@@ -38,7 +38,7 @@ internal class RefinementViewModel(application: Application) : AndroidViewModel(
     val failed = MutableStateFlow(false)
     val stamp = MutableStateFlow(0L)
 
-    fun run(block: suspend () -> Unit) {
+    fun run(message: String = "Saved", block: suspend () -> Unit) {
         if (busy.value) return
         busy.value = true
         status.value = ""
@@ -47,7 +47,7 @@ internal class RefinementViewModel(application: Application) : AndroidViewModel(
             try {
                 block()
                 stamp.value++
-                status.value = "Saved"
+                status.value = message
             } catch (e: CancellationException) {
                 throw e
             } catch (e: IllegalArgumentException) {

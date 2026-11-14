@@ -1,0 +1,1 @@
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android" android:minWidth="240dp" android:minHeight="64dp" android:minResizeWidth="224dp" android:minResizeHeight="64dp" android:initialLayout="@layout/traxos_entry_widget" android:resizeMode="horizontal|vertical" android:updatePeriodMillis="0" android:widgetCategory="home_screen"/>

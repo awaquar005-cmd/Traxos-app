@@ -488,6 +488,9 @@ class PlanningExtensionsRepository(val db: TraxosDatabase) {
                 val recordId =
                     if (!existingRecord.isNullOrBlank()) {
                         val r = requireNotNull(db.ledger().record(existingRecord))
+                        require(db.extras().splits(r.id).isEmpty()) {
+                            "Remove category splits before matching loan principal"
+                        }
                         require(
                             !r.deleted &&
                                 r.linkId == null &&

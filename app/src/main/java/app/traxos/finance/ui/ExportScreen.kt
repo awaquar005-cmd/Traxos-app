@@ -37,6 +37,7 @@ internal data class ExportRequest(
     val secrets: Boolean,
     val display: DisplayOptions,
     val conversion: String,
+    val receipts: Boolean = false,
 )
 
 internal class ExportViewModel(application: Application) : AndroidViewModel(application) {
@@ -96,7 +97,7 @@ internal class ExportViewModel(application: Application) : AndroidViewModel(appl
                         when (next.format) {
                             "PDF" -> service.pdf(out, next.scope, next.display, next.conversion)
                             "CSV" -> service.csv(out, next.scope)
-                            "JSON" -> service.json(out, next.secrets)
+                            "JSON" -> service.json(out, next.secrets, next.receipts)
                             else -> error("Unknown format")
                         }
                     }
@@ -173,6 +174,7 @@ internal fun ExportScreen(vm: ExportViewModel = viewModel()) {
     var deleted by rememberSaveable { mutableStateOf(false) }
     var notes by rememberSaveable { mutableStateOf(true) }
     var secrets by rememberSaveable { mutableStateOf(false) }
+    var receipts by rememberSaveable { mutableStateOf(false) }
     var conversion by rememberSaveable { mutableStateOf("") }
     var confirm by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -194,8 +196,8 @@ internal fun ExportScreen(vm: ExportViewModel = viewModel()) {
     if (confirm)
         TraxosDialog(
             "Export unencrypted data?",
-            if (format == "JSON" && secrets)
-                "This JSON includes gift codes, PINs and saved gift images in readable portable encoding. The card vault, login and app PIN are excluded. Anyone with the file can read it. Use encrypted Backup for recovery."
+            if (format == "JSON" && (secrets || receipts))
+                "This JSON includes the secret/image or receipt payloads you selected in readable portable encoding. The card vault, login and app PIN are excluded. Anyone with the file can read it. Use encrypted Backup for recovery."
             else
                 "This file contains private financial history and is not encrypted. JSON preserves complete selected financial data; PDF/CSV are reports. Card-vault details and login credentials are never included. Use encrypted Backup for recovery.",
             "Export",
@@ -214,7 +216,11 @@ internal fun ExportScreen(vm: ExportViewModel = viewModel()) {
                                 deleted,
                                 notes,
                             )
-                    if (vm.prepare(ExportRequest(format, scope, secrets, display, conversion))) {
+                    if (
+                        vm.prepare(
+                            ExportRequest(format, scope, secrets, display, conversion, receipts)
+                        )
+                    ) {
                         val name =
                             "TRAXOS-${LocalDate.now()}-${UUID.randomUUID().toString().take(8)}.${format.lowercase()}"
                         when (format) {
@@ -257,6 +263,14 @@ internal fun ExportScreen(vm: ExportViewModel = viewModel()) {
                 "Complete financial tables, IDs, revisions, deleted/archived history and manual rates. Integers are exact decimal strings with type tags. No scope filters are applied. JSON export is not an import/restore bypass.",
                 style = MaterialTheme.typography.bodySmall,
             )
+            SettingsToggle(
+                "Include receipt bodies",
+                "Unencrypted portable receipt images/PDFs; metadata is included either way",
+                receipts,
+                !busy && !selecting,
+            ) {
+                receipts = it
+            }
             SettingsToggle(
                 "Include gift secrets",
                 "Also export gift codes, PINs and saved images as unencrypted portable data",

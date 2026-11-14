@@ -449,7 +449,17 @@ class RegionalExportsTest {
             BackupEnvelope.write(bytes, "fixture-password".toCharArray()) { out ->
                 out.writeInt(1)
                 out.writeInt(14)
-                val tables = backupTables.filter { it != "manual_rates" }
+                val tables =
+                    backupTables.filter {
+                        it !in
+                            setOf(
+                                "manual_rates",
+                                "transaction_splits",
+                                "receipt_attachments",
+                                "entry_presets",
+                                "merchant_rules",
+                            )
+                    }
                 out.writeInt(tables.size)
                 fun text(v: String) {
                     val b = v.toByteArray(Charsets.UTF_8)

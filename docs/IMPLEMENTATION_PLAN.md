@@ -1,3 +1,7 @@
+# 0.18.0 transaction/report extras and faster entry
+
+Scope and acceptance inventory: TRANSACTION_ENTRY_EXTRAS_PLAN.md. Implementation covers split categories, encrypted receipts/recovery, trends/comparisons/filters, Android widget/tile/shortcuts, favorites and scoped merchant rules. Validation and physical-device gates are tracked in PROGRESS.md; implementation must not be mistaken for OEM/phone acceptance. Previous roadmap items and constraints below remain cumulative.
+
 # 0.17.0 scoped roadmap
 
 P1 manual FX rules/dated rates and regional formatting; P1 scoped PDF/CSV/typed JSON and correct plaintext/secret boundaries; P2 local profile/accessibility/channel/launcher/help/privacy polish. Acceptance:14→15 migration/old archives, exact conversion/revision/rounding, export value fidelity/scope/failure/cancellation/PDF rendering, photo bounds/atomic replacement, alias reachability and native preference/navigation tests; preserve all299 earlier tests and original ledger/hero/vault routes. [Plan](REGIONAL_EXPORT_PROFILE_PLAN.md) · [semantics](REGIONAL_EXPORT_PROFILE.md).

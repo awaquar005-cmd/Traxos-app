@@ -20,5 +20,12 @@
   </activity>
   <activity-alias android:name=".OfficialLauncher" android:targetActivity=".MainActivity" android:enabled="true" android:exported="true" android:label="TRAXOS" android:icon="@drawable/traxos_mark"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
   <activity-alias android:name=".FinanceLauncher" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:label="Traxos Finance" android:icon="@drawable/traxos_mark"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+  <receiver android:name=".entry.EntryWidget" android:exported="true" android:label="Traxos Quick Entry">
+   <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter>
+   <meta-data android:name="android.appwidget.provider" android:resource="@xml/traxos_entry_widget"/>
+  </receiver>
+  <service android:name=".entry.EntryTile" android:exported="true" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE" android:label="Traxos Add" android:icon="@drawable/traxos_mark">
+   <intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter>
+  </service>
  </application>
 </manifest>

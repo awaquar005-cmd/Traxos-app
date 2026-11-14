@@ -145,6 +145,7 @@ internal fun TransactionsScreen(
     var sorting by rememberSaveable { mutableStateOf(false) }
     val preferenceBusy by vm.busy.collectAsStateWithLifecycle()
     val sort = preferences?.activitySort ?: "NEWEST"
+    val filterMerchants by vm.repository.dao.labels().collectAsStateWithLifecycle(emptyList())
     if (filtering) {
         val ready = reads as? ReadState.Ready
         if (ready != null)
@@ -154,6 +155,7 @@ internal fun TransactionsScreen(
                 ready.categories,
                 { filtering = false },
                 vm::scope,
+                filterMerchants,
             )
     }
     if (sorting)
@@ -210,6 +212,16 @@ internal fun TransactionsScreen(
                                 ?.name,
                             ready?.categories?.firstOrNull { it.id == scope.categoryId }?.name,
                             scope.currency.takeIf { it.isNotBlank() },
+                            filterMerchants.firstOrNull { it.id == scope.merchantId }?.name,
+                            if (scope.minimum.isNotBlank() || scope.maximum.isNotBlank())
+                                "Amount ${scope.minimum.ifBlank{"0"}}–${scope.maximum.ifBlank{"Any"}}"
+                            else null,
+                            if (scope.receipt != "ALL") "Receipts: ${scope.receipt.lowercase()}"
+                            else null,
+                            if (scope.split != "ALL") "Categories: ${scope.split.lowercase()}"
+                            else null,
+                            if (scope.origin != "ALL") "Source: ${scope.origin.lowercase()}"
+                            else null,
                         )
                         .joinToString(" · "),
                     style = MaterialTheme.typography.labelSmall,

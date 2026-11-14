@@ -60,6 +60,7 @@ private fun escapeSearch(value: String) =
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class MainViewModel(val repository: LedgerRepository, private val saved: SavedStateHandle) :
     ViewModel() {
+    val pendingEntry = MutableStateFlow<app.traxos.finance.entry.EntryRequest?>(null)
     private val retry = MutableStateFlow(0)
     private val preferenceRetry = MutableStateFlow(0)
     private val month = MutableStateFlow(LocalDate.now().withDayOfMonth(1))
@@ -153,6 +154,12 @@ class MainViewModel(val repository: LedgerRepository, private val saved: SavedSt
                             scope.categoryId,
                             scope.currency,
                             query.sort,
+                            merchant = scope.merchantId,
+                            minimum = scope.minimumMinor,
+                            maximum = scope.maximumMinor,
+                            receipt = scope.receipt,
+                            split = scope.split,
+                            origin = scope.origin,
                         )
                     }
                     .flow
@@ -367,6 +374,7 @@ class FormViewModel(
 ) : ViewModel() {
     val fields = saved.getStateFlow("fields", hashMapOf<String, String>())
     val loading = MutableStateFlow(true)
+    val attachmentBusy = MutableStateFlow(false)
     val busy = MutableStateFlow(false)
     val error = MutableStateFlow<String?>(null)
     val events = Channel<Feedback>(Channel.BUFFERED)
@@ -458,6 +466,25 @@ class FormViewModel(
                                         )
                                     }
                         }
+                    if (!accountForm && !isNew) {
+                        val currency =
+                            requireNotNull(repository.dao.account(map["accountId"].orEmpty()))
+                                .currency
+                        map["splits"] =
+                            org.json
+                                .JSONArray(
+                                    repository.extras.dao.splits(entityId).map {
+                                        org.json
+                                            .JSONObject()
+                                            .put("categoryId", it.categoryId)
+                                            .put("amount", Money.editable(it.amountMinor, currency))
+                                    }
+                                )
+                                .toString()
+                                .takeIf { it != "[]" }
+                                .orEmpty()
+                        map["categoryManual"] = "1"
+                    }
                     saved["fields"] = map
                 }
             } catch (e: Exception) {
@@ -472,9 +499,68 @@ class FormViewModel(
     }
 
     fun set(key: String, value: String) {
-        saved["fields"] = HashMap(fields.value).apply { put(key, value) }
+        saved["fields"] =
+            HashMap(fields.value).apply {
+                put(key, value)
+                if (
+                    key in listOf("merchantId", "accountId", "type") &&
+                        get("categoryManual") != "1" &&
+                        !get("ruleMessage").isNullOrBlank()
+                ) {
+                    put("categoryId", "")
+                    put("ruleMessage", "")
+                }
+                if (key == "categoryId") {
+                    put("categoryManual", if (value.isBlank()) "" else "1")
+                    put("ruleMessage", "")
+                }
+                if (key == "type") {
+                    put("splits", "")
+                    put("categoryManual", "")
+                    put("ruleMessage", "")
+                }
+            }
         saved["dirty"] = true
         error.value = null
+        val merchant = fields.value["merchantId"].orEmpty()
+        if (
+            key in listOf("merchantId", "accountId", "type") &&
+                merchant.isNotBlank() &&
+                !accountForm &&
+                isNew
+        )
+            viewModelScope.launch {
+                try {
+                    val snapshot = fields.value
+                    val name = repository.dao.label(merchant)?.name.orEmpty()
+                    val rule =
+                        repository.extras.suggested(
+                            name,
+                            snapshot["type"].orEmpty(),
+                            snapshot["accountId"].orEmpty(),
+                        )
+                    val ruleCategory =
+                        rule?.let { repository.dao.category(it.categoryId)?.name.orEmpty() }
+                    if (
+                        rule != null &&
+                            fields.value["merchantId"] == merchant &&
+                            fields.value["type"] == snapshot["type"] &&
+                            fields.value["accountId"] == snapshot["accountId"] &&
+                            fields.value["categoryManual"] != "1" &&
+                            fields.value["splits"].isNullOrBlank()
+                    ) {
+                        saved["fields"] =
+                            HashMap(fields.value).apply {
+                                put("categoryId", rule.categoryId)
+                                put("ruleMessage", "Merchant rule: ${ruleCategory.orEmpty()}")
+                            }
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    error.value = "Could not load merchant suggestions. Your draft is kept."
+                }
+            }
     }
 
     fun default(key: String, value: String) {
@@ -485,7 +571,7 @@ class FormViewModel(
     fun dirty(): Boolean = saved.get<Boolean>("dirty") == true
 
     fun save() {
-        if (busy.value || loading.value || fields.value.isEmpty()) return
+        if (busy.value || attachmentBusy.value || loading.value || fields.value.isEmpty()) return
         busy.value = true
         error.value = null
         val f = fields.value.toMap()
@@ -522,6 +608,10 @@ class FormViewModel(
                         f["note"].orEmpty(),
                         revision,
                         f["merchantId"]?.takeIf { it.isNotBlank() },
+                        app.traxos.finance.entry.SplitDrafts.parts(
+                            f["splits"].orEmpty(),
+                            account.currency,
+                        ),
                     )
                 }
                 saved["dirty"] = false
@@ -548,8 +638,66 @@ class FormViewModel(
         }
     }
 
+    fun applyEntry(request: app.traxos.finance.entry.EntryRequest) {
+        if (!isNew || accountForm || busy.value || attachmentBusy.value) return
+        busy.value = true
+        viewModelScope.launch {
+            try {
+                val preset =
+                    request.presetId?.let {
+                        requireNotNull(repository.extras.dao.preset(it)) {
+                                "Favorite no longer exists"
+                            }
+                            .also { p -> repository.extras.validatePreset(p) }
+                    }
+                require(preset != null || request.action in listOf("EXPENSE", "INCOME"))
+                repository.extras.dao.discardDrafts(entityId)
+                saved["fields"] =
+                    hashMapOf(
+                        "amount" to
+                            (preset?.let { Money.editable(it.amountMinor, it.currency) } ?: ""),
+                        "type" to (preset?.type ?: request.action),
+                        "day" to LocalDate.now().toString(),
+                        "accountId" to (preset?.accountId ?: ""),
+                        "categoryId" to (preset?.categoryId ?: ""),
+                        "merchantId" to preset?.merchantId.orEmpty(),
+                        "note" to preset?.note.orEmpty(),
+                        "categoryManual" to if (preset != null) "1" else "",
+                        "splits" to "",
+                    )
+                saved["dirty"] = preset != null
+                error.value = null
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                error.value =
+                    if (e is IllegalArgumentException) e.message
+                    else "Could not open favorite. Current draft is kept."
+            } finally {
+                busy.value = false
+            }
+        }
+    }
+
+    fun discard(close: () -> Unit) {
+        if (busy.value || attachmentBusy.value) return
+        busy.value = true
+        viewModelScope.launch {
+            try {
+                if (!accountForm && isNew) repository.extras.dao.discardDrafts(entityId)
+                close()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                busy.value = false
+                error.value =
+                    "Could not discard receipt drafts; retry. Saved transactions are unchanged."
+            }
+        }
+    }
+
     fun delete() {
-        if (busy.value || isNew || accountForm) return
+        if (busy.value || attachmentBusy.value || isNew || accountForm) return
         busy.value = true
         viewModelScope.launch {
             try {

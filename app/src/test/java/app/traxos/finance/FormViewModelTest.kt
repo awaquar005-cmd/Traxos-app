@@ -6,6 +6,9 @@ import androidx.lifecycle.viewModelScope
 import androidx.test.core.app.ApplicationProvider
 import app.traxos.finance.data.LedgerRepository
 import app.traxos.finance.data.TraxosDatabase
+import app.traxos.finance.entry.EntryPreset
+import app.traxos.finance.entry.EntryRequest
+import app.traxos.finance.entry.MerchantRule
 import app.traxos.finance.ui.FormViewModel
 import java.time.LocalDate
 import java.util.UUID
@@ -99,6 +102,55 @@ class FormViewModelTest {
         assertEquals(op, saved.get<String>("operationId"))
         assertEquals("Typed before recreation", restored.fields.value["note"])
         assertTrue(restored.dirty())
+        assertEquals(0L, db.ledger().recordCount())
+    }
+
+    @Test
+    fun merchantSuggestionKeepsDraftAndClearsWhenMerchantChanges() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val vm = form()
+        val merchant = UUID.randomUUID().toString()
+        repo.saveLabel(UUID.randomUUID().toString(), merchant, "Fresh Mart", "MERCHANT")
+        repo.extras.rule(
+            MerchantRule(UUID.randomUUID().toString(), "Fresh Mart", "EXACT", "EXPENSE", "travel"),
+            0,
+        )
+        vm.set("categoryId", "")
+        vm.set("note", "Keep draft")
+        vm.set("merchantId", merchant)
+        vm.fields.filter { it["categoryId"] == "travel" }.first()
+        assertEquals("Keep draft", vm.fields.value["note"])
+        vm.set("merchantId", "")
+        assertEquals("", vm.fields.value["categoryId"])
+        assertEquals("Keep draft", vm.fields.value["note"])
+        assertEquals(0L, db.ledger().recordCount())
+    }
+
+    @Test
+    fun stalePresetCannotReplaceDraftAndValidPresetStillNeedsSave() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val vm = form()
+        vm.set("note", "Keep existing draft")
+        val preset =
+            EntryPreset(
+                UUID.randomUUID().toString(),
+                "Lunch",
+                "EXPENSE",
+                "INR",
+                15000,
+                "bank",
+                "food",
+            )
+        repo.extras.preset(preset, 0)
+        repo.extras.archivePreset(preset.id, 1, true)
+        vm.applyEntry(EntryRequest("PRESET", preset.id))
+        vm.error.filter { it != null }.first()
+        assertEquals("Keep existing draft", vm.fields.value["note"])
+        repo.extras.archivePreset(preset.id, 2, false)
+        vm.applyEntry(EntryRequest("PRESET", preset.id))
+        vm.fields.filter { it["amount"] == "150.00" }.first()
+        assertEquals("bank", vm.fields.value["accountId"])
+        assertEquals("food", vm.fields.value["categoryId"])
         assertEquals(0L, db.ledger().recordCount())
     }
 }

@@ -1,5 +1,15 @@
 # Current Personal APK
 
+**[Download TRAXOS0.18.0 Personal APK](https://raw.githubusercontent.com/awaquar005-cmd/Traxos-app/main/downloads/TRAXOS-0.18.0-transactions-entry-personal.apk)**
+
+Install as **Update**, never uninstall/clear data. Code22, same signature, additive Room15→16.
+
+Personal APK built; **349 tests passed across the full run and final targeted rerun (0 remaining failures/errors/skips)**. Lint: **0 errors, 30 warnings, 5 hints**. Signing and16KiB ZIP/64-bit ELF alignment verified. [Evidence](../docs/validation/transaction-entry-extras/README.md).
+
+Split categories and receipt controls are in transaction forms. Settings/More → Trends / Faster entry / Transaction receipts. Widget/tile/launcher and physical provider/lock acceptance remain device gates. Historical builds below are not recommended downgrades.
+
+# Current Personal APK
+
 **[Download TRAXOS0.17.0 Personal APK](https://raw.githubusercontent.com/awaquar005-cmd/Traxos-app/main/downloads/TRAXOS-0.17.0-regional-exports-personal.apk)**
 
 Install as **Update**, never uninstall/clear data. Code21, same signature, additive Room14→15.

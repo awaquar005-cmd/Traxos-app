@@ -1,3 +1,10 @@
+# 0.18.0 decisions
+
+- Split categories use child allocations rather than child financial transactions, preserving account balances, idempotency and Undo. Shared/loan/plan ownership remains exclusive.
+- Receipt bodies use an independent existing Keystore cipher and persistent encrypted drafts. Media limits protect RAM/archive size. Metadata is not represented as fully encrypted. External viewing is opt-in and cache grants are revocable.
+- Previous-period/year/month comparisons and parent-amount filters are explicit; currencies remain isolated and zero/negative baselines have no misleading percent.
+- Native Android surfaces reuse reviewed forms behind app lock; they carry no financial payload or secrets. No additional dependency or broad permission. Presets/rules are portable; device surface preferences and unfinished drafts are not.
+
 # 0.17.0 decisions
 
 - Manual FX estimates never alter original balances, dates or currency totals. No network pricing, silent rate chaining or implicit conversion. Dated rates are backed up; display policies are device-local.

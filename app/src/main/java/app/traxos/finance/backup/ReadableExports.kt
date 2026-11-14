@@ -79,6 +79,8 @@ class ReadableExports(
     private val db: TraxosDatabase,
     private val cipher: GiftCipher,
     private val pdfFactory: () -> PdfPages = { AndroidPdfPages() },
+    private val receiptCipher: GiftCipher =
+        app.traxos.finance.gifts.KeystoreGiftCipher("traxos.receipts"),
 ) {
     private fun typeLabel(type: String): String =
         when (type) {
@@ -97,7 +99,7 @@ class ReadableExports(
     private fun query(s: ExportScope): Cursor {
         s.validate()
         return db.openHelper.readableDatabase.query(
-            "SELECT t.*,a.name AS accountName,a.currency,CASE WHEN t.type IN ('DEBT_IN','DEBT_OUT') OR EXISTS(SELECT 1 FROM debt_funding f WHERE f.recordId=t.id AND f.active=1) THEN 'Loan principal' ELSE c.name END AS categoryName,CASE WHEN t.type='EXPENSE' AND EXISTS(SELECT 1 FROM debt_funding f WHERE f.recordId=t.id AND f.active=1) THEN 'DEBT_OUT' WHEN t.type='INCOME' AND EXISTS(SELECT 1 FROM debt_funding f WHERE f.recordId=t.id AND f.active=1) THEN 'DEBT_IN' ELSE t.type END AS displayType FROM transactions t JOIN accounts a ON a.id=t.accountId JOIN categories c ON c.id=t.categoryId WHERE t.day>=? AND t.day<=? AND (?='' OR t.accountId=?) AND (?='' OR a.currency=?) AND (?=1 OR t.deleted=0) ORDER BY t.day,t.id",
+            "SELECT t.*,a.name AS accountName,a.currency,CASE WHEN t.type IN ('DEBT_IN','DEBT_OUT') OR EXISTS(SELECT 1 FROM debt_funding f WHERE f.recordId=t.id AND f.active=1) THEN 'Loan principal' WHEN EXISTS(SELECT 1 FROM transaction_splits s WHERE s.recordId=t.id) THEN 'Split categories' ELSE c.name END AS categoryName,CASE WHEN t.type='EXPENSE' AND EXISTS(SELECT 1 FROM debt_funding f WHERE f.recordId=t.id AND f.active=1) THEN 'DEBT_OUT' WHEN t.type='INCOME' AND EXISTS(SELECT 1 FROM debt_funding f WHERE f.recordId=t.id AND f.active=1) THEN 'DEBT_IN' ELSE t.type END AS displayType FROM transactions t JOIN accounts a ON a.id=t.accountId JOIN categories c ON c.id=t.categoryId WHERE t.day>=? AND t.day<=? AND (?='' OR t.accountId=?) AND (?='' OR a.currency=?) AND (?=1 OR t.deleted=0) ORDER BY t.day,t.id",
             arrayOf<Any>(
                 s.start,
                 s.end,
@@ -110,7 +112,11 @@ class ReadableExports(
         )
     }
 
-    suspend fun json(output: OutputStream, giftSecrets: Boolean = false) =
+    suspend fun json(
+        output: OutputStream,
+        giftSecrets: Boolean = false,
+        receiptPayloads: Boolean = false,
+    ) =
         withContext(Dispatchers.IO) {
             val job = currentCoroutineContext()
             db.withTransaction {
@@ -121,7 +127,7 @@ class ReadableExports(
                         .name("version")
                         .value(1L)
                         .name("roomSchema")
-                        .value(15L)
+                        .value(16L)
                         .name("integerEncoding")
                         .value("decimal strings; no floating-point loss")
                         .name("blobEncoding")
@@ -140,6 +146,11 @@ class ReadableExports(
                         .forEach { w.value(it) }
                     if (!giftSecrets) w.value("gift secret payloads and saved images")
                     w.endArray()
+                    w.name("receiptPayloadsIncluded").value(receiptPayloads)
+                    if (!receiptPayloads) {
+                        w.name("receiptPayloadPolicy")
+                            .value("Receipt bodies omitted; metadata preserved")
+                    }
                     w.name("tables").beginObject()
                     backupTables.forEach { table ->
                         w.name(table).beginArray()
@@ -150,8 +161,9 @@ class ReadableExports(
                                 c.columnNames.forEachIndexed { index, name ->
                                     w.name(name).beginObject()
                                     when {
-                                        table == "gift_cards" && name == "secret" && !giftSecrets ->
-                                            w.name("type").value("omitted")
+                                        (table == "gift_cards" && !giftSecrets ||
+                                            table == "receipt_attachments" && !receiptPayloads) &&
+                                            name == "secret" -> w.name("type").value("omitted")
                                         c.isNull(index) -> w.name("type").value("null")
                                         c.getType(index) == Cursor.FIELD_TYPE_INTEGER ->
                                             w.name("type")
@@ -165,16 +177,33 @@ class ReadableExports(
                                                         c.getString(c.getColumnIndexOrThrow("id")),
                                                         c.getBlob(index),
                                                     )
+                                                else if (
+                                                    table == "receipt_attachments" &&
+                                                        name == "secret"
+                                                )
+                                                    receiptCipher.open(
+                                                        c.getString(c.getColumnIndexOrThrow("id")),
+                                                        c.getBlob(index),
+                                                    )
                                                 else c.getBlob(index)
                                             w.name("type")
                                                 .value(
                                                     if (table == "gift_cards" && name == "secret")
                                                         "portable-gift-secret-base64"
+                                                    else if (
+                                                        table == "receipt_attachments" &&
+                                                            name == "secret"
+                                                    )
+                                                        "portable-receipt-base64"
                                                     else "blob"
                                                 )
                                                 .name("value")
                                                 .value(Base64.encodeToString(value, Base64.NO_WRAP))
-                                            if (table == "gift_cards" && name == "secret")
+                                            if (
+                                                table in
+                                                    listOf("gift_cards", "receipt_attachments") &&
+                                                    name == "secret"
+                                            )
                                                 value.fill(0)
                                         }
                                         c.getType(index) == Cursor.FIELD_TYPE_STRING ->
@@ -196,13 +225,32 @@ class ReadableExports(
             }
         }
 
+    private fun allocations(id: String, currency: String): String =
+        db.openHelper.readableDatabase
+            .query(
+                "SELECT c.name,s.amountMinor FROM transaction_splits s JOIN categories c ON c.id=s.categoryId WHERE s.recordId=? ORDER BY c.name,s.categoryId",
+                arrayOf(id),
+            )
+            .use { c ->
+                buildList {
+                        while (c.moveToNext()) add(
+                            c.getString(0) +
+                                ": " +
+                                Money.editable(c.getLong(1), currency) +
+                                " " +
+                                currency
+                        )
+                    }
+                    .joinToString("; ")
+            }
+
     suspend fun csv(output: OutputStream, scope: ExportScope) =
         withContext(Dispatchers.IO) {
             val job = currentCoroutineContext()
             db.withTransaction {
                 output.bufferedWriter().use { w ->
                     w.write(
-                        "id,date,type,account,category,classification,amount,currency,note,link_id,deleted\r\n"
+                        "id,date,type,account,category,classification,amount,currency,note,link_id,deleted,category_allocations\r\n"
                     )
                     query(scope).use { c ->
                         while (c.moveToNext()) {
@@ -223,6 +271,7 @@ class ReadableExports(
                                     if (scope.notes) t("note") else "",
                                     t("linkId"),
                                     t("deleted"),
+                                    allocations(t("id"), t("currency")),
                                 )
                             w.write(fields.joinToString(",", transform = LedgerCsv::cell))
                             w.write("\r\n")
@@ -324,6 +373,8 @@ class ReadableExports(
                                 line(
                                     "${t("accountName")} · ${t("categoryName")} · ${Money.format(amount,currency,display.localeValue(),display.currencyCode)}"
                                 )
+                                val allocated = allocations(t("id"), currency)
+                                if (allocated.isNotBlank()) line(allocated)
                                 if (conversion.isNotBlank() && currency != conversion) {
                                     val result =
                                         ExchangeRules.convert(

@@ -34,6 +34,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.compose.*
 import app.traxos.finance.data.*
 import app.traxos.finance.domain.NavigationLayout
+import app.traxos.finance.entry.EntryInbox
 import app.traxos.finance.gifts.*
 import app.traxos.finance.smart.*
 import app.traxos.finance.voice.*
@@ -122,7 +123,8 @@ fun TraxosApp(vm: MainViewModel) {
             route.startsWith("gift_edit/") ||
             route.startsWith("ui_review") ||
             route.startsWith("card_details/") ||
-            route.startsWith("money_edit/")
+            route.startsWith("money_edit/") ||
+            route.startsWith("entry_edit/")
     val transferEvents = remember {
         kotlinx.coroutines.channels.Channel<String>(kotlinx.coroutines.channels.Channel.BUFFERED)
     }
@@ -274,6 +276,43 @@ fun TraxosApp(vm: MainViewModel) {
                 }
             }
     }
+    val entryRequest by EntryInbox.pending.collectAsStateWithLifecycle()
+    LaunchedEffect(entryRequest) {
+        val request = entryRequest ?: return@LaunchedEffect
+        EntryInbox.pending.value = null
+        when (request.action) {
+            "EXPENSE",
+            "INCOME",
+            "PRESET" -> {
+                try {
+                    if (request.presetId != null)
+                        app.transactionExtras.validatePreset(
+                            requireNotNull(app.transactionExtras.dao.preset(request.presetId)) {
+                                "Favorite no longer exists"
+                            }
+                        )
+                    vm.pendingEntry.value = request
+                    val same =
+                        nav.currentDestination?.route == "transaction/{id}" &&
+                            nav.currentBackStackEntry?.arguments?.getString("id") == "new"
+                    nav.navigate("transaction/new") { launchSingleTop = same }
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    feedback(
+                        Feedback(
+                            if (e is IllegalArgumentException) e.message ?: "Favorite unavailable"
+                            else "Could not open quick entry. Your records are kept.",
+                            kind = NoticeKind.ERROR,
+                        )
+                    )
+                }
+            }
+            "VOICE" -> mainNav("voice")
+            "SMART" -> mainNav("smart")
+            "HOME" -> mainNav("home")
+        }
+    }
     LaunchedEffect(vm) { for (event in vm.events) feedback(event) }
     LaunchedEffect(transferEvents) {
         for (id in transferEvents) {
@@ -332,6 +371,11 @@ fun TraxosApp(vm: MainViewModel) {
                                 "cloud_setup" -> "Account & Drive"
                                 "backup" -> "Backups & recovery"
                                 "reports" -> "Monthly reports"
+                                "trends" -> "Trends & comparisons"
+                                "fast_entry" -> "Faster entry"
+                                "receipt_settings" -> "Receipts"
+                                "receipt_view/{id}" -> "Transaction receipts"
+                                "entry_edit/{kind}/{id}" -> "Entry settings"
                                 "deleted" -> "Deleted transactions"
                                 "transfer" -> "Own-account transfer"
                                 "categories" -> "Categories"
@@ -356,6 +400,10 @@ fun TraxosApp(vm: MainViewModel) {
                                         route == "categories" ||
                                         route == "period_budgets" ||
                                         route == "planning_settings" ||
+                                        route == "trends" ||
+                                        route == "fast_entry" ||
+                                        route == "receipt_settings" ||
+                                        route.startsWith("receipt_view/") ||
                                         route.startsWith("debt/") ||
                                         route.startsWith("group/") ||
                                         route == "cards" ||
@@ -526,6 +574,9 @@ fun TraxosApp(vm: MainViewModel) {
                                 "subscriptions" -> "subscriptions"
                                 "finance_reminders" -> "finance_reminders"
                                 "planning_settings" -> "planning_settings"
+                                "trends" -> "trends"
+                                "fast_entry" -> "fast_entry"
+                                "receipt_settings" -> "receipt_settings"
                                 "gift_settings" -> "gift_settings"
                                 else -> "settings/$section"
                             }
@@ -592,6 +643,34 @@ fun TraxosApp(vm: MainViewModel) {
                     VoiceEntryScreen(voice, prefs.defaultCurrency, startVoice) {
                         nav.navigate("transaction/new") { launchSingleTop = true }
                     }
+                }
+            }
+            composable("trends") {
+                RoutePage("trends") {
+                    TrendsScreen({ scope, type ->
+                        vm.search("")
+                        vm.scope(scope)
+                        vm.recordFilter(type)
+                        mainNav("transactions")
+                    })
+                }
+            }
+            composable("fast_entry") { RoutePage("fast_entry") { FastEntryScreen(mainNav) } }
+            composable("receipt_settings") {
+                RoutePage("receipt_settings") { ReceiptSettingsScreen(mainNav) }
+            }
+            composable("receipt_view/{id}") { e ->
+                RoutePage("receipt_view") {
+                    ReceiptRecordScreen(e.arguments?.getString("id").orEmpty())
+                }
+            }
+            composable("entry_edit/{kind}/{id}") { e ->
+                RoutePage("entry_editor") {
+                    EntryOptionEditor(
+                        e.arguments?.getString("kind").orEmpty(),
+                        e.arguments?.getString("id").orEmpty(),
+                        { nav.popBackStack() },
+                    )
                 }
             }
             composable("reports") {

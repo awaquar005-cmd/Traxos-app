@@ -104,6 +104,15 @@ internal fun SettingsScreen(vm: MainViewModel, openSection: (String) -> Unit) {
             SettingsRow("Exports", "PDF, CSV and exact standalone JSON") { openSection("exports") }
         }
         SettingsGroup("MONEY & TOOLS") {
+            SettingsRow("Faster entry", "Favorites, merchant rules, widgets, tile and shortcuts") {
+                openSection("fast_entry")
+            }
+            SettingsRow("Trends & comparisons", "Filtered personal spending and income") {
+                openSection("trends")
+            }
+            SettingsRow("Transaction receipts", "Encrypted attachments, previews and cleanup") {
+                openSection("receipt_settings")
+            }
             SettingsRow("Debt & planning alerts", "Budget thresholds, debt and goal reminders") {
                 openSection("planning_settings")
             }

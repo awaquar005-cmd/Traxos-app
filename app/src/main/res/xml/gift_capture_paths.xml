@@ -1,1 +1,1 @@
-<paths xmlns:android="http://schemas.android.com/apk/res/android"><cache-path name="gift-capture" path="gift-capture/"/></paths>
+<paths xmlns:android="http://schemas.android.com/apk/res/android"><cache-path name="gift-capture" path="gift-capture/"/><cache-path name="receipt-view" path="receipt-view/"/></paths>

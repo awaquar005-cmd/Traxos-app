@@ -166,7 +166,7 @@ class RegionalNativeTest {
                 }
             // Robolectric4.14 does not implement PdfDocument JNI. Test the actual report
             // pagination/drawing on native Canvas; device-native PDF serialization is a phone gate.
-            ReadableExports(db, TestGiftCipher()) { backend }
+            ReadableExports(db, TestGiftCipher(), pdfFactory = { backend })
                 .pdf(ByteArrayOutputStream(), ExportScope(), DisplayOptions(locale = "en-IN"))
             assertTrue(written)
             assertTrue(closed)

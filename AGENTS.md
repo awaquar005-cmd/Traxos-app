@@ -1,3 +1,7 @@
+# Current transaction/report and faster-entry extension
+
+0.18.0 adds exact split allocations, independently encrypted bounded receipt bodies/draft adoption/recovery, currency-separated filtered trends, favorites/merchant rules and reviewed widget/tile/launcher entry surfaces. Room16 is additive. Read docs/TRANSACTION_ENTRY_EXTRAS.md. Preserve one-movement accounting, explicit category choices, loan/group/plan ownership, prior routes and vault exclusions. Surface intents never post money; PIN/biometric lock remains the gate. Android launcher/Files/widget/tile acceptance requires a physical phone.
+
 # Current regional/export extension
 
 Current0.17.0 adds dated manual FX, formatting locales/date/clock/timezone, native PDF/scoped CSV/typed JSON, local photos/accessibility/channel/launcher/help/privacy controls. Room15 is additive and reads schema11–15 archives. Read docs/REGIONAL_EXPORT_PROFILE.md. Never interpret estimates as ledger conversion, export the card vault/PIN/login, auto-send diagnostics, remove old launcher/share reachability or present formatting language as a full UI translation.

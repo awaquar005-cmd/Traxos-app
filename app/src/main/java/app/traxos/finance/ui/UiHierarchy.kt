@@ -194,6 +194,24 @@ internal fun MoreScreen(navigate: (String) -> Unit) {
         SettingsGroup("LEDGER TOOLS") {
             listOf(
                     ToolEntry(
+                        "trends",
+                        "Trends & comparisons",
+                        "Periods, filters and category allocations",
+                        TraxosIcons.report,
+                    ),
+                    ToolEntry(
+                        "receipt_settings",
+                        "Receipts",
+                        "Encrypted transaction images and PDFs",
+                        TraxosIcons.ledger,
+                    ),
+                    ToolEntry(
+                        "fast_entry",
+                        "Faster entry",
+                        "Favorites, rules and Android shortcuts",
+                        TraxosIcons.spark,
+                    ),
+                    ToolEntry(
                         "reports",
                         "Monthly reports",
                         "Income, purchases and refunds by category",

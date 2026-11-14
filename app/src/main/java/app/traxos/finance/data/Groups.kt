@@ -432,7 +432,8 @@ class GroupsRepository(val db: TraxosDatabase) {
                     }
                     require(
                         db.groups().link(recordId) == null &&
-                            db.planning().debtRecord(recordId) == null
+                            db.planning().debtRecord(recordId) == null &&
+                            db.extras().splits(recordId).isEmpty()
                     ) {
                         "This transaction is already linked"
                     }
@@ -532,6 +533,7 @@ class GroupsRepository(val db: TraxosDatabase) {
                     require(
                         db.groups().link(recordId) == null &&
                             db.planning().debtRecord(recordId) == null &&
+                            db.extras().splits(recordId).isEmpty() &&
                             db.obligations().paymentForRecord(recordId) == null
                     )
                     link = GroupLedgerLink(recordId, operation, 0)

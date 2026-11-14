@@ -35,6 +35,10 @@ internal fun SmartInboxScreen(
     val categories by vm.categories.collectAsStateWithLifecycle()
     var account by remember(selected?.id) { mutableStateOf("") }
     var category by remember(selected?.id) { mutableStateOf("") }
+    var categoryManual by remember(selected?.id) { mutableStateOf(false) }
+    val merchantRules by vm.ledger.extras.dao.rules().collectAsStateWithLifecycle(emptyList())
+    val entrySettings by vm.ledger.extras.dao.settings().collectAsStateWithLifecycle(null)
+    var ruleMessage by remember(selected?.id) { mutableStateOf("") }
     LaunchedEffect(incoming) {
         if (incoming != null) {
             text = incoming
@@ -43,8 +47,27 @@ internal fun SmartInboxScreen(
         }
     }
     LaunchedEffect(selected?.id, prefs?.defaultAccountId, prefs?.defaultExpenseCategoryId) {
-        account = prefs?.defaultAccountId.orEmpty()
-        category = prefs?.defaultExpenseCategoryId.orEmpty()
+        if (account.isBlank()) account = prefs?.defaultAccountId.orEmpty()
+        if (category.isBlank() && !categoryManual)
+            category = prefs?.defaultExpenseCategoryId.orEmpty()
+    }
+    LaunchedEffect(d?.merchant, d?.type, account, categoryManual, merchantRules, entrySettings) {
+        val draft = d
+        if (draft?.kind == "TRANSACTION" && !categoryManual && entrySettings?.rules != false) {
+            val rule =
+                app.traxos.finance.entry.EntryRules.match(
+                    draft.merchant,
+                    draft.type,
+                    account,
+                    merchantRules,
+                    categories,
+                )
+            if (rule != null) {
+                category = rule.categoryId
+                ruleMessage =
+                    "Merchant rule: ${categories.firstOrNull{it.id==rule.categoryId}?.name.orEmpty()}"
+            }
+        }
     }
     if (selected != null && d != null) {
         val draft = d!!
@@ -195,7 +218,13 @@ internal fun SmartInboxScreen(
                 ) {
                     account = it
                 }
-                CategoryPicker(vm.ledger, category, categories, draft.type, !busy) { category = it }
+                CategoryPicker(vm.ledger, category, categories, draft.type, !busy) {
+                    category = it
+                    categoryManual = true
+                    ruleMessage = ""
+                }
+                if (ruleMessage.isNotBlank())
+                    Text(ruleMessage, style = MaterialTheme.typography.bodySmall)
                 TraxosDateField("Date (today if absent)", draft.day, !busy) { v ->
                     vm.update { it.copy(day = v) }
                 }
@@ -355,12 +384,25 @@ internal fun SmartInboxScreen(
                 val suggestedAccount =
                     eligible.firstOrNull { it.account.id == prefs?.defaultAccountId }
                         ?: eligible.singleOrNull()
+                val ruleCategory =
+                    if (entrySettings?.rules != false)
+                        app.traxos.finance.entry.EntryRules.match(
+                                p.merchant,
+                                p.type,
+                                suggestedAccount?.account?.id.orEmpty(),
+                                merchantRules,
+                                categories,
+                            )
+                            ?.categoryId
+                    else null
                 val suggestedCategory =
-                    categories.firstOrNull {
-                        !it.archived &&
-                            it.type == p.type &&
-                            it.id == prefs?.defaultExpenseCategoryId
-                    } ?: categories.filter { !it.archived && it.type == p.type }.singleOrNull()
+                    categories.firstOrNull { it.id == ruleCategory }
+                        ?: categories.firstOrNull {
+                            !it.archived &&
+                                it.type == p.type &&
+                                it.id == prefs?.defaultExpenseCategoryId
+                        }
+                        ?: categories.filter { !it.archived && it.type == p.type }.singleOrNull()
                 if (p.kind == "TRANSACTION")
                     Text(
                         "Save to: ${suggestedAccount?.account?.name ?: "Choose account in Edit"} · ${suggestedCategory?.name ?: "Choose category in Edit"}",

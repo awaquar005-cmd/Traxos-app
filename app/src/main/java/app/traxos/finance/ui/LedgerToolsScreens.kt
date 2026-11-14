@@ -34,12 +34,19 @@ internal fun ActivityFilterSheet(
     categories: List<Category>,
     close: () -> Unit,
     apply: (ActivityScope) -> Unit,
+    merchants: List<EntryLabel> = emptyList(),
 ) {
     var from by rememberSaveable { mutableStateOf(initial.from) }
     var through by rememberSaveable { mutableStateOf(initial.through) }
     var account by rememberSaveable { mutableStateOf(initial.accountId) }
     var category by rememberSaveable { mutableStateOf(initial.categoryId) }
     var currency by rememberSaveable { mutableStateOf(initial.currency) }
+    var merchant by rememberSaveable { mutableStateOf(initial.merchantId) }
+    var minimum by rememberSaveable { mutableStateOf(initial.minimum) }
+    var maximum by rememberSaveable { mutableStateOf(initial.maximum) }
+    var receipt by rememberSaveable { mutableStateOf(initial.receipt) }
+    var split by rememberSaveable { mutableStateOf(initial.split) }
+    var origin by rememberSaveable { mutableStateOf(initial.origin) }
     var error by rememberSaveable { mutableStateOf<String?>(null) }
     val keyboard = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
     val focus = androidx.compose.ui.platform.LocalFocusManager.current
@@ -122,6 +129,65 @@ internal fun ActivityFilterSheet(
                 listOf("" to "All currencies") + Money.currencies.map { it to it },
                 onSelect = { currency = it },
             )
+            TraxosSelector(
+                "Merchant",
+                merchant,
+                listOf("" to "All merchants") +
+                    merchants.filter { it.kind == "MERCHANT" }.map { it.id to it.name },
+            ) {
+                merchant = it
+            }
+            TraxosInput(
+                "Minimum amount",
+                minimum,
+                { minimum = it },
+                number = true,
+                id = "filter_minimum",
+            )
+            TraxosInput(
+                "Maximum amount",
+                maximum,
+                { maximum = it },
+                number = true,
+                id = "filter_maximum",
+            )
+            Text(
+                "Amount limits require one currency and match whole transactions. Category filters also match split allocations.",
+                style = MaterialTheme.typography.bodySmall,
+            )
+            TraxosSelector(
+                "Receipts",
+                receipt,
+                listOf(
+                    "ALL" to "Any receipt state",
+                    "HAS" to "Has receipts",
+                    "NONE" to "No receipts",
+                ),
+            ) {
+                receipt = it
+            }
+            TraxosSelector(
+                "Allocation",
+                split,
+                listOf(
+                    "ALL" to "All transactions",
+                    "SPLIT" to "Split categories",
+                    "SINGLE" to "Single category",
+                ),
+            ) {
+                split = it
+            }
+            TraxosSelector(
+                "Source",
+                origin,
+                listOf(
+                    "ALL" to "All sources",
+                    "LEDGER" to "Personal ledger",
+                    "GROUP" to "Linked group payments",
+                ),
+            ) {
+                origin = it
+            }
         }
         if (error != null) TraxosNotice(error!!, NoticeKind.ERROR)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -132,6 +198,12 @@ internal fun ActivityFilterSheet(
                     account = ""
                     category = ""
                     currency = ""
+                    merchant = ""
+                    minimum = ""
+                    maximum = ""
+                    receipt = "ALL"
+                    split = "ALL"
+                    origin = "ALL"
                     error = null
                 },
                 Modifier.weight(1f).testTag("filter_reset"),
@@ -143,7 +215,19 @@ internal fun ActivityFilterSheet(
                 {
                     try {
                         apply(
-                            ActivityScope(from.trim(), through.trim(), account, category, currency)
+                            ActivityScope(
+                                    from.trim(),
+                                    through.trim(),
+                                    account,
+                                    category,
+                                    currency,
+                                    merchant,
+                                    minimum,
+                                    maximum,
+                                    receipt,
+                                    split,
+                                    origin,
+                                )
                                 .validate()
                         )
                         keyboard?.hide()

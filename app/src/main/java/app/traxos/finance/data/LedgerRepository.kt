@@ -15,6 +15,7 @@ import org.json.JSONObject
 
 class LedgerRepository(private val db: TraxosDatabase) {
     val dao = db.ledger()
+    val extras by lazy { app.traxos.finance.entry.TransactionExtrasRepository(db) }
     private val gate = Mutex()
 
     suspend fun saveAccount(
@@ -111,6 +112,7 @@ class LedgerRepository(private val db: TraxosDatabase) {
         note: String,
         expectedRevision: Long? = null,
         merchantId: String? = null,
+        splits: List<app.traxos.finance.entry.SplitPart>? = null,
     ) =
         mutate(operationId) {
             Money.effect(type, amount)
@@ -169,11 +171,24 @@ class LedgerRepository(private val db: TraxosDatabase) {
                 require(dao.recordCount() < Money.MAX_TRANSACTIONS) {
                     "Device record limit reached; export before continuing"
                 }
+            val oldSplits = db.extras().splits(id)
+            val allocation =
+                splits
+                    ?: oldSplits.map {
+                        app.traxos.finance.entry.SplitPart(it.categoryId, it.amountMinor)
+                    }
+            app.traxos.finance.entry.EntryRules.validateSplits(
+                type,
+                amount,
+                allocation,
+                dao.categories().first(),
+                oldSplits.map { it.categoryId }.toSet(),
+            )
             val record =
                 LedgerRecord(
                     id,
                     accountId,
-                    categoryId,
+                    allocation.minByOrNull { it.categoryId }?.categoryId ?: categoryId,
                     type,
                     amount,
                     day,
@@ -183,6 +198,20 @@ class LedgerRepository(private val db: TraxosDatabase) {
                     merchantId = merchantId,
                 )
             if (old == null) dao.insertRecord(record) else dao.updateRecord(record)
+            db.extras().clearSplits(id)
+            if (allocation.isNotEmpty())
+                db.extras()
+                    .insertSplits(
+                        allocation.map {
+                            app.traxos.finance.entry.TransactionSplit(
+                                id,
+                                it.categoryId,
+                                it.amountMinor,
+                            )
+                        }
+                    )
+            extras.adoptDrafts(id)
+
             recordJournal(
                 operationId,
                 record,
@@ -585,6 +614,17 @@ class LedgerRepository(private val db: TraxosDatabase) {
                 .put("zoneId", r.zoneId)
                 .put("note", r.note)
                 .put("merchantId", r.merchantId)
+                .put(
+                    "categorySplits",
+                    org.json.JSONArray(
+                        db.extras().splits(r.id).map {
+                            org.json
+                                .JSONObject()
+                                .put("categoryId", it.categoryId)
+                                .put("amountMinor", it.amountMinor)
+                        }
+                    ),
+                )
                 .put("linkId", r.linkId)
                 .put("deleted", r.deleted),
         )

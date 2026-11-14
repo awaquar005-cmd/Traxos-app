@@ -66,6 +66,7 @@ internal fun FormDestination(
     val fields by vm.fields.collectAsStateWithLifecycle()
     val busy by vm.busy.collectAsStateWithLifecycle()
     val loading by vm.loading.collectAsStateWithLifecycle()
+    val attachmentBusy by vm.attachmentBusy.collectAsStateWithLifecycle()
     val error by vm.error.collectAsStateWithLifecycle()
     LaunchedEffect(vm, loading, reads is ReadState.Ready) {
         if (!loading && !account && vm.isNew && reads is ReadState.Ready)
@@ -88,6 +89,27 @@ internal fun FormDestination(
                 vm.set("note", draft.note)
             }
     }
+    val pendingEntry by main.pendingEntry.collectAsStateWithLifecycle()
+    var replaceRequest by remember { mutableStateOf<app.traxos.finance.entry.EntryRequest?>(null) }
+    LaunchedEffect(pendingEntry, loading) {
+        if (!account && vm.isNew && !loading && pendingEntry != null) {
+            val request = pendingEntry!!
+            main.pendingEntry.value = null
+            if (vm.dirty()) replaceRequest = request else vm.applyEntry(request)
+        }
+    }
+    replaceRequest?.let { request ->
+        TraxosDialog(
+            "Replace draft?",
+            "Amounts, categories, note and unsaved receipt attachments will be replaced. Saved transactions remain unchanged.",
+            "Replace",
+            {
+                replaceRequest = null
+                vm.applyEntry(request)
+            },
+            { replaceRequest = null },
+        )
+    }
     var transfer by rememberSaveable { mutableStateOf(false) }
     var closeTransfer by remember { mutableStateOf(false) }
     if (transfer)
@@ -107,7 +129,7 @@ internal fun FormDestination(
     var discard by rememberSaveable { mutableStateOf(false) }
     var delete by rememberSaveable { mutableStateOf(false) }
     val leave: () -> Unit = {
-        if (!busy) {
+        if (!busy && !attachmentBusy) {
             if (vm.dirty()) discard = true else nav.popBackStack()
         }
     }
@@ -119,7 +141,7 @@ internal fun FormDestination(
             "Discard",
             {
                 discard = false
-                nav.popBackStack()
+                vm.discard { nav.popBackStack() }
             },
             { discard = false },
             cancelLabel = "Keep editing",
@@ -142,6 +164,7 @@ internal fun FormDestination(
         account || (!fields["accountId"].isNullOrBlank() && !fields["categoryId"].isNullOrBlank())
     val ready =
         !loading &&
+            !attachmentBusy &&
             preferences != null &&
             fields.isNotEmpty() &&
             selectionsReady &&
@@ -216,7 +239,8 @@ internal fun FormDestination(
                                 )
                                 TraxosTextButton(main::retry) { Text("Retry local records") }
                             }
-                            is ReadState.Ready ->
+                            is ReadState.Ready -> {
+                                if (vm.isNew) FavoriteFormChips(vm, main)
                                 TransactionFormFields(
                                     fields,
                                     reads,
@@ -233,7 +257,26 @@ internal fun FormDestination(
                                 ) {
                                     nav.navigate("account/new") { launchSingleTop = true }
                                 }
+                            }
                         }
+                }
+                if (!account && !loading) {
+                    var receiptsOpen by rememberSaveable { mutableStateOf(false) }
+                    TraxosTextButton(
+                        { receiptsOpen = !receiptsOpen },
+                        Modifier.testTag("transaction_receipts"),
+                        !busy && !attachmentBusy,
+                    ) {
+                        Text(if (receiptsOpen) "Hide receipts" else "Receipts")
+                    }
+                    if (receiptsOpen)
+                        ReceiptControls(
+                            vm.entityId,
+                            vm.isNew,
+                            !busy,
+                            { vm.set("receiptTouched", "1") },
+                            { vm.attachmentBusy.value = it },
+                        )
                 }
                 if (!account && !vm.isNew)
                     TraxosButton(
@@ -390,16 +433,17 @@ private fun TransactionFormFields(
             AccountPicker(repository, f["accountId"].orEmpty(), accounts, enabled, flat = true) {
                 set("accountId", it)
             }
-            CategoryPicker(
-                repository,
-                f["categoryId"].orEmpty(),
-                state.categories,
-                f["type"].orEmpty(),
-                enabled,
-                flat = true,
-            ) {
-                set("categoryId", it)
-            }
+            if (f["splits"].isNullOrBlank())
+                CategoryPicker(
+                    repository,
+                    f["categoryId"].orEmpty(),
+                    state.categories,
+                    f["type"].orEmpty(),
+                    enabled,
+                    flat = true,
+                ) {
+                    set("categoryId", it)
+                }
         }
     }
     if (account?.type == "CREDIT_CARD")
@@ -408,23 +452,35 @@ private fun TransactionFormFields(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-    val quick = state.categories.filter { it.type == categoryType && !it.archived }.take(4)
-    Text(
-        "QUICK CATEGORY",
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Row(
-        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        quick.forEach { category ->
-            CompactAction(
-                category.name,
-                { set("categoryId", category.id) },
-                enabled = enabled,
-                active = f["categoryId"] == category.id,
+    SplitFormControls(f, state, repository, enabled, set)
+    f["ruleMessage"]
+        ?.takeIf { it.isNotBlank() }
+        ?.let {
+            Text(
+                it,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary,
             )
+        }
+    if (f["splits"].isNullOrBlank()) {
+        val quick = state.categories.filter { it.type == categoryType && !it.archived }.take(4)
+        Text(
+            "QUICK CATEGORY",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Row(
+            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            quick.forEach { category ->
+                CompactAction(
+                    category.name,
+                    { set("categoryId", category.id) },
+                    enabled = enabled,
+                    active = f["categoryId"] == category.id,
+                )
+            }
         }
     }
     var details by rememberSaveable { mutableStateOf(!isNew || !f["note"].isNullOrBlank()) }

@@ -1,3 +1,13 @@
+# 0.18.0 transaction/report extras and faster entry
+
+- `entry/TransactionExtras.kt`, `ReceiptStore.kt`, `SplitDrafts.kt`, `ReportLines.kt`, `TrendFilters.kt`, `TrendMath.kt`, `EntrySurfaces.kt` — allocations, encrypted media, filtered reports, presets/rules and native reviewed entry surfaces.
+- `ui/TransactionExtrasComponents.kt`, `FastEntryScreens.kt`, `TrendsScreen.kt` — reusable split/receipt editors, favorites/rule/configuration/receipt manager and trends.
+- `Forms.kt`, `ViewModels.kt`, `SmartInboxScreen.kt`, `LedgerScreens.kt`, `LedgerToolsScreens.kt`, `App.kt`, `SettingsScreen.kt`, `UiHierarchy.kt`, `ExportScreen.kt`, `RegionalProfileScreens.kt` — integration, explicit-choice guards, routes/settings and payload consent.
+- `Database.kt`, schema16, `LedgerRepository.kt`, `Groups.kt`, `Obligations.kt`, `PlanningExtensions.kt`, `PortableBackup.kt`, `ReadableExports.kt` — safe migration, finance ownership, reports, portable re-encryption and allocation exports.
+- `MainActivity.kt`, `TraxosApplication.kt`, manifest, widget layout/provider XML/strings, white mark derivative and narrow FileProvider cache path — Android surface lifecycle.
+- `TransactionExtrasTest`, `EntryReceiptNativeTest`, `TransactionExtrasMigrationTest`, `TransactionExtrasUiTest`, `EntrySurfaceWorkerTest`, `TrendsUiTest`; added form-state coverage in FormViewModelTest and compatibility adaptations in RegionalExportsTest/RegionalNativeTest.
+- `docs/TRANSACTION_ENTRY_EXTRAS.md`, plan and current validation evidence — behavior and acceptance limits.
+
 # Current0.17.0 delivery
 
 - `downloads/TRAXOS-0.17.0-regional-exports-personal.apk` — Personal code21, update-compatible signing.

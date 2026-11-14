@@ -1,3 +1,7 @@
+# 0.18.0 preservation addendum
+
+Existing routes/entities/brand and all previous accounting semantics remain. Added routes: trends, fast_entry, receipt_settings, receipt_view/{id}, entry_edit/{kind}/{id}. Added Room16 child/media/preference tables and report view are forward migrated; old schema15 entities stay unchanged. New receipts are excluded from default plaintext JSON bodies and included by authenticated portable recovery. Existing QR/gift images/voice/SMS/Drive/lock/card vault and prior module features remain. No OCR or live group backend is added. See current delivery manifest and TRANSACTION_ENTRY_EXTRAS.md.
+
 # 0.17.0 preservation
 
 Original financial records/currencies and prior entity definitions remain; one additive rates table and optional settings/export routes. Existing app lock/card vault/CVV, hero/mark/watermark, gifts/QR/images, voice/SMS, recurring, plans/debts/groups/cards/subscriptions, defaults/navigation and cloud/local recovery remain. New shared display helpers change presentation only. MainActivity stays available behind two branded launcher aliases and retains inbound shares. No new permission/dependency/backend. Formatting-language choices do not claim translated English UI. See REGIONAL_EXPORT_PROFILE.md.

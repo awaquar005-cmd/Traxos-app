@@ -1,0 +1,135 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.11.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :app:preBuild UP-TO-DATE
+> Task :app:prePersonalDebugBuild UP-TO-DATE
+> Task :app:mergePersonalDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:generatePersonalDebugBuildConfig UP-TO-DATE
+> Task :app:checkPersonalDebugAarMetadata UP-TO-DATE
+> Task :app:generatePersonalDebugResValues UP-TO-DATE
+> Task :app:mapPersonalDebugSourceSetPaths UP-TO-DATE
+> Task :app:generatePersonalDebugResources UP-TO-DATE
+> Task :app:mergePersonalDebugResources UP-TO-DATE
+> Task :app:packagePersonalDebugResources UP-TO-DATE
+> Task :app:parsePersonalDebugLocalResources UP-TO-DATE
+> Task :app:createPersonalDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksPersonalDebug UP-TO-DATE
+> Task :app:processPersonalDebugMainManifest UP-TO-DATE
+> Task :app:processPersonalDebugManifest UP-TO-DATE
+> Task :app:processPersonalDebugManifestForPackage UP-TO-DATE
+> Task :app:processPersonalDebugResources UP-TO-DATE
+> Task :app:kspPersonalDebugKotlin
+> Task :app:compilePersonalDebugKotlin
+> Task :app:javaPreCompilePersonalDebug UP-TO-DATE
+> Task :app:compilePersonalDebugJavaWithJavac UP-TO-DATE
+> Task :app:mergePersonalDebugShaders UP-TO-DATE
+> Task :app:compilePersonalDebugShaders NO-SOURCE
+> Task :app:generatePersonalDebugAssets UP-TO-DATE
+> Task :app:mergePersonalDebugAssets UP-TO-DATE
+> Task :app:compressPersonalDebugAssets UP-TO-DATE
+> Task :app:checkPersonalDebugDuplicateClasses UP-TO-DATE
+> Task :app:desugarPersonalDebugFileDependencies UP-TO-DATE
+> Task :app:mergeExtDexPersonalDebug UP-TO-DATE
+> Task :app:mergeLibDexPersonalDebug UP-TO-DATE
+> Task :app:dexBuilderPersonalDebug
+> Task :app:mergePersonalDebugGlobalSynthetics UP-TO-DATE
+> Task :app:processPersonalDebugJavaRes UP-TO-DATE
+> Task :app:mergePersonalDebugJavaResource
+> Task :app:mergeProjectDexPersonalDebug
+> Task :app:mergePersonalDebugJniLibFolders UP-TO-DATE
+> Task :app:mergePersonalDebugNativeLibs UP-TO-DATE
+> Task :app:stripPersonalDebugDebugSymbols UP-TO-DATE
+> Task :app:validateSigningPersonalDebug UP-TO-DATE
+> Task :app:writePersonalDebugAppMetadata UP-TO-DATE
+> Task :app:writePersonalDebugSigningConfigVersions UP-TO-DATE
+> Task :app:packagePersonalDebug
+> Task :app:createPersonalDebugApkListingFileRedirect
+> Task :app:assemblePersonalDebug
+> Task :app:bundlePersonalDebugClassesToRuntimeJar
+> Task :app:bundlePersonalDebugClassesToCompileJar
+> Task :app:kspPersonalDebugUnitTestKotlin
+> Task :app:compilePersonalDebugUnitTestKotlin
+> Task :app:prePersonalDebugUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompilePersonalDebugUnitTest UP-TO-DATE
+> Task :app:compilePersonalDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :app:packagePersonalDebugUnitTestForUnitTest UP-TO-DATE
+> Task :app:generatePersonalDebugUnitTestConfig UP-TO-DATE
+> Task :app:processPersonalDebugUnitTestJavaRes UP-TO-DATE
+
+> Task :app:testPersonalDebugUnitTest
+
+TransactionExtrasMigrationTest > v15PreservesFinancePreferencesAndReopens FAILED
+    java.lang.IllegalStateException at RoomConnectionManager.kt:212
+        Caused by: java.lang.IllegalStateException at RoomConnectionManager.kt:212
+
+AccentMigrationTest > shippedV6PreservesLedgerGiftSecretsAndPersistsAccentAcrossRestart FAILED
+    java.lang.IllegalStateException at RoomConnectionManager.kt:212
+        Caused by: java.lang.IllegalStateException at RoomConnectionManager.kt:212
+
+CardVaultMigrationTest > shippedV8PreservesLedgerGiftsPreferencesAndAddsEmptyEncryptedCardTable FAILED
+    java.lang.IllegalStateException at RoomConnectionManager.kt:212
+        Caused by: java.lang.IllegalStateException at RoomConnectionManager.kt:212
+
+CatalogMigrationTest > shippedV5PreservesLedgerGiftSecretsInboxAndPreferences FAILED
+    java.lang.IllegalStateException at RoomConnectionManager.kt:212
+        Caused by: java.lang.IllegalStateException at RoomConnectionManager.kt:212
+
+DebtPlanningExtensionsTest > migration13PreservesExistingBalancesAndAddsEmptyExtensions FAILED
+    java.lang.IllegalStateException at RoomConnectionManager.kt:212
+        Caused by: java.lang.IllegalStateException at RoomConnectionManager.kt:212
+
+DebtsTest > shippedSchema11UpgradesWithoutLosingAccountsPreferencesOrGiftTables FAILED
+    java.lang.IllegalStateException at RoomConnectionManager.kt:212
+        Caused by: java.lang.IllegalStateException at RoomConnectionManager.kt:212
+
+GiftMigrationTest > shippedV3UpgradesPreservingLedgerAndCustomizedNavigation FAILED
+    java.lang.IllegalStateException at RoomConnectionManager.kt:212
+        Caused by: java.lang.IllegalStateException at RoomConnectionManager.kt:212
+
+MoneyModulesTest > schema12MigrationPreservesExistingTransactionsAndAddsEmptyModules FAILED
+    java.lang.IllegalStateException at RoomConnectionManager.kt:212
+        Caused by: java.lang.IllegalStateException at RoomConnectionManager.kt:212
+
+NavigationPreferencesTest > shippedV2UpgradesWithoutLosingSettingsOrFinancialData FAILED
+    java.lang.IllegalStateException at RoomConnectionManager.kt:212
+        Caused by: java.lang.IllegalStateException at RoomConnectionManager.kt:212
+
+OfflineToolsMigrationTest > shippedV7PreservesLedgerGiftSecretsAndPersistsIndependentSortPreference FAILED
+    java.lang.IllegalStateException at RoomConnectionManager.kt:212
+        Caused by: java.lang.IllegalStateException at RoomConnectionManager.kt:212
+
+PlansMigrationTest > shippedV10KeepsExistingFinanceAndVaultAndAddsEmptyPlans FAILED
+    java.lang.IllegalStateException at RoomConnectionManager.kt:212
+        Caused by: java.lang.IllegalStateException at RoomConnectionManager.kt:212
+
+PreferencesMigrationTest > migratePublishedV1PreservesLedgerAndDefaultsNewPreferences FAILED
+    java.lang.IllegalStateException at RoomConnectionManager.kt:212
+        Caused by: java.lang.IllegalStateException at RoomConnectionManager.kt:212
+
+RecurringMigrationTest > shippedV9PreservesLedgerGiftsCardSecretsAndAddsEmptySchedules FAILED
+    java.lang.IllegalStateException at RoomConnectionManager.kt:212
+        Caused by: java.lang.IllegalStateException at RoomConnectionManager.kt:212
+
+RegionalExportsTest > migration14PreservesExistingDataAndCreatesEmptyRateTable FAILED
+    java.lang.IllegalStateException at RoomConnectionManager.kt:212
+        Caused by: java.lang.IllegalStateException at RoomConnectionManager.kt:212
+
+SmartMigrationTest > shippedV4KeepsEncryptedGiftLedgerAndNavigationAfterUpgradeAndRestart FAILED
+    java.lang.IllegalStateException at RoomConnectionManager.kt:212
+        Caused by: java.lang.IllegalStateException at RoomConnectionManager.kt:212
+
+343 tests completed, 15 failed
+
+> Task :app:testPersonalDebugUnitTest FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:testPersonalDebugUnitTest'.
+> There were failing tests. See the report at: file:///workspace/apk-development/app/build/reports/tests/testPersonalDebugUnitTest/index.html
+
+* Try:
+> Run with --scan to get full insights.
+
+BUILD FAILED in 13m 6s
+47 actionable tasks: 12 executed, 35 up-to-date

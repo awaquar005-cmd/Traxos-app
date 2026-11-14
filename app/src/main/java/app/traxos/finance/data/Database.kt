@@ -195,12 +195,12 @@ interface LedgerDao {
     @Query("SELECT COUNT(*) FROM outbox_operations") suspend fun operationCount(): Long
 
     @Query(
-        "SELECT t.*, a.name AS accountName, CASE WHEN t.type IN ('DEBT_IN','DEBT_OUT') OR EXISTS(SELECT 1 FROM debt_funding df WHERE df.recordId=t.id AND df.active=1) THEN 'Loan principal' ELSE c.name END AS categoryName, a.currency, m.name AS merchantName, c.icon AS categoryIcon, c.color AS categoryColor, (SELECT MIN(o.createdAt) FROM outbox_operations o WHERE o.entityId=t.id AND o.entityType='TRANSACTION') AS loggedAt FROM transactions t JOIN accounts a ON a.id = t.accountId JOIN categories c ON c.id = t.categoryId LEFT JOIN entry_labels m ON m.id = t.merchantId WHERE t.deleted = 0 AND t.profileId = 'local' ORDER BY t.day DESC, t.id DESC LIMIT 6"
+        "SELECT t.*, a.name AS accountName, CASE WHEN t.type IN ('DEBT_IN','DEBT_OUT') OR EXISTS(SELECT 1 FROM debt_funding df WHERE df.recordId=t.id AND df.active=1) THEN 'Loan principal' WHEN EXISTS(SELECT 1 FROM transaction_splits sp WHERE sp.recordId=t.id) THEN 'Split categories' ELSE c.name END AS categoryName, a.currency, m.name AS merchantName, c.icon AS categoryIcon, c.color AS categoryColor, (SELECT MIN(o.createdAt) FROM outbox_operations o WHERE o.entityId=t.id AND o.entityType='TRANSACTION') AS loggedAt FROM transactions t JOIN accounts a ON a.id = t.accountId JOIN categories c ON c.id = t.categoryId LEFT JOIN entry_labels m ON m.id = t.merchantId WHERE t.deleted = 0 AND t.profileId = 'local' ORDER BY t.day DESC, t.id DESC LIMIT 6"
     )
     fun recent(): Flow<List<RecordRow>>
 
     @Query(
-        "SELECT t.*, a.name AS accountName, CASE WHEN t.type IN ('DEBT_IN','DEBT_OUT') OR EXISTS(SELECT 1 FROM debt_funding df WHERE df.recordId=t.id AND df.active=1) THEN 'Loan principal' ELSE c.name END AS categoryName, a.currency, m.name AS merchantName, c.icon AS categoryIcon, c.color AS categoryColor, (SELECT MIN(o.createdAt) FROM outbox_operations o WHERE o.entityId=t.id AND o.entityType='TRANSACTION') AS loggedAt FROM transactions t JOIN accounts a ON a.id = t.accountId JOIN categories c ON c.id = t.categoryId LEFT JOIN entry_labels m ON m.id = t.merchantId WHERE t.deleted = :deleted AND (NOT :deleted OR t.linkId IS NULL OR t.type IN ('TRANSFER_OUT','PAYMENT_OUT')) AND t.profileId = 'local' AND t.day >= :start AND t.day <= :end AND (:account='' OR t.accountId=:account) AND (:category='' OR t.categoryId=:category) AND (:currency='' OR a.currency=:currency) AND (:filter='ALL' OR (:filter='EXPENSES' AND t.type IN ('EXPENSE','REFUND') AND NOT EXISTS(SELECT 1 FROM debt_funding df WHERE df.recordId=t.id AND df.active=1)) OR (:filter='INCOME' AND t.type='INCOME' AND NOT EXISTS(SELECT 1 FROM debt_funding df WHERE df.recordId=t.id AND df.active=1)) OR (:filter='TRANSFERS' AND t.type IN ('TRANSFER_IN','TRANSFER_OUT')) OR (:filter='CARD_PAYMENTS' AND t.type IN ('PAYMENT_IN','PAYMENT_OUT'))) AND (t.note LIKE '%' || :search || '%' ESCAPE '\\' OR c.name LIKE '%' || :search || '%' ESCAPE '\\' OR a.name LIKE '%' || :search || '%' ESCAPE '\\' OR m.name LIKE '%' || :search || '%' ESCAPE '\\') ORDER BY CASE WHEN :sort='OLDEST' THEN t.day END ASC, CASE WHEN :sort='OLDEST' THEN t.id END ASC, t.day DESC, t.id DESC"
+        "SELECT t.*, a.name AS accountName, CASE WHEN t.type IN ('DEBT_IN','DEBT_OUT') OR EXISTS(SELECT 1 FROM debt_funding df WHERE df.recordId=t.id AND df.active=1) THEN 'Loan principal' WHEN EXISTS(SELECT 1 FROM transaction_splits sp WHERE sp.recordId=t.id) THEN 'Split categories' ELSE c.name END AS categoryName, a.currency, m.name AS merchantName, c.icon AS categoryIcon, c.color AS categoryColor, (SELECT MIN(o.createdAt) FROM outbox_operations o WHERE o.entityId=t.id AND o.entityType='TRANSACTION') AS loggedAt FROM transactions t JOIN accounts a ON a.id = t.accountId JOIN categories c ON c.id = t.categoryId LEFT JOIN entry_labels m ON m.id = t.merchantId WHERE t.deleted = :deleted AND (NOT :deleted OR t.linkId IS NULL OR t.type IN ('TRANSFER_OUT','PAYMENT_OUT')) AND t.profileId = 'local' AND t.day >= :start AND t.day <= :end AND (:account='' OR t.accountId=:account) AND (:category='' OR (NOT EXISTS(SELECT 1 FROM transaction_splits sp WHERE sp.recordId=t.id) AND NOT EXISTS(SELECT 1 FROM group_ledger_links gl JOIN group_events ge ON ge.id=gl.eventId WHERE gl.recordId=t.id AND ge.kind='EXPENSE') AND t.categoryId=:category) OR EXISTS(SELECT 1 FROM transaction_splits sp WHERE sp.recordId=t.id AND sp.categoryId=:category) OR EXISTS(SELECT 1 FROM group_ledger_links gl JOIN group_events ge ON ge.id=gl.eventId WHERE gl.recordId=t.id AND ge.kind='EXPENSE' AND ge.categoryId=:category)) AND (:currency='' OR a.currency=:currency) AND (:filter='ALL' OR (:filter='EXPENSES' AND t.type IN ('EXPENSE','REFUND') AND NOT EXISTS(SELECT 1 FROM debt_funding df WHERE df.recordId=t.id AND df.active=1)) OR (:filter='INCOME' AND t.type='INCOME' AND NOT EXISTS(SELECT 1 FROM debt_funding df WHERE df.recordId=t.id AND df.active=1)) OR (:filter='TRANSFERS' AND t.type IN ('TRANSFER_IN','TRANSFER_OUT')) OR (:filter='CARD_PAYMENTS' AND t.type IN ('PAYMENT_IN','PAYMENT_OUT'))) AND (:origin='ALL' OR (:origin='LEDGER' AND NOT EXISTS(SELECT 1 FROM group_ledger_links l WHERE l.recordId=t.id)) OR (:origin='GROUP' AND EXISTS(SELECT 1 FROM group_ledger_links l JOIN group_events e ON e.id=l.eventId WHERE l.recordId=t.id AND e.kind='EXPENSE' AND NOT EXISTS(SELECT 1 FROM group_events u WHERE u.reversalOf=e.id)))) AND (:merchant='' OR t.merchantId=:merchant) AND t.amountMinor>=:minimum AND t.amountMinor<=:maximum AND (:receipt='ALL' OR (:receipt='HAS' AND EXISTS(SELECT 1 FROM receipt_attachments r WHERE r.recordId=t.id AND r.deleted=0)) OR (:receipt='NONE' AND NOT EXISTS(SELECT 1 FROM receipt_attachments r WHERE r.recordId=t.id AND r.deleted=0))) AND (:split='ALL' OR (:split='SPLIT' AND EXISTS(SELECT 1 FROM transaction_splits sp WHERE sp.recordId=t.id)) OR (:split='SINGLE' AND NOT EXISTS(SELECT 1 FROM transaction_splits sp WHERE sp.recordId=t.id))) AND (t.note LIKE '%' || :search || '%' ESCAPE '\\' OR c.name LIKE '%' || :search || '%' ESCAPE '\\' OR a.name LIKE '%' || :search || '%' ESCAPE '\\' OR m.name LIKE '%' || :search || '%' ESCAPE '\\') ORDER BY CASE WHEN :sort='OLDEST' THEN t.day END ASC, CASE WHEN :sort='OLDEST' THEN t.id END ASC, t.day DESC, t.id DESC"
     )
     fun page(
         search: String,
@@ -212,6 +212,12 @@ interface LedgerDao {
         currency: String = "",
         sort: String = "NEWEST",
         deleted: Boolean = false,
+        merchant: String = "",
+        minimum: Long = 0,
+        maximum: Long = 99_999_999_999L,
+        receipt: String = "ALL",
+        split: String = "ALL",
+        origin: String = "ALL",
     ): PagingSource<Int, RecordRow>
 
     @Query(
@@ -220,7 +226,7 @@ interface LedgerDao {
     fun summary(start: Long, end: Long): Flow<List<Summary>>
 
     @Query(
-        "SELECT currency,categoryId,categoryName,categoryIcon,categoryColor,SUM(expenseMinor) AS expenseMinor,SUM(refundMinor) AS refundMinor,SUM(incomeMinor) AS incomeMinor,SUM(entries) AS entries FROM (SELECT a.currency,c.id AS categoryId,c.name AS categoryName,c.icon AS categoryIcon,c.color AS categoryColor,SUM(CASE WHEN t.type='EXPENSE' THEN CASE WHEN EXISTS(SELECT 1 FROM debt_funding df WHERE df.recordId=t.id AND df.active=1) THEN 0 ELSE COALESCE((SELECT reportMinor FROM group_ledger_links WHERE recordId=t.id),t.amountMinor) END ELSE 0 END) AS expenseMinor,SUM(CASE WHEN t.type='REFUND' THEN t.amountMinor ELSE 0 END) AS refundMinor,SUM(CASE WHEN t.type='INCOME' THEN CASE WHEN EXISTS(SELECT 1 FROM debt_funding df WHERE df.recordId=t.id AND df.active=1) THEN 0 ELSE COALESCE((SELECT reportMinor FROM group_ledger_links WHERE recordId=t.id),t.amountMinor) END ELSE 0 END) AS incomeMinor,COUNT(*) AS entries FROM transactions t JOIN accounts a ON a.id=t.accountId JOIN categories c ON c.id=t.categoryId WHERE t.profileId='local' AND t.deleted=0 AND t.type IN ('EXPENSE','REFUND','INCOME') AND t.day>=:start AND t.day<:end GROUP BY a.currency,c.id UNION ALL SELECT g.currency,c.id AS categoryId,c.name AS categoryName,c.icon AS categoryIcon,c.color AS categoryColor,SUM(s.amountMinor) AS expenseMinor,0 AS refundMinor,0 AS incomeMinor,COUNT(*) AS entries FROM group_shares s JOIN group_events e ON e.id=s.eventId JOIN shared_groups g ON g.id=e.groupId JOIN categories c ON c.id=e.categoryId WHERE e.kind='EXPENSE' AND s.memberId=g.selfId AND e.day>=:start AND e.day<:end AND NOT EXISTS(SELECT 1 FROM group_events r WHERE r.reversalOf=e.id) GROUP BY g.currency,c.id) GROUP BY currency,categoryId ORDER BY currency,categoryName COLLATE NOCASE,categoryId"
+        "SELECT currency,categoryId,categoryName,categoryIcon,categoryColor,SUM(expenseMinor) AS expenseMinor,SUM(refundMinor) AS refundMinor,SUM(incomeMinor) AS incomeMinor,COUNT(*) AS entries FROM personal_report_lines WHERE day>=:start AND day<:end GROUP BY currency,categoryId ORDER BY currency,categoryName COLLATE NOCASE,categoryId"
     )
     fun categoryReport(start: Long, end: Long): Flow<List<CategoryReport>>
 
@@ -322,16 +328,27 @@ interface LedgerDao {
             GoalFunding::class,
             PlanningSettings::class,
             app.traxos.finance.regional.ManualRate::class,
+            app.traxos.finance.entry.TransactionSplit::class,
+            app.traxos.finance.entry.ReceiptAttachment::class,
+            app.traxos.finance.entry.ReceiptDraft::class,
+            app.traxos.finance.entry.EntryPreset::class,
+            app.traxos.finance.entry.MerchantRule::class,
+            app.traxos.finance.entry.FastEntrySettings::class,
             PaymentPlan::class,
             PlanPayment::class,
             IgnoredPlan::class,
             FinanceReminderSettings::class,
             FinanceReminderReceipt::class,
         ],
-    version = 15,
+    views = [app.traxos.finance.entry.PersonalReportLine::class],
+    version = 16,
     exportSchema = true,
 )
 abstract class TraxosDatabase : RoomDatabase() {
+    abstract fun extras(): app.traxos.finance.entry.ExtrasDao
+
+    abstract fun trends(): app.traxos.finance.entry.TrendsDao
+
     abstract fun regional(): app.traxos.finance.regional.RegionalDao
 
     abstract fun planning(): PlanningDao
@@ -657,6 +674,61 @@ abstract class TraxosDatabase : RoomDatabase() {
             }
 
         // Only one active occurrence per plan/due date; reversed rows retain immutable identity.
+        val MIGRATION_15_16 =
+            object : Migration(15, 16) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS transaction_splits (recordId TEXT NOT NULL,categoryId TEXT NOT NULL,amountMinor INTEGER NOT NULL,PRIMARY KEY(recordId,categoryId),FOREIGN KEY(recordId) REFERENCES transactions(id) ON UPDATE NO ACTION ON DELETE RESTRICT,FOREIGN KEY(categoryId) REFERENCES categories(id) ON UPDATE NO ACTION ON DELETE RESTRICT)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_transaction_splits_categoryId ON transaction_splits(categoryId)"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS receipt_attachments (id TEXT NOT NULL,recordId TEXT NOT NULL,name TEXT NOT NULL,mime TEXT NOT NULL,digest TEXT NOT NULL,secret BLOB NOT NULL,createdAt INTEGER NOT NULL,deleted INTEGER NOT NULL,revision INTEGER NOT NULL,PRIMARY KEY(id),FOREIGN KEY(recordId) REFERENCES transactions(id) ON UPDATE NO ACTION ON DELETE RESTRICT)"
+                    )
+                    db.execSQL(
+                        "CREATE UNIQUE INDEX IF NOT EXISTS index_receipt_attachments_recordId_digest ON receipt_attachments(recordId,digest)"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS receipt_drafts (id TEXT NOT NULL,ownerId TEXT NOT NULL,name TEXT NOT NULL,mime TEXT NOT NULL,digest TEXT NOT NULL,secret BLOB NOT NULL,createdAt INTEGER NOT NULL,PRIMARY KEY(id))"
+                    )
+                    db.execSQL(
+                        "CREATE UNIQUE INDEX IF NOT EXISTS index_receipt_drafts_ownerId_digest ON receipt_drafts(ownerId,digest)"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS entry_presets (id TEXT NOT NULL,name TEXT NOT NULL,type TEXT NOT NULL,currency TEXT NOT NULL,amountMinor INTEGER NOT NULL,accountId TEXT NOT NULL,categoryId TEXT NOT NULL,merchantId TEXT,note TEXT NOT NULL,favorite INTEGER NOT NULL,position INTEGER NOT NULL,archived INTEGER NOT NULL,revision INTEGER NOT NULL,PRIMARY KEY(id),FOREIGN KEY(accountId) REFERENCES accounts(id) ON UPDATE NO ACTION ON DELETE RESTRICT,FOREIGN KEY(categoryId) REFERENCES categories(id) ON UPDATE NO ACTION ON DELETE RESTRICT,FOREIGN KEY(merchantId) REFERENCES entry_labels(id) ON UPDATE NO ACTION ON DELETE RESTRICT)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_entry_presets_accountId ON entry_presets(accountId)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_entry_presets_categoryId ON entry_presets(categoryId)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_entry_presets_merchantId ON entry_presets(merchantId)"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS merchant_rules (id TEXT NOT NULL,pattern TEXT NOT NULL,mode TEXT NOT NULL,type TEXT NOT NULL,categoryId TEXT NOT NULL,accountId TEXT,scopeKey TEXT NOT NULL,priority INTEGER NOT NULL,enabled INTEGER NOT NULL,revision INTEGER NOT NULL,PRIMARY KEY(id),FOREIGN KEY(categoryId) REFERENCES categories(id) ON UPDATE NO ACTION ON DELETE RESTRICT,FOREIGN KEY(accountId) REFERENCES accounts(id) ON UPDATE NO ACTION ON DELETE RESTRICT)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_merchant_rules_categoryId ON merchant_rules(categoryId)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_merchant_rules_accountId ON merchant_rules(accountId)"
+                    )
+                    db.execSQL(
+                        "CREATE UNIQUE INDEX IF NOT EXISTS index_merchant_rules_pattern_mode_type_scopeKey ON merchant_rules(pattern,mode,type,scopeKey)"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS fast_entry_settings (id INTEGER NOT NULL,rules INTEGER NOT NULL,widget1 TEXT NOT NULL,widget2 TEXT NOT NULL,widget3 TEXT NOT NULL,tile INTEGER NOT NULL,shortcuts INTEGER NOT NULL,publicLabels INTEGER NOT NULL,PRIMARY KEY(id))"
+                    )
+                    db.execSQL(
+                        "CREATE VIEW `personal_report_lines` AS " +
+                            app.traxos.finance.entry.REPORT_LINES_SQL
+                    )
+                }
+            }
+
         val MIGRATION_14_15 =
             object : Migration(14, 15) {
                 override fun migrate(db: SupportSQLiteDatabase) {
@@ -749,6 +821,7 @@ abstract class TraxosDatabase : RoomDatabase() {
                     MIGRATION_12_13,
                     MIGRATION_13_14,
                     MIGRATION_14_15,
+                    MIGRATION_15_16,
                 )
                 .addCallback(
                     object : Callback() {

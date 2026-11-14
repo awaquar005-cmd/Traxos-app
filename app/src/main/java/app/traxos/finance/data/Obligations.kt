@@ -840,6 +840,7 @@ class ObligationsRepository(val db: TraxosDatabase) {
                                 r.linkId == null &&
                                 db.groups().link(r.id) == null &&
                                 db.planning().debtRecord(r.id) == null &&
+                                db.extras().splits(r.id).isEmpty() &&
                                 dao.paymentForRecord(r.id) == null
                         ) {
                             "Choose an unused matching expense, amount, account and date"

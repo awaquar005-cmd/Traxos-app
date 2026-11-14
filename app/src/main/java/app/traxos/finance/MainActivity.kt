@@ -49,6 +49,7 @@ class MainActivity : FragmentActivity() {
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        app.traxos.finance.entry.EntryInbox.receive(intent)
         receiveGiftIntent(intent)
     }
 
@@ -86,6 +87,7 @@ class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(R.style.Theme_Traxos)
         super.onCreate(savedInstanceState)
+        app.traxos.finance.entry.EntryInbox.receive(intent)
         receiveGiftIntent(intent)
         enableEdgeToEdge()
         if (BuildConfig.DEBUG) window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)

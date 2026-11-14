@@ -1,0 +1,11 @@
+# Transaction/report and faster-entry validation
+
+Personal APK built; **349 tests passed across the full run and final targeted rerun (0 remaining failures/errors/skips)**. Lint: **0 errors, 30 warnings, 5 hints**. Signing and16KiB ZIP/64-bit ELF alignment verified.
+
+[Exact suites/signature](host-results.json) · [Final build/tests/lint](build-tests-lint.log) · [Initial full regression](full-regression.log) · [Preservation audit](../../TRANSACTION_ENTRY_EXTRAS_DELIVERY_MANIFEST.json).
+
+All328 prior tests retained. Tests exercise exact split allocation/one movement/idempotency/edit/delete/restore/rollback, category filters and parent-amount bounds, currency separation, group-share/reimbursement reporting, rule scope/Unicode/priority, preset revisions/archive/stale targets and non-posting form application, native image limits and receipt encryption/duplicate/draft adoption/delete/restore/cross-key backup/default vs explicit JSON bodies,15→16 and all previous shipped migrations, real split-sheet/cent distribution and report drill/filter/theme UI, Android surface worker settings and intent restrictions.
+
+The initial343-test full run exposed the same strict view SQL mismatch in15 migration cases. All failed suites were rerun after matching the generated Room view definition exactly; the112-test corrected run passed, followed by final receipt interaction/tile/widget lint fixes and focused regression; final source also excludes zero group reimbursements from reporting rows and refreshes pinned labels/tile settings. Final targeted suite results replace the older results; nine focused tests passed again after the tile compatibility, widget resource and receipt-save interaction fixes. Scoped lint suppression covers only the guarded Android26–33 tile fallback, which has no PendingIntent overload; no lint baseline was added. No failed tests were removed or disabled.
+
+No physical phone or emulator was used. OEM widget sizing/pinning, Quick Settings placement/keyguard, launcher alias/pinned-label refresh, locked launches, Files providers/real media/viewer permissions, PDF serialization, upgrade over the installed release and TalkBack/IME acceptance remain physical-device gates. PDF receipt validation is size/header only. Actual shared group transport remains deferred. No Google/backend claims are made.

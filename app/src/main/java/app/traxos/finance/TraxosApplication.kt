@@ -12,6 +12,8 @@ open class TraxosApplication : Application(), androidx.work.Configuration.Provid
                 .setMinimumLoggingLevel(android.util.Log.ERROR)
                 .build()
 
+    val transactionExtras by lazy { app.traxos.finance.entry.TransactionExtrasRepository(database) }
+    val receiptStore by lazy { app.traxos.finance.entry.ReceiptStore(this, database) }
     val deviceOptions by lazy { app.traxos.finance.regional.DeviceOptions(this) }
     val regional by lazy { app.traxos.finance.regional.RegionalRepository(database) }
     val profilePhoto by lazy { app.traxos.finance.regional.ProfilePhoto(this) }
@@ -79,5 +81,6 @@ open class TraxosApplication : Application(), androidx.work.Configuration.Provid
         giftScheduler.start()
         recurringScheduler.start()
         financeScheduler.start()
+        app.traxos.finance.entry.EntrySurfaceWork.kick(this)
     }
 }
