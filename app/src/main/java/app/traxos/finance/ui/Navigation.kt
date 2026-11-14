@@ -54,6 +54,7 @@ internal val screenRegistry =
         ScreenEntry("smart", "Smart Add", TraxosIcons.spark),
         ScreenEntry("reports", "Reports", TraxosIcons.report),
         ScreenEntry("plans", "Plans", TraxosIcons.report),
+        ScreenEntry("debts", "Debts & credit", TraxosIcons.people),
         ScreenEntry("voice", "Voice", TraxosIcons.mic),
     )
 

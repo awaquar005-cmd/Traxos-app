@@ -1,5 +1,7 @@
 # TRAXOS coding-agent handoff
 
+Current Personal release0.14.0 adds standalone private IOUs and existing card-liability overview (docs/DEBTS_CREDIT.md). Room12 is additive; keep schema11 backup import and exclude the card vault.
+
 Read docs/V8_FEATURE_PRESERVATION.md, docs/V8_STATUS.md, docs/PROGRESS.md and the architecture before changing this app. Original HTMLs in docs/references/v8 are visual/interaction references, not a replacement specification, runtime or complete feature inventory. The V3 specification remains cumulative.
 
 - Never remove, disable, omit or replace an existing implemented feature because a screenshot/HTML/short list does not mention it. Inventory actual routes, settings, workers, entities and repository APIs; update the before/after manifest. Keep current defaults, inline creation, extra fields, undo/recovery, navigation customization and financial semantics.

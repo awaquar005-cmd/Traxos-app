@@ -1,5 +1,21 @@
 # Current delivery
 
+- `downloads/TRAXOS-0.14.0-debts-personal.apk` — Personal code18, update-compatible signature.
+- `docs/DEBTS_DELIVERY_MANIFEST.json` — retained routes/old entities/protected sources.
+- `docs/validation/debts-credit/` — executed tests/lint/build/signing and native host renders.
+
+# 0.14.0 changes
+
+- `data/Debts.kt`, `ui/DebtsScreen.kt`: Room IOUs, repayments, adjustments/history/Undo, archive/restore and currency-separated totals/card liabilities.
+- `data/Database.kt`, `app/schemas/.../12.json`: explicit11→12 additive migration.
+- `backup/PortableBackup.kt`: schema12 archive inclusion/validation and retained schema11 compatibility.
+- `ui/CloudScreen.kt`, `UiHierarchy.kt`, `Overlays.kt`: padded instructions/controls, actionable Google setup and transient More menu.
+- `ui/App.kt`, `Navigation.kt`, `domain/NavigationLayout.kt`: functional More entry and optional configurable destination.
+- `DebtsTest.kt`, `CloudScreenUiTest.kt`: accounting/idempotence/migration/recovery and native pointer/form regression checks.
+- `app/build.gradle.kts`: code18/0.14.0-debts-personal.
+
+# Current delivery
+
 - `downloads/TRAXOS-0.13.0-cloud-personal.apk` — Personal version17; hash in SHA256SUMS.txt.
 - `docs/CLOUD_DELIVERY_MANIFEST.json` — source/route/schema preservation and current service configuration boundaries.
 - `docs/validation/oauth-drive/` — successful build log, suite/lint/signature report and synthetic native account/folder PNGs.

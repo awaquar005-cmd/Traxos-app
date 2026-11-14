@@ -1,3 +1,7 @@
+# 0.14.0 preservation addendum
+
+Real debts route is added, replacing only the More private-debt preview link. All prior routes, preview catalog, financial/gift/QR/images/vault/security/Plans/recurring/voice/default/preferences/Google/Drive/local recovery remain. New schema12 tables and backward-compatible archive reader preserve schema11 data; no vault export or dashboard hero change. See DEBTS_CREDIT.md.
+
 # 0.13.0 account and recovery addendum
 
 Native Drive consent, fixed-owner linking, encrypted resumable snapshots with remote read-back/restore, local-copy support and probed SAF selection are implemented. Email/password/Google account-login/provider linking use real Firebase endpoints with encrypted session storage, but owner configuration is still required; no Firebase API key/Web client was supplied and no real account/backend/phone result is claimed tested. Drive-only linking is independent of that setup. See OAUTH_DRIVE.md and the final validation report. All previous feature routes and schema11 remain; the older snapshots below are historical when superseded.

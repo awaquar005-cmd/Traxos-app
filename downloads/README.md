@@ -1,5 +1,15 @@
 # Current Personal APK
 
+**[Download TRAXOS 0.14.0 Personal APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.14.0-debts-personal.apk)**
+
+Install as **Update**, never uninstall/clear data. Code18, same signature, additive Room11→12 upgrade.
+
+Personal assemble, **242 tests passed (0 failures/errors/skips)** and lint passed: **0 errors, 23 warnings, 1 hint**. Signing matches0.13.0; ZIP/64-bit ELF16KiB alignment passed. [Evidence](../docs/validation/debts-credit/README.md).
+
+More → Debts & credit is functional local IOU tracking; Google configuration and phone acceptance boundaries remain explicit. Historical downloads below are not recommended downgrades.
+
+# Current Personal APK
+
 **[Download TRAXOS 0.13.0 Personal APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.13.0-cloud-personal.apk)**
 
 Install as **Update**, never uninstall/clear data. Version17, same signing identity, Room11 unchanged. Only Personal built. **232 tests passed; lint0 errors,23 warnings,1 hint(s).** [Evidence](../docs/validation/oauth-drive/README.md).

@@ -302,11 +302,15 @@ interface LedgerDao {
             Budget::class,
             SavingsGoal::class,
             GoalMovement::class,
+            DebtThread::class,
+            DebtMovement::class,
         ],
-    version = 11,
+    version = 12,
     exportSchema = true,
 )
 abstract class TraxosDatabase : RoomDatabase() {
+    abstract fun debts(): DebtsDao
+
     abstract fun plans(): PlansDao
 
     abstract fun recurring(): RecurringDao
@@ -507,6 +511,24 @@ abstract class TraxosDatabase : RoomDatabase() {
                 }
             }
 
+        val MIGRATION_11_12 =
+            object : Migration(11, 12) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS debt_threads (id TEXT NOT NULL, person TEXT NOT NULL, direction TEXT NOT NULL, currency TEXT NOT NULL, originalMinor INTEGER NOT NULL, outstandingMinor INTEGER NOT NULL, day INTEGER NOT NULL, dueDay INTEGER, note TEXT NOT NULL, archived INTEGER NOT NULL, revision INTEGER NOT NULL, operationId TEXT NOT NULL, PRIMARY KEY(id))"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS debt_movements (id TEXT NOT NULL, debtId TEXT NOT NULL, deltaMinor INTEGER NOT NULL, kind TEXT NOT NULL, day INTEGER NOT NULL, note TEXT NOT NULL, createdAt INTEGER NOT NULL, undoOf TEXT, PRIMARY KEY(id), FOREIGN KEY(debtId) REFERENCES debt_threads(id) ON UPDATE NO ACTION ON DELETE RESTRICT)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_debt_movements_debtId_createdAt ON debt_movements(debtId,createdAt)"
+                    )
+                    db.execSQL(
+                        "CREATE UNIQUE INDEX IF NOT EXISTS index_debt_movements_undoOf ON debt_movements(undoOf)"
+                    )
+                }
+            }
+
         fun open(context: Context, name: String = "traxos.db"): TraxosDatabase =
             Room.databaseBuilder(context, TraxosDatabase::class.java, name)
                 .addMigrations(
@@ -520,6 +542,7 @@ abstract class TraxosDatabase : RoomDatabase() {
                     MIGRATION_8_9,
                     MIGRATION_9_10,
                     MIGRATION_10_11,
+                    MIGRATION_11_12,
                 )
                 .addCallback(
                     object : Callback() {

@@ -108,6 +108,8 @@ internal val backupTables =
         "budgets",
         "savings_goals",
         "goal_movements",
+        "debt_threads",
+        "debt_movements",
         "gift_cards",
         "gift_redemptions",
     )
@@ -203,7 +205,7 @@ class PortableBackup(
                 val sql = db.openHelper.writableDatabase
                 BackupEnvelope.write(output, password) { data ->
                     data.writeInt(1)
-                    data.writeInt(11)
+                    data.writeInt(12)
                     data.writeInt(backupTables.size)
                     backupTables.forEach { table ->
                         data.text(table)
@@ -255,11 +257,19 @@ class PortableBackup(
                     val counts = linkedMapOf<String, Long>()
                     stage.withTransaction {
                         BackupEnvelope.read(input, password) { data ->
-                            require(data.readInt() == 1 && data.readInt() == 11) {
+                            require(data.readInt() == 1)
+                            val sourceSchema = data.readInt()
+                            require(sourceSchema in 11..12) {
                                 "This backup needs a compatible Traxos version"
                             }
-                            require(data.readInt() == backupTables.size)
-                            backupTables.forEach { expected ->
+                            val sourceTables =
+                                if (sourceSchema == 11)
+                                    backupTables.filterNot {
+                                        it in listOf("debt_threads", "debt_movements")
+                                    }
+                                else backupTables
+                            require(data.readInt() == sourceTables.size)
+                            sourceTables.forEach { expected ->
                                 require(data.text() == expected) { "Invalid backup table" }
                                 val columns =
                                     sql.query("SELECT * FROM `$expected` LIMIT 0").use {
@@ -480,6 +490,23 @@ class PortableBackup(
         }
         none("SELECT total FROM (SELECT COUNT(*) AS total FROM transactions) WHERE total>1000000")
         none("SELECT total FROM (SELECT COUNT(*) AS total FROM accounts) WHERE total>1000")
+        none("SELECT total FROM (SELECT COUNT(*) AS total FROM debt_threads) WHERE total>10000")
+        none(
+            "SELECT id FROM debt_threads WHERE day NOT BETWEEN 3652 AND 84370 OR (dueDay IS NOT NULL AND dueDay NOT BETWEEN 3652 AND 84370)"
+        )
+        none("SELECT id FROM debt_movements WHERE day NOT BETWEEN 3652 AND 84370")
+        none(
+            "SELECT id FROM debt_threads WHERE direction NOT IN ('LENT','BORROWED') OR currency NOT IN ('INR','USD','EUR','JPY','KWD') OR originalMinor NOT BETWEEN 1 AND ${Money.MAX_MINOR} OR outstandingMinor NOT BETWEEN 0 AND ${Money.MAX_MINOR} OR revision<1 OR length(trim(person)) NOT BETWEEN 1 AND 80 OR length(note)>500 OR (dueDay IS NOT NULL AND dueDay<day) OR (archived=1 AND outstandingMinor!=0)"
+        )
+        none(
+            "SELECT d.id FROM debt_threads d LEFT JOIN debt_movements m ON m.debtId=d.id GROUP BY d.id HAVING d.originalMinor+COALESCE(SUM(m.deltaMinor),0)!=d.outstandingMinor"
+        )
+        none(
+            "SELECT m.id FROM debt_movements m JOIN debt_threads d ON d.id=m.debtId WHERE m.day<d.day OR length(m.note)>500 OR m.deltaMinor=0 OR m.deltaMinor NOT BETWEEN -${Money.MAX_MINOR} AND ${Money.MAX_MINOR} OR m.kind NOT IN ('REPAYMENT','INCREASE','DECREASE','UNDO') OR (m.kind='INCREASE' AND m.deltaMinor<0) OR (m.kind IN ('REPAYMENT','DECREASE') AND m.deltaMinor>0) OR (m.kind='UNDO' AND m.undoOf IS NULL) OR (m.kind!='UNDO' AND m.undoOf IS NOT NULL)"
+        )
+        none(
+            "SELECT u.id FROM debt_movements u LEFT JOIN debt_movements p ON p.id=u.undoOf WHERE u.undoOf IS NOT NULL AND (p.id IS NULL OR p.debtId!=u.debtId OR p.undoOf IS NOT NULL OR p.deltaMinor!=-u.deltaMinor)"
+        )
         none("SELECT id FROM accounts WHERE openingDate NOT BETWEEN -365243219162 AND 365241780471")
         none(
             "SELECT id FROM transactions WHERE day NOT BETWEEN -365243219162 AND 365241780471 OR zoneId='' "

@@ -1,3 +1,7 @@
+# 0.14.0 scoped milestone
+
+P1 private IOU tracking and existing credit-liability overview: implement opening balance/person/direction, edits, partial/full repayment, adjustments, history/Undo, settle/archive/restore, per-currency totals, migration and encrypted-backup round trips. Acceptance: no synthetic income/expense, duplicate-safe operations, preserved records/routes, actionable configuration feedback and readable instruction padding. Group settlement, account-linked loan postings, interest and debt reminders remain planned, not implemented. See DEBTS_CREDIT.md and PROGRESS.md for executed validation.
+
 ## 0.13.0 account/Drive durability
 
 P1: independent Android Drive consent/one-owner link, app folder selection, encrypted resumable snapshot/verified download/restore and verified SAF selection; real Firebase email/password and same-UID Google provider link, with runtime public configuration. Preserve local-only use and schema. Acceptance: fixed-owner collisions, unverified/revoked/recent-auth/password fallback, encrypted credential persistence/AtomicFile interruption, denied/read-only SAF, upload loss/retry/host validation/tampering/restore and full baseline suite/build/lint. Owner Firebase configuration and real Google/phone acceptance remain explicit prerequisites, not mocked completed service tests. No shared ledger sync or new finance modules.

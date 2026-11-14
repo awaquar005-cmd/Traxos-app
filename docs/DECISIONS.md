@@ -1,3 +1,10 @@
+# 0.14.0 decisions
+
+- IOUs start as explicit standalone tracking of existing debts; no implicit expense/income or duplicate bank writer. Existing card liabilities stay ledger-derived. Bank-linked lending and group integration require a later accounting contract.
+- Account setup remains honest: missing Firebase opens an Import sheet on Google tap; it cannot bypass Google/Firebase configuration.
+- Spacing is opt-in for instruction/form groups, preserving dense Settings rows and48dp control targets.
+- Room12 is additive; portable archives read11/12 and validate debt histories before restore.
+
 ## 0.13.0 — real auth boundary and independent Drive
 
 Use Credential Manager for Google authentication, Google AuthorizationClient for narrow drive.file consent, Firebase's HTTPS Authentication APIs for requested email/password/provider linking, and existing local storage for finance. No Firebase SDK/Analytics/Firestore/Supabase module is introduced. Owner-supplied Firebase configuration is required; do not invent keys or simulate sign-in. Drive can authorize/bind its actual owner independently of Firebase, using the existing Android OAuth registration, so the account-setup prerequisite does not disable local-user Drive backups. A Drive permission ID is not a Firebase UID/Google ID-token subject. Preserve one permanent local owner binding across sign-out; prevent provider changes/automatic cross-account merging. Keep tokens encrypted, passwords ephemeral, vault/cloud auth excluded from portable backups. Native sign-in needs a Web client ID; the owner has not supplied one and the ambiguous “don't” reply was not treated as permission to create credentials.

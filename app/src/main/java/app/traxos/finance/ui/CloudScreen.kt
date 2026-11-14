@@ -68,6 +68,7 @@ internal fun CloudScreen(openLocal: () -> Unit, vm: CloudViewModel = viewModel()
     var confirmOut by remember { mutableStateOf(false) }
     var confirmDiscard by remember { mutableStateOf(false) }
     var selected by remember { mutableStateOf<DriveSnapshot?>(null) }
+    var googleSetup by remember { mutableStateOf(false) }
     var showPassword by rememberSaveable { mutableStateOf(false) }
     val chooser =
         rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
@@ -247,6 +248,25 @@ internal fun CloudScreen(openLocal: () -> Unit, vm: CloudViewModel = viewModel()
             }
         }
     }
+    if (googleSetup)
+        TraxosSheet("Google account setup", { googleSetup = false }) {
+            Text(
+                "Account sign-in needs your Firebase Android google-services.json with Email/Password and Google enabled. Drive authorization works separately using your Android client.",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TraxosTextButton({ googleSetup = false }, Modifier.weight(1f)) { Text("Cancel") }
+                TraxosButton(
+                    {
+                        googleSetup = false
+                        configPicker.launch(arrayOf("application/json", "text/plain", "*/*"))
+                    },
+                    Modifier.weight(1f),
+                ) {
+                    Text("Import")
+                }
+            }
+        }
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -268,7 +288,7 @@ internal fun CloudScreen(openLocal: () -> Unit, vm: CloudViewModel = viewModel()
                 style = MaterialTheme.typography.labelLarge,
             )
         if (!config.authReady || !config.googleReady)
-            SettingsGroup("ACCOUNT SETUP") {
+            SettingsGroup("ACCOUNT SETUP", padded = true) {
                 Text(
                     "Use Firebase Authentication in your existing Google project. Enable Email/Password and Google, register app.traxos.finance, then download its public google-services.json. No Firestore database or private key is needed.",
                     style = MaterialTheme.typography.bodySmall,
@@ -287,7 +307,7 @@ internal fun CloudScreen(openLocal: () -> Unit, vm: CloudViewModel = viewModel()
                 }
             }
         val profile = state.profile
-        SettingsGroup("ACCOUNT") {
+        SettingsGroup("ACCOUNT", padded = true) {
             if (state.cacheError)
                 TraxosNotice(
                     "Saved cloud credentials could not be opened. Local records are intact. Sign in again; no ledger data is reset.",
@@ -432,13 +452,22 @@ internal fun CloudScreen(openLocal: () -> Unit, vm: CloudViewModel = viewModel()
                     }
                 }
             }
-            GoogleAccountButton({ vm.google(context) }, !busy && config.googleReady)
+            GoogleAccountButton(
+                { if (config.googleReady) vm.google(context) else googleSetup = true },
+                !busy,
+            )
+            if (!config.googleReady)
+                Text(
+                    "Google account sign-in needs Firebase setup. Drive authorization below works separately.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             if (profile != null)
                 TraxosTextButton({ confirmOut = true }, Modifier.fillMaxWidth(), !busy) {
                     Text("Sign out")
                 }
         }
-        SettingsGroup("LOCAL FOLDER") {
+        SettingsGroup("LOCAL FOLDER", padded = true) {
             SettingsRow("Backup folder", "Choose and test a writable local folder") {
                 if (!busy) openLocal()
             }
@@ -447,7 +476,7 @@ internal fun CloudScreen(openLocal: () -> Unit, vm: CloudViewModel = viewModel()
                 style = MaterialTheme.typography.bodySmall,
             )
         }
-        SettingsGroup("GOOGLE DRIVE") {
+        SettingsGroup("GOOGLE DRIVE", padded = true) {
             driveBinding?.let {
                 Text(
                     "Linked Google account: ${it.email}",

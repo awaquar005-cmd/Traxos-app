@@ -5,6 +5,7 @@
 8ebda26fcadc227f4edc1b1ffd206d9cf4565bf19e7b8ccd2f683c3c7636f3f7  TRAXOS-0.11.0-v8-personal.apk
 8454f2ac5c5c1e77b1fa097f51fb329102dda15d988acb7c7009dbc0516fc70e  TRAXOS-0.12.0-local-personal.apk
 05e1d2b8affc12312856a298da1b8bdbef8ad224aeca8c9c0474ee27017e6c0c  TRAXOS-0.13.0-cloud-personal.apk
+d0f3f2f431324d3213997d0bfc91573efcced7eed3c13e9f7b1acd879ac5b4dd  TRAXOS-0.14.0-debts-personal.apk
 7a6ce3326b3bb5a616b4b403e4b82cf688a4d0fd0ef51c5ab251334ed8005a69  TRAXOS-0.2.0-ui-pass.apk
 db37d6d06b29fd35b68c958c877d684acca6662980913eec7a1d59aabfbdb1d0  TRAXOS-0.3.0-ui-components.apk
 f97d42c0ceed1c70ffeda4541010f2e7108a7e1ffd44e10fb5860976961c634e  TRAXOS-0.4.0-gift-wallet.apk

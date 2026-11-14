@@ -291,6 +291,7 @@ fun TraxosApp(vm: MainViewModel) {
                                 "gift_settings" -> "Gift settings"
                                 "gift/{id}" -> "Gift card"
                                 "more" -> "More"
+                                "debts" -> "Debts & credit"
                                 "smart" -> "Smart Add"
                                 "plans" -> "Plans"
                                 "voice" -> "Voice entry"
@@ -542,6 +543,14 @@ fun TraxosApp(vm: MainViewModel) {
             }
             composable("deleted") {
                 RoutePage("deleted") { DeletedTransactionsScreen(vm, prefs.balancesHidden) }
+            }
+            composable("debts") {
+                val debts = remember(app.database) { DebtsRepository(app.database) }
+                RoutePage("debts") {
+                    DebtsScreen(debts, prefs.defaultCurrency, prefs.balancesHidden) { id ->
+                        nav.navigate("card_payment/$id") { launchSingleTop = true }
+                    }
+                }
             }
             composable("more") { RoutePage("more") { MoreScreen(mainNav) } }
             composable("smart") {

@@ -492,14 +492,17 @@ internal fun TraxosDateField(
 internal fun TraxosActionMenu(options: List<Pair<String, String>>, onSelect: (String) -> Unit) {
     val keyboard = LocalSoftwareKeyboardController.current
     val parentFocus = LocalFocusManager.current
-    var open by rememberSaveable { mutableStateOf(false) }
+    var open by remember { mutableStateOf(false) }
     val density = LocalDensity.current
     Box {
-        TraxosIconButton({
-            keyboard?.hide()
-            parentFocus.clearFocus()
-            open = true
-        }) {
+        TraxosIconButton(
+            {
+                keyboard?.hide()
+                parentFocus.clearFocus()
+                open = !open
+            },
+            Modifier.testTag("more_actions"),
+        ) {
             Text(
                 "⋮",
                 style = MaterialTheme.typography.headlineSmall,
@@ -535,7 +538,7 @@ internal fun TraxosActionMenu(options: List<Pair<String, String>>, onSelect: (St
                                     open = false
                                     onSelect(id)
                                 },
-                                Modifier.fillMaxWidth(),
+                                Modifier.fillMaxWidth().testTag("menu_$id"),
                             ) {
                                 Row(
                                     Modifier.fillMaxWidth(),
@@ -548,6 +551,9 @@ internal fun TraxosActionMenu(options: List<Pair<String, String>>, onSelect: (St
                                             "settings" -> TraxosIcons.settings
                                             "reports" -> TraxosIcons.report
                                             "deleted" -> TraxosIcons.history
+                                            "more" -> TraxosIcons.tools
+                                            "cloud_setup",
+                                            "backup" -> TraxosIcons.cloud
                                             else -> TraxosIcons.ledger
                                         },
                                         null,

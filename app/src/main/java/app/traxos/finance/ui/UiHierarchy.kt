@@ -18,7 +18,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
 @Composable
-internal fun SettingsGroup(title: String, content: @Composable ColumnScope.() -> Unit) {
+internal fun SettingsGroup(
+    title: String,
+    padded: Boolean = false,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             title,
@@ -32,8 +36,11 @@ internal fun SettingsGroup(title: String, content: @Composable ColumnScope.() ->
             color = MaterialTheme.colorScheme.surfaceContainerLowest,
         ) {
             Column(
-                Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-                verticalArrangement = Arrangement.spacedBy(0.dp),
+                Modifier.padding(
+                    horizontal = if (padded) 12.dp else 4.dp,
+                    vertical = if (padded) 12.dp else 2.dp,
+                ),
+                verticalArrangement = Arrangement.spacedBy(if (padded) 10.dp else 0.dp),
                 content = content,
             )
         }
@@ -155,6 +162,12 @@ internal fun MoreScreen(navigate: (String) -> Unit) {
                         "On-device speech and editable review",
                         TraxosIcons.mic,
                     ),
+                    ToolEntry(
+                        "debts",
+                        "Debts & credit",
+                        "People, repayments and card liabilities",
+                        TraxosIcons.people,
+                    ),
                     ToolEntry("plans", "Plans", "Budgets and savings progress", TraxosIcons.report),
                     ToolEntry("smart", "Smart Add", "Review shared text and SMS", TraxosIcons.spark),
                 )
@@ -221,12 +234,6 @@ internal fun MoreScreen(navigate: (String) -> Unit) {
                         "Savings & budgets",
                         "Targets, allocations and monthly limits",
                         TraxosIcons.target,
-                    ),
-                    ToolEntry(
-                        "debts",
-                        "Debts & people",
-                        "Lend, borrow and repayment timelines",
-                        TraxosIcons.people,
                     ),
                     ToolEntry(
                         "groups",

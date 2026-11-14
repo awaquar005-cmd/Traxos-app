@@ -301,7 +301,7 @@ internal fun BackupScreen(vm: BackupViewModel = viewModel()) {
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        SettingsGroup("LOCAL STORAGE") {
+        SettingsGroup("LOCAL STORAGE", padded = true) {
             Text(
                 "Choose a subfolder inside Documents or Downloads. Android can disable selection of storage roots; create a TRAXOS folder there first.",
                 style = MaterialTheme.typography.bodySmall,
@@ -328,7 +328,7 @@ internal fun BackupScreen(vm: BackupViewModel = viewModel()) {
             }
             TraxosNotice(status, NoticeKind.INFO)
         }
-        SettingsGroup("ENCRYPTED BACKUP") {
+        SettingsGroup("ENCRYPTED BACKUP", padded = true) {
             Text(
                 "Includes ledger, accounts, categories, merchants, recurring rules, Plans and gift cards with images. Excludes the bank/card vault, PIN, device preferences and unapproved Smart Add suggestions.",
                 style = MaterialTheme.typography.bodySmall,
@@ -375,7 +375,7 @@ internal fun BackupScreen(vm: BackupViewModel = viewModel()) {
                 Text("Restore")
             }
         }
-        SettingsGroup("EXPORT") {
+        SettingsGroup("EXPORT", padded = true) {
             SettingsRow(
                 "Transaction CSV",
                 "Readable report · no gift secrets or card-vault details",
