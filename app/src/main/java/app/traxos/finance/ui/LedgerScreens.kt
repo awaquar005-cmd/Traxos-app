@@ -27,8 +27,6 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import app.traxos.finance.data.*
 import app.traxos.finance.domain.ActivityScope
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 @Composable
 internal fun RecordItem(
@@ -37,6 +35,7 @@ internal fun RecordItem(
     shape: androidx.compose.ui.graphics.Shape = androidx.compose.ui.graphics.RectangleShape,
     click: () -> Unit,
 ) {
+    val display = LocalDisplayOptions.current
     val largeFont = LocalDensity.current.fontScale > 1.3f
     Surface(
         onClick = click,
@@ -67,10 +66,7 @@ internal fun RecordItem(
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
-                        row.accountName +
-                            " · " +
-                            LocalDate.ofEpochDay(row.record.day)
-                                .format(DateTimeFormatter.ofPattern("d MMM yyyy")),
+                        row.accountName + " · " + display.date(row.record.day),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -115,13 +111,7 @@ internal fun RecordItem(
             Text(
                 row.categoryName +
                     (row.loggedAt?.let {
-                        " · Recorded " +
-                            java.time.Instant.ofEpochMilli(it)
-                                .atZone(
-                                    runCatching { java.time.ZoneId.of(row.record.zoneId) }
-                                        .getOrDefault(java.time.ZoneId.systemDefault())
-                                )
-                                .format(DateTimeFormatter.ofPattern("HH:mm"))
+                        " · Recorded " + display.time(java.time.Instant.ofEpochMilli(it))
                     } ?: ""),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -193,6 +183,7 @@ internal fun TransactionsScreen(
         Modifier.fillMaxSize().padding(horizontal = 12.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
+        val display = LocalDisplayOptions.current
         val largeFont = LocalDensity.current.fontScale > 1.3f
         Text("Every transaction.", style = MaterialTheme.typography.headlineSmall)
         Text(

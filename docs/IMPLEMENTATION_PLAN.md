@@ -1,3 +1,7 @@
+# 0.17.0 scoped roadmap
+
+P1 manual FX rules/dated rates and regional formatting; P1 scoped PDF/CSV/typed JSON and correct plaintext/secret boundaries; P2 local profile/accessibility/channel/launcher/help/privacy polish. Acceptance:14→15 migration/old archives, exact conversion/revision/rounding, export value fidelity/scope/failure/cancellation/PDF rendering, photo bounds/atomic replacement, alias reachability and native preference/navigation tests; preserve all299 earlier tests and original ledger/hero/vault routes. [Plan](REGIONAL_EXPORT_PROFILE_PLAN.md) · [semantics](REGIONAL_EXPORT_PROFILE.md).
+
 # 0.16.0 scoped completion
 
 P1 debt account movements/matching/contacts/explicit sharing/due reminders; P1 custom and salary-period budgets/threshold notifications; P1 goal deadlines/account allocations and paired transfers. Preserve manual workflows and old records, exact principal/report accounting, aggregate earmark limits, idempotency, encrypted recovery and private deduplicated reminders. [Acceptance plan](DEBT_PLANNING_EXTENSIONS_PLAN.md), [delivery semantics](DEBT_PLANNING_EXTENSIONS.md). Live sharing remains deferred by owner choice.

@@ -488,7 +488,7 @@ internal fun PlansScreen(
                     Text(
                         if (hidden) "Amounts hidden · ${b.currency}"
                         else
-                            "${Money.format(kotlin.math.abs(b.limitMinor-spent),b.currency)} ${if(spent>b.limitMinor) "over budget" else "left"}",
+                            "${displayMoney(kotlin.math.abs(b.limitMinor-spent),b.currency)} ${if(spent>b.limitMinor) "over budget" else "left"}",
                         style = MaterialTheme.typography.bodySmall,
                         color =
                             if (spent > b.limitMinor) MaterialTheme.colorScheme.error
@@ -543,7 +543,7 @@ internal fun PlansScreen(
                     Text(
                         if (hidden) "•••• of •••• · ${g.currency}"
                         else
-                            "${Money.format(g.savedMinor,g.currency)} of ${Money.format(g.targetMinor,g.currency)}",
+                            "${displayMoney(g.savedMinor,g.currency)} of ${displayMoney(g.targetMinor,g.currency)}",
                         style = MaterialTheme.typography.bodyMedium,
                     )
                     goalPreferences
@@ -559,7 +559,7 @@ internal fun PlansScreen(
                     if (backed != 0L)
                         Text(
                             if (hidden) "Account-backed ••••"
-                            else "Account-backed ${Money.format(backed,g.currency)}",
+                            else "Account-backed ${displayMoney(backed,g.currency)}",
                             style = MaterialTheme.typography.bodySmall,
                         )
                     val underfunded =

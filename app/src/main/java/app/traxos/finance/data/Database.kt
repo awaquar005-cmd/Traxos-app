@@ -321,16 +321,19 @@ interface LedgerDao {
             GoalPreferences::class,
             GoalFunding::class,
             PlanningSettings::class,
+            app.traxos.finance.regional.ManualRate::class,
             PaymentPlan::class,
             PlanPayment::class,
             IgnoredPlan::class,
             FinanceReminderSettings::class,
             FinanceReminderReceipt::class,
         ],
-    version = 14,
+    version = 15,
     exportSchema = true,
 )
 abstract class TraxosDatabase : RoomDatabase() {
+    abstract fun regional(): app.traxos.finance.regional.RegionalDao
+
     abstract fun planning(): PlanningDao
 
     abstract fun groups(): GroupsDao
@@ -654,6 +657,18 @@ abstract class TraxosDatabase : RoomDatabase() {
             }
 
         // Only one active occurrence per plan/due date; reversed rows retain immutable identity.
+        val MIGRATION_14_15 =
+            object : Migration(14, 15) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS manual_rates (id TEXT NOT NULL,source TEXT NOT NULL,target TEXT NOT NULL,day INTEGER NOT NULL,rate TEXT NOT NULL,revision INTEGER NOT NULL,PRIMARY KEY(id))"
+                    )
+                    db.execSQL(
+                        "CREATE UNIQUE INDEX IF NOT EXISTS index_manual_rates_source_target_day ON manual_rates(source,target,day)"
+                    )
+                }
+            }
+
         val MIGRATION_13_14 =
             object : Migration(13, 14) {
                 override fun migrate(db: SupportSQLiteDatabase) {
@@ -733,6 +748,7 @@ abstract class TraxosDatabase : RoomDatabase() {
                     MIGRATION_11_12,
                     MIGRATION_12_13,
                     MIGRATION_13_14,
+                    MIGRATION_14_15,
                 )
                 .addCallback(
                     object : Callback() {

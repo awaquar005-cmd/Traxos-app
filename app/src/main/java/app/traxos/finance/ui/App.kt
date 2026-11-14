@@ -550,7 +550,18 @@ fun TraxosApp(vm: MainViewModel) {
                                 launchSingleTop = true
                             }
                         },
-                        { destination -> nav.navigate(destination) { launchSingleTop = true } },
+                        { destination ->
+                            nav.navigate(destination) {
+                                // Different Settings arguments are real child pages; do not
+                                // replace their parent just because the route pattern matches.
+                                launchSingleTop =
+                                    !destination.startsWith("settings/") ||
+                                        nav.currentBackStackEntry
+                                            ?.arguments
+                                            ?.getString("section") ==
+                                            destination.substringAfter("settings/")
+                            }
+                        },
                         openCloud = { nav.navigate("cloud_setup") { launchSingleTop = true } },
                     )
                 }

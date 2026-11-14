@@ -1,3 +1,13 @@
+# Current0.17.0 delivery
+
+- `downloads/TRAXOS-0.17.0-regional-exports-personal.apk` — Personal code21, update-compatible signing.
+- `regional/Regional.kt`, `regional/ProfilePhoto.kt` — FX/entity/repository/device options/photo/launcher services.
+- `backup/ReadableExports.kt` — scoped CSV, typed JSON and native PDF layout/adapter; `PortableBackup.kt`, schema15 and `Database.kt` — additive rate migration and backwards-compatible recovery.
+- `ui/RegionalProfileScreens.kt`, `ExportScreen.kt`, `HelpPrivacyScreens.kt`, `DisplayEnvironment.kt` — new custom functional settings pages.
+- `MainActivity.kt`, manifest aliases, `SettingsScreen.kt`, `Theme.kt`, `SecurityScreens.kt`, `App.kt` — connected display/security/launcher/navigation; existing UI amounts/dates use shared formatting helpers.
+- Four new test files: RegionalExportsTest, RegionalNativeTest, RegionalSettingsUiTest, ExportDeliveryTest.
+- `docs/REGIONAL_EXPORT_PROFILE.md`, plan/manifest and `docs/validation/regional-exports-profile/` — workflows, preserved features and actual evidence.
+
 # Current0.16.0 delivery
 
 - `downloads/TRAXOS-0.16.0-debt-plans-personal.apk` — Personal code20, update-compatible signing.

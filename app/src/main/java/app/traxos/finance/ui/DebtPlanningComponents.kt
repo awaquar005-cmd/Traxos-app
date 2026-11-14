@@ -278,7 +278,7 @@ internal fun DebtFundingFields(
                 record,
                 candidates.map {
                     it.id to
-                        "${it.note.ifBlank{it.type}} · ${Money.format(it.amountMinor,currency)} · ${LocalDate.ofEpochDay(it.day)}"
+                        "${it.note.ifBlank{it.type}} · ${displayMoney(it.amountMinor,currency)} · ${displayDate(it.day)}"
                 },
                 enabled,
             ) {
@@ -459,14 +459,16 @@ internal fun DebtShareSheet(debt: DebtThread, person: SavedPerson?, dismiss: () 
     val asOf = remember {
         ZonedDateTime.now().format(DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm z"))
     }
-    LaunchedEffect(includeNote) {
+    val formattedOutstanding = displayMoney(debt.outstandingMinor, debt.currency)
+    val formattedDue = debt.dueDay?.let { displayDate(it) }
+    LaunchedEffect(includeNote, formattedOutstanding) {
         text =
             "Traxos · ${debt.person}\n" +
                 (if (debt.direction == "LENT") "Recorded amount owed to me: "
                 else "Recorded amount I owe: ") +
-                Money.format(debt.outstandingMinor, debt.currency) +
+                formattedOutstanding +
                 "\nAs of $asOf" +
-                debt.dueDay?.let { "\nDue ${LocalDate.ofEpochDay(it)}" }.orEmpty() +
+                formattedDue?.let { "\nDue $it" }.orEmpty() +
                 (if (includeNote && debt.note.isNotBlank()) "\n${debt.note}" else "")
     }
     val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current

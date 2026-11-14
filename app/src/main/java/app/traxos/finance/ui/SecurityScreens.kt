@@ -480,10 +480,11 @@ private fun LockBrand() {
     var entered by remember {
         mutableStateOf(!android.animation.ValueAnimator.areAnimatorsEnabled())
     }
+    val reduceMotion = LocalDisplayOptions.current.reduceMotion
     val scale by
         androidx.compose.animation.core.animateFloatAsState(
-            if (entered) 1f else .94f,
-            animationSpec = androidx.compose.animation.core.tween(180),
+            if (entered || reduceMotion) 1f else .94f,
+            animationSpec = androidx.compose.animation.core.tween(if (reduceMotion) 0 else 180),
             label = "Traxos mark entrance",
         )
     LaunchedEffect(Unit) { entered = true }

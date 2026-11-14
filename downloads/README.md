@@ -1,5 +1,15 @@
 # Current Personal APK
 
+**[Download TRAXOS0.17.0 Personal APK](https://raw.githubusercontent.com/awaquar005-cmd/Traxos-app/main/downloads/TRAXOS-0.17.0-regional-exports-personal.apk)**
+
+Install as **Update**, never uninstall/clear data. Code21, same signature, additive Room14→15.
+
+Personal APK built; **328 tests passed across the full run and targeted rerun (0 remaining failures/errors/skips)**. Lint: **0 errors, 25 warnings, 4 hints**. Signing and16KiB ZIP/64-bit ELF alignment verified. [Evidence](../docs/validation/regional-exports-profile/README.md).
+
+Settings → Currency & region / Exports / Profile / Accessibility / App identity / Notifications / Help & support / Privacy & permissions. Actual Android PDF file/provider/launcher acceptance remains a phone gate. Historical builds below are not recommended downgrades.
+
+# Current Personal APK
+
 **[Download TRAXOS0.16.0 Personal APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.16.0-debt-plans-personal.apk)**
 
 Install as **Update**, never uninstall/clear data. Code20, same signature, additive Room13→14.

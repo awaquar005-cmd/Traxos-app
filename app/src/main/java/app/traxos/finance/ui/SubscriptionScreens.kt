@@ -105,7 +105,7 @@ internal fun SubscriptionsScreen(
                         match,
                         candidates.map {
                             it.id to
-                                "${it.note} · ${Money.format(it.amountMinor,selected.currency)} · ${LocalDate.ofEpochDay(it.day)}"
+                                "${it.note} · ${displayMoney(it.amountMinor,selected.currency)} · ${displayDate(it.day)}"
                         },
                         !busy,
                     ) {
@@ -185,7 +185,7 @@ internal fun SubscriptionsScreen(
                 style = MaterialTheme.typography.bodySmall,
             )
             Text(
-                "Next ${LocalDate.ofEpochDay(item.nextDay)}${item.trialEnd?.let{" · Trial ends ${LocalDate.ofEpochDay(it)}"}.orEmpty()}",
+                "Next ${displayDate(item.nextDay)}${item.trialEnd?.let{" · Trial ends ${displayDate(it)}"}.orEmpty()}",
                 style = MaterialTheme.typography.bodySmall,
             )
             Text(
@@ -198,7 +198,7 @@ internal fun SubscriptionsScreen(
             val latest = past.filter { !it.voided }.maxByOrNull { it.dueDay }
             if (item.kind == "EMI")
                 Text(
-                    "${past.count{!it.voided}} / ${item.installments} installments · original principal ${if(hidden)"••••" else Money.format(item.principalMinor,item.currency)}",
+                    "${past.count{!it.voided}} / ${item.installments} installments · original principal ${if(hidden)"••••" else displayMoney(item.principalMinor,item.currency)}",
                     style = MaterialTheme.typography.bodySmall,
                 )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -242,14 +242,14 @@ internal fun SubscriptionsScreen(
             past.take(100).forEach { p ->
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        "${LocalDate.ofEpochDay(p.paidDay)} · due ${LocalDate.ofEpochDay(p.dueDay)}${if(p.voided)" · undone" else ""}",
+                        "${displayDate(p.paidDay)} · due ${displayDate(p.dueDay)}${if(p.voided)" · undone" else ""}",
                         style = MaterialTheme.typography.bodySmall,
                     )
                     MoneyText(p.amountMinor, item.currency, hidden = hidden)
                     if (p.feeMinor > 0)
                         Text(
                             if (hidden) "Fee ••••"
-                            else "Fee ${Money.format(p.feeMinor,item.currency)}",
+                            else "Fee ${displayMoney(p.feeMinor,item.currency)}",
                             style = MaterialTheme.typography.bodySmall,
                         )
                     if (latest?.id == p.id)
@@ -323,7 +323,7 @@ internal fun SubscriptionsScreen(
                 TraxosCard {
                     Text(s.name, style = MaterialTheme.typography.titleSmall)
                     Text(
-                        "${s.evidence} payments · ${s.frequency.lowercase()} · ${if(s.amount==null)"variable amount" else if(hidden)"••••" else Money.format(s.amount,s.currency)}",
+                        "${s.evidence} payments · ${s.frequency.lowercase()} · ${if(s.amount==null)"variable amount" else if(hidden)"••••" else displayMoney(s.amount,s.currency)}",
                         style = MaterialTheme.typography.bodySmall,
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -381,7 +381,7 @@ internal fun SubscriptionsScreen(
                     p.amountMinor?.let { MoneyText(it, p.currency, hidden = hidden) }
                         ?: Text("Variable amount", style = MaterialTheme.typography.bodyMedium)
                 Text(
-                    "${if(p.trialEnd!=null)"Trial · " else ""}Next ${LocalDate.ofEpochDay(p.nextDay)}${if(p.nextDay<LocalDate.now().toEpochDay() && p.status=="ACTIVE")" · Overdue" else ""}",
+                    "${if(p.trialEnd!=null)"Trial · " else ""}Next ${displayDate(p.nextDay)}${if(p.nextDay<LocalDate.now().toEpochDay() && p.status=="ACTIVE")" · Overdue" else ""}",
                     style = MaterialTheme.typography.bodySmall,
                 )
                 if (p.status == "ACTIVE")
@@ -589,7 +589,7 @@ internal fun SubscriptionEditor(
                     purchase,
                     options.map {
                         it.id to
-                            "${it.note} · ${Money.format(it.amountMinor,unit)} · ${LocalDate.ofEpochDay(it.day)}"
+                            "${it.note} · ${displayMoney(it.amountMinor,unit)} · ${displayDate(it.day)}"
                     },
                     !busy && old == null,
                 ) {

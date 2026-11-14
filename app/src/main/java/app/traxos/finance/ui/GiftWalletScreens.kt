@@ -210,7 +210,7 @@ internal fun GiftWalletScreen(
                             style = MaterialTheme.typography.titleMedium,
                         )
                         Text(
-                            c.expiryDay?.let { "Expires ${LocalDate.ofEpochDay(it)}" }
+                            c.expiryDay?.let { "Expires ${displayDate(it)}" }
                                 ?: "No expiry recorded",
                             style = MaterialTheme.typography.bodySmall,
                         )
@@ -693,18 +693,16 @@ internal fun GiftDetailScreen(vm: GiftViewModel, id: String, edit: () -> Unit, b
             Text(GiftRules.state(c, today), style = MaterialTheme.typography.labelMedium)
             Text(
                 if (c.kind == "DISCOUNT") "Discount voucher"
-                else c.remainingMinor?.let { Money.format(it, c.currency) } ?: "Unknown balance",
+                else c.remainingMinor?.let { displayMoney(it, c.currency) } ?: "Unknown balance",
                 style = MaterialTheme.typography.headlineSmall,
             )
             Text(
-                "Original: ${c.originalMinor?.let {Money.format(it,c.currency)} ?: "Not recorded"}",
+                "Original: ${c.originalMinor?.let {displayMoney(it,c.currency)} ?: "Not recorded"}",
                 style = MaterialTheme.typography.bodySmall,
             )
+            Text(c.expiryDay?.let { "Expiry · ${displayDate(it)}" } ?: "No expiry recorded")
             Text(
-                c.expiryDay?.let { "Expiry · ${LocalDate.ofEpochDay(it)}" } ?: "No expiry recorded"
-            )
-            Text(
-                "${c.source.lowercase().replaceFirstChar(Char::titlecase)} · ${LocalDate.ofEpochDay(c.receivedDay)}",
+                "${c.source.lowercase().replaceFirstChar(Char::titlecase)} · ${displayDate(c.receivedDay)}",
                 style = MaterialTheme.typography.bodySmall,
             )
             Text(
@@ -819,7 +817,7 @@ internal fun GiftDetailScreen(vm: GiftViewModel, id: String, edit: () -> Unit, b
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    entry.amountMinor?.let { Money.format(it, c.currency) }
+                    entry.amountMinor?.let { displayMoney(it, c.currency) }
                         ?: "Single-use discount redeemed"
                 )
                 Text(
@@ -856,8 +854,9 @@ internal fun GiftDetailScreen(vm: GiftViewModel, id: String, edit: () -> Unit, b
     }
 }
 
+@Composable
 private fun giftWalletMoney(hidden: Boolean, minor: Long, currency: String) =
-    if (hidden) "•••• $currency" else Money.format(minor, currency)
+    if (hidden) "•••• $currency" else displayMoney(minor, currency)
 
 @Composable
 private fun giftToday(): Long {

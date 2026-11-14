@@ -36,11 +36,19 @@ object Money {
         BigDecimal.valueOf(minor, Currency.getInstance(currency).defaultFractionDigits)
             .toPlainString()
 
-    fun format(minor: Long, currency: String): String {
+    fun format(
+        minor: Long,
+        currency: String,
+        locale: Locale = Locale.getDefault(),
+        code: Boolean = false,
+    ): String {
         val unit: Currency = Currency.getInstance(currency)
-        return NumberFormat.getCurrencyInstance(Locale.getDefault())
+        return NumberFormat.getCurrencyInstance(locale)
             .apply {
                 this.currency = unit
+                if (code && this is java.text.DecimalFormat)
+                    decimalFormatSymbols =
+                        decimalFormatSymbols.apply { currencySymbol = unit.currencyCode }
                 minimumFractionDigits = unit.defaultFractionDigits
                 maximumFractionDigits = unit.defaultFractionDigits
             }

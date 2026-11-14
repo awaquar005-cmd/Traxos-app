@@ -134,7 +134,7 @@ internal fun GroupDetail(
                 style = MaterialTheme.typography.titleMedium,
             )
             Text(
-                "${LocalDate.ofEpochDay(selected.day)} · ${selected.kind.lowercase()}",
+                "${displayDate(selected.day)} · ${selected.kind.lowercase()}",
                 style = MaterialTheme.typography.bodySmall,
             )
             MoneyText(selected.amountMinor, group.currency, hidden = hidden)
@@ -256,7 +256,7 @@ internal fun GroupDetail(
         items(events.take(100), key = { it.id }) { e ->
             SettingsRow(
                 e.title.ifBlank { e.kind.lowercase() },
-                "${LocalDate.ofEpochDay(e.day)} · ${e.kind.lowercase()}${if(events.any{it.reversalOf==e.id})" · reversed" else ""}",
+                "${displayDate(e.day)} · ${e.kind.lowercase()}${if(events.any{it.reversalOf==e.id})" · reversed" else ""}",
             ) {
                 detail = e.id
             }
@@ -464,7 +464,7 @@ internal fun GroupEditor(
                 }
                 val balance = GroupMath.balances(members, events, shares)
                 Text(
-                    "From owes ${Money.format(maxOf(0,-(balance[payer]?:0)),unit)} · To is owed ${Money.format(maxOf(0,balance[receiver]?:0),unit)}",
+                    "From owes ${displayMoney(maxOf(0,-(balance[payer]?:0)),unit)} · To is owed ${displayMoney(maxOf(0,balance[receiver]?:0),unit)}",
                     style = MaterialTheme.typography.bodySmall,
                 )
             } else {
@@ -530,7 +530,7 @@ internal fun GroupEditor(
                     listOf("" to "Not linked · no account changes") +
                         candidates.map {
                             it.id to
-                                "${it.note.ifBlank{it.type}} · ${Money.format(it.amountMinor,unit)} · ${LocalDate.ofEpochDay(it.day)}"
+                                "${it.note.ifBlank{it.type}} · ${displayMoney(it.amountMinor,unit)} · ${displayDate(it.day)}"
                         },
                     !busy,
                 ) { selectedId ->

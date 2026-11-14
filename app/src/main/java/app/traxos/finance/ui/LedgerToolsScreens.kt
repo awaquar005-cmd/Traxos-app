@@ -471,7 +471,7 @@ internal fun MonthlyReportsScreen(vm: MainViewModel, hidden: Boolean, activity: 
                                         Text(
                                             if (hidden) "Purchases •••• · Refunds ••••"
                                             else
-                                                "Purchases ${Money.format(row.expenseMinor,currency)} · Refunds ${Money.format(row.refundMinor,currency)}",
+                                                "Purchases ${displayMoney(row.expenseMinor,currency)} · Refunds ${displayMoney(row.refundMinor,currency)}",
                                             style = MaterialTheme.typography.bodySmall,
                                         )
                                     }

@@ -98,7 +98,7 @@ internal fun PeriodBudgetsScreen(
                     style = MaterialTheme.typography.titleMedium,
                 )
                 Text(
-                    "${if(b.kind=="SALARY")"Salary day ${b.salaryDay}" else "Custom period"} · ${LocalDate.ofEpochDay(range.start)} – ${LocalDate.ofEpochDay(range.end)}",
+                    "${if(b.kind=="SALARY")"Salary day ${b.salaryDay}" else "Custom period"} · ${displayDate(range.start)} – ${displayDate(range.end)}",
                     style = MaterialTheme.typography.bodySmall,
                 )
                 Text(
@@ -123,8 +123,8 @@ internal fun PeriodBudgetsScreen(
                 Text(
                     if (hidden) "Amounts hidden · ${b.currency}"
                     else if (spent > b.limitMinor)
-                        "${Money.format(spent-b.limitMinor,b.currency)} over budget"
-                    else "${Money.format(b.limitMinor-spent,b.currency)} left",
+                        "${displayMoney(spent-b.limitMinor,b.currency)} over budget"
+                    else "${displayMoney(b.limitMinor-spent,b.currency)} left",
                     style = MaterialTheme.typography.bodySmall,
                     color =
                         if (spent > b.limitMinor) MaterialTheme.colorScheme.error
@@ -358,7 +358,7 @@ internal fun GoalFundingFields(
             ?.let { a ->
                 val held = reservations.filter { it.accountId == account }.sumOf { it.amountMinor }
                 Text(
-                    "Available for new allocations: ${Money.format(maxOf(0,a.balanceMinor-held),currency)}",
+                    "Available for new allocations: ${displayMoney(maxOf(0,a.balanceMinor-held),currency)}",
                     style = MaterialTheme.typography.bodySmall,
                 )
             }

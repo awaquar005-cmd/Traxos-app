@@ -13,8 +13,8 @@ android {
         applicationId = "app.traxos.finance"
         minSdk = 26
         targetSdk = 36
-        versionCode = 20
-        versionName = "0.16.0-debt-plans-personal"
+        versionCode = 21
+        versionName = "0.17.0-regional-exports-personal"
     }
     flavorDimensions += "distribution"
     productFlavors {

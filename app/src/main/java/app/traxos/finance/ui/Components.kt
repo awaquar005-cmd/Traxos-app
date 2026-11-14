@@ -31,7 +31,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.traxos.finance.R
-import app.traxos.finance.domain.Money
 
 object Radius {
     val card = RoundedCornerShape(16.dp)
@@ -480,7 +479,7 @@ internal fun MoneyText(
     color: Color = Color.Unspecified,
 ) {
     Text(
-        if (hidden) "••••" else prefix + Money.format(minor, currency),
+        if (hidden) "••••" else prefix + displayMoney(minor, currency),
         style =
             (if (large) MaterialTheme.typography.headlineMedium
                 else MaterialTheme.typography.titleMedium)

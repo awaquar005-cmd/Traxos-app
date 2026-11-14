@@ -90,11 +90,21 @@ private val TraxosType =
 fun TraxosTheme(mode: String, accent: String, content: @Composable () -> Unit) {
     val dark = mode == "DARK" || (mode == "SYSTEM" && isSystemInDarkTheme())
     val ink = accentOptions.firstOrNull { it.id == accent }?.color ?: accentOptions.first().color
+    val contrast = LocalDisplayOptions.current.contrast
     val colors =
         (if (dark) Dark else Light).copy(
             primary = if (dark) androidx.compose.ui.graphics.lerp(ink, Color.White, .65f) else ink,
             primaryContainer = ink,
             onPrimaryContainer = Color.White,
+            onSurface =
+                if (contrast) (if (dark) Color.White else Color.Black)
+                else (if (dark) Dark else Light).onSurface,
+            onSurfaceVariant =
+                if (contrast) (if (dark) Color.White else Color.Black)
+                else (if (dark) Dark else Light).onSurfaceVariant,
+            onBackground =
+                if (contrast) (if (dark) Color.White else Color.Black)
+                else (if (dark) Dark else Light).onBackground,
         )
     MaterialTheme(
         colorScheme = colors,

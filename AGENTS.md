@@ -1,3 +1,7 @@
+# Current regional/export extension
+
+Current0.17.0 adds dated manual FX, formatting locales/date/clock/timezone, native PDF/scoped CSV/typed JSON, local photos/accessibility/channel/launcher/help/privacy controls. Room15 is additive and reads schema11–15 archives. Read docs/REGIONAL_EXPORT_PROFILE.md. Never interpret estimates as ledger conversion, export the card vault/PIN/login, auto-send diagnostics, remove old launcher/share reachability or present formatting language as a full UI translation.
+
 # Current extension
 
 Current0.16.0 adds principal-only account-linked IOUs, selected contacts/explicit sharing, budget periods/thresholds and account-backed goals/deadlines. Room14 is additive; preserve old entities and schema11–14 encrypted snapshots, reservation ownership and principal/report semantics. Read docs/DEBT_PLANNING_EXTENSIONS.md. Do not undo allocated/archive safeguards or claim bank payment execution.

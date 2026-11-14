@@ -276,7 +276,7 @@ internal fun RecurringPanel(
                         style = MaterialTheme.typography.bodySmall,
                     )
                     Text(
-                        "${account?.currency?.let { Money.format(rule.amountMinor,it) }.orEmpty()} · ${if(rule.enabled) "Next" else "Paused · next"} ${LocalDate.ofEpochDay(rule.nextDay)}",
+                        "${account?.currency?.let { displayMoney(rule.amountMinor,it) }.orEmpty()} · ${if(rule.enabled) "Next" else "Paused · next"} ${displayDate(rule.nextDay)}",
                         style = MaterialTheme.typography.bodySmall,
                     )
                     if (rule.lastError.isNotBlank()) TraxosNotice(rule.lastError, NoticeKind.ERROR)

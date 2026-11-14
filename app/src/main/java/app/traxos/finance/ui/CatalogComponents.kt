@@ -457,7 +457,7 @@ internal fun CardPaymentScreen(repository: LedgerRepository, cardId: String, bac
     ) {
         Text(card?.account?.name ?: "Card payment", style = MaterialTheme.typography.titleLarge)
         card?.let {
-            Text("Recorded debt: ${Money.format(maxOf(0,-it.balanceMinor),it.account.currency)}")
+            Text("Recorded debt: ${displayMoney(maxOf(0,-it.balanceMinor),it.account.currency)}")
         }
         Text(
             "Moves money from your account to the card. Does not create a second expense.",

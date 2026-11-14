@@ -1,0 +1,75 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.11.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :app:preBuild UP-TO-DATE
+> Task :app:prePersonalDebugBuild UP-TO-DATE
+> Task :app:mergePersonalDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:generatePersonalDebugBuildConfig UP-TO-DATE
+> Task :app:checkPersonalDebugAarMetadata UP-TO-DATE
+> Task :app:generatePersonalDebugResValues UP-TO-DATE
+> Task :app:mapPersonalDebugSourceSetPaths UP-TO-DATE
+> Task :app:generatePersonalDebugResources UP-TO-DATE
+> Task :app:mergePersonalDebugResources UP-TO-DATE
+> Task :app:packagePersonalDebugResources UP-TO-DATE
+> Task :app:parsePersonalDebugLocalResources UP-TO-DATE
+> Task :app:createPersonalDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksPersonalDebug UP-TO-DATE
+> Task :app:processPersonalDebugMainManifest UP-TO-DATE
+> Task :app:processPersonalDebugManifest UP-TO-DATE
+> Task :app:processPersonalDebugManifestForPackage UP-TO-DATE
+> Task :app:processPersonalDebugResources UP-TO-DATE
+> Task :app:kspPersonalDebugKotlin
+> Task :app:compilePersonalDebugKotlin
+> Task :app:javaPreCompilePersonalDebug UP-TO-DATE
+> Task :app:compilePersonalDebugJavaWithJavac UP-TO-DATE
+> Task :app:mergePersonalDebugShaders UP-TO-DATE
+> Task :app:compilePersonalDebugShaders NO-SOURCE
+> Task :app:generatePersonalDebugAssets UP-TO-DATE
+> Task :app:mergePersonalDebugAssets UP-TO-DATE
+> Task :app:compressPersonalDebugAssets UP-TO-DATE
+> Task :app:checkPersonalDebugDuplicateClasses UP-TO-DATE
+> Task :app:desugarPersonalDebugFileDependencies UP-TO-DATE
+> Task :app:mergeExtDexPersonalDebug UP-TO-DATE
+> Task :app:mergeLibDexPersonalDebug UP-TO-DATE
+> Task :app:dexBuilderPersonalDebug
+> Task :app:mergePersonalDebugGlobalSynthetics UP-TO-DATE
+> Task :app:processPersonalDebugJavaRes UP-TO-DATE
+> Task :app:mergePersonalDebugJavaResource
+> Task :app:mergeProjectDexPersonalDebug
+> Task :app:mergePersonalDebugJniLibFolders UP-TO-DATE
+> Task :app:mergePersonalDebugNativeLibs UP-TO-DATE
+> Task :app:stripPersonalDebugDebugSymbols UP-TO-DATE
+> Task :app:validateSigningPersonalDebug UP-TO-DATE
+> Task :app:writePersonalDebugAppMetadata UP-TO-DATE
+> Task :app:writePersonalDebugSigningConfigVersions UP-TO-DATE
+> Task :app:packagePersonalDebug
+> Task :app:createPersonalDebugApkListingFileRedirect
+> Task :app:assemblePersonalDebug
+> Task :app:bundlePersonalDebugClassesToRuntimeJar
+> Task :app:bundlePersonalDebugClassesToCompileJar
+> Task :app:kspPersonalDebugUnitTestKotlin
+> Task :app:compilePersonalDebugUnitTestKotlin
+> Task :app:prePersonalDebugUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompilePersonalDebugUnitTest UP-TO-DATE
+> Task :app:compilePersonalDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :app:packagePersonalDebugUnitTestForUnitTest UP-TO-DATE
+> Task :app:generatePersonalDebugUnitTestConfig UP-TO-DATE
+> Task :app:processPersonalDebugUnitTestJavaRes UP-TO-DATE
+> Task :app:testPersonalDebugUnitTest
+> Task :app:prePersonalDebugAndroidTestBuild SKIPPED
+> Task :app:generatePersonalDebugAndroidTestResValues UP-TO-DATE
+> Task :app:generatePersonalDebugAndroidTestLintModel
+> Task :app:extractProguardFiles UP-TO-DATE
+> Task :app:generatePersonalDebugLintReportModel
+> Task :app:generatePersonalDebugUnitTestLintModel
+> Task :app:lintAnalyzePersonalDebug
+> Task :app:lintAnalyzePersonalDebugAndroidTest
+> Task :app:lintAnalyzePersonalDebugUnitTest
+
+> Task :app:lintReportPersonalDebug
+Wrote HTML report to file:///workspace/apk-development/app/build/reports/lint-results-personalDebug.html
+
+> Task :app:lintPersonalDebug
+
+BUILD SUCCESSFUL in 13m 33s
+57 actionable tasks: 20 executed, 37 up-to-date

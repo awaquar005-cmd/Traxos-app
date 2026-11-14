@@ -12,6 +12,10 @@ open class TraxosApplication : Application(), androidx.work.Configuration.Provid
                 .setMinimumLoggingLevel(android.util.Log.ERROR)
                 .build()
 
+    val deviceOptions by lazy { app.traxos.finance.regional.DeviceOptions(this) }
+    val regional by lazy { app.traxos.finance.regional.RegionalRepository(database) }
+    val profilePhoto by lazy { app.traxos.finance.regional.ProfilePhoto(this) }
+
     val cloudFiles by lazy {
         app.traxos.finance.cloud.CloudFiles(noBackupFilesDir, KeystoreGiftCipher("traxos.cloud"))
     }

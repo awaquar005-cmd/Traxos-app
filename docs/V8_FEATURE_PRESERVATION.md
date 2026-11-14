@@ -1,3 +1,7 @@
+# 0.17.0 preservation
+
+Original financial records/currencies and prior entity definitions remain; one additive rates table and optional settings/export routes. Existing app lock/card vault/CVV, hero/mark/watermark, gifts/QR/images, voice/SMS, recurring, plans/debts/groups/cards/subscriptions, defaults/navigation and cloud/local recovery remain. New shared display helpers change presentation only. MainActivity stays available behind two branded launcher aliases and retains inbound shares. No new permission/dependency/backend. Formatting-language choices do not claim translated English UI. See REGIONAL_EXPORT_PROFILE.md.
+
 # 0.16.0 preservation
 
 Additive debt/planning extension retains the0.15.0 routes, prior entity definitions, hero/brand, gift QR/images, encrypted vault, security, voice/SMS, recurring, groups/cards/bills, cloud and local recovery. No new library/permission/backend. Live shared groups remain deferred. See DEBT_PLANNING_DELIVERY_MANIFEST.json after validation.

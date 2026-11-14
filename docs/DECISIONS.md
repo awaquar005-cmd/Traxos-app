@@ -1,3 +1,12 @@
+# 0.17.0 decisions
+
+- Manual FX estimates never alter original balances, dates or currency totals. No network pricing, silent rate chaining or implicit conversion. Dated rates are backed up; display policies are device-local.
+- Typed JSON encodes exact integer strings and blobs with explicit types, whole financial relationships and optional portable gift payloads. Vault/PIN/login/SMS remain excluded. It is not an importer or encrypted recovery substitute.
+- Native PDF/CSV scoped reports disclose plaintext. PDF refuses over5,000 entries to bound phone memory rather than silently truncate. Streaming JSON/CSV remain available for full histories.
+- Local profile pictures use selected URI, bounded downsampling/EXIF correction, metadata stripping and atomic replacement. No photo-upload service or broad photo permission.
+- Accessibility augments system font scaling and applies semantic contrast/haptic/lock-motion preferences. Formatting locales are real; unimplemented interface translations are not advertised. Launcher choices retain the actual mark and name.
+- Support is offline guidance plus explicit safe diagnostic sharing/public issue link. No unconfigured help server, automatic message or fake store rating.
+
 # 0.16.0 decisions
 
 - Keep loan principal distinct from income/spending; match rather than repost existing bank records, with explicit release and linked Undo. Never initiate bank payments.

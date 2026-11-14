@@ -27,7 +27,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.window.*
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 @Composable
 internal fun TraxosNotice(text: String, kind: NoticeKind, modifier: Modifier = Modifier) {
@@ -417,7 +416,7 @@ internal fun TraxosDateField(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
-                date?.format(DateTimeFormatter.ofPattern("d MMM yyyy")) ?: value,
+                date?.let { displayDate(it.toEpochDay()) } ?: value,
                 style = MaterialTheme.typography.bodyMedium,
             )
         }

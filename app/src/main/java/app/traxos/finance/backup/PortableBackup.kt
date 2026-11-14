@@ -130,6 +130,7 @@ internal val backupTables =
         "budget_alert_rules",
         "goal_preferences",
         "goal_funding",
+        "manual_rates",
     )
 
 private fun DataOutputStream.text(value: String) {
@@ -145,7 +146,7 @@ private fun DataInputStream.text(): String {
     return ByteArray(n).also { readFully(it) }.toString(Charsets.UTF_8)
 }
 
-private fun row(cursor: Cursor): JSONObject =
+internal fun row(cursor: Cursor): JSONObject =
     JSONObject().apply {
         cursor.columnNames.forEachIndexed { i, column ->
             put(
@@ -223,7 +224,7 @@ class PortableBackup(
                 val sql = db.openHelper.writableDatabase
                 BackupEnvelope.write(output, password) { data ->
                     data.writeInt(1)
-                    data.writeInt(14)
+                    data.writeInt(15)
                     data.writeInt(backupTables.size)
                     backupTables.forEach { table ->
                         data.text(table)
@@ -277,7 +278,7 @@ class PortableBackup(
                         BackupEnvelope.read(input, password) { data ->
                             require(data.readInt() == 1)
                             val sourceSchema = data.readInt()
-                            require(sourceSchema in 11..14) {
+                            require(sourceSchema in 11..15) {
                                 "This backup needs a compatible Traxos version"
                             }
                             val added13 =
@@ -306,7 +307,8 @@ class PortableBackup(
                                 )
                             val sourceTables =
                                 backupTables.filterNot {
-                                    (sourceSchema < 14 && it in added14) ||
+                                    (sourceSchema < 15 && it == "manual_rates") ||
+                                        (sourceSchema < 14 && it in added14) ||
                                         (sourceSchema < 13 && it in added13) ||
                                         (sourceSchema == 11 &&
                                             it in listOf("debt_threads", "debt_movements"))
@@ -539,6 +541,20 @@ class PortableBackup(
         }
 
     private fun validate(sql: SupportSQLiteDatabase) {
+        sql.query("SELECT * FROM manual_rates").use { c ->
+            while (c.moveToNext()) app.traxos.finance.regional.ExchangeRules.validate(
+                app.traxos.finance.regional.ManualRate(
+                    c.getString(c.getColumnIndexOrThrow("id")),
+                    c.getString(c.getColumnIndexOrThrow("source")),
+                    c.getString(c.getColumnIndexOrThrow("target")),
+                    c.getLong(c.getColumnIndexOrThrow("day")),
+                    c.getString(c.getColumnIndexOrThrow("rate")),
+                    c.getLong(c.getColumnIndexOrThrow("revision")),
+                ),
+                allowFuture = true,
+            )
+        }
+
         sql.query("PRAGMA foreign_key_check").use {
             require(!it.moveToFirst()) { "Broken backup references" }
         }

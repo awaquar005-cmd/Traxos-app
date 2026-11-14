@@ -1,3 +1,7 @@
+# Current0.17.0 scope
+
+Regional/manual FX, native exports, local photo/accessibility/launcher/channel and help/privacy/support controls implemented. Personal APK built; **328 tests passed across the full run and targeted rerun (0 remaining failures/errors/skips)**. Lint: **0 errors, 25 warnings, 4 hints**. Signing and16KiB ZIP/64-bit ELF alignment verified. [Evidence](validation/regional-exports-profile/README.md). APK: `downloads/TRAXOS-0.17.0-regional-exports-personal.apk`. Native PDF serialization and physical/OEM acceptance remain pending. Interface remains English; formatting languages are selectable. Physical/OEM/provider/cloud gates remain explicit. See PROGRESS.md and REGIONAL_EXPORT_PROFILE.md. Older entries below are historical.
+
 # Current0.16.0 scope
 
 Debt account links/contacts/explicit sharing/reminders and budget periods/thresholds/goal deadlines/account backing are implemented. Personal APK built; **299 tests passed across the full run and targeted rerun (0 remaining failures/errors/skips)**. Lint: **0 errors, 23 warnings, 4 hints**. Signing and16KiB ZIP/64-bit ELF alignment verified.; physical/OEM acceptance remains pending. See DEBT_PLANNING_EXTENSIONS.md and PROGRESS.md. Prior entries below are historical.

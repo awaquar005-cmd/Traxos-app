@@ -379,7 +379,7 @@ internal fun DebtsScreen(
                 )
                 MoneyText(d.outstandingMinor, d.currency, true, hidden = hidden)
                 Text(
-                    "Opened ${LocalDate.ofEpochDay(d.day)}${d.dueDay?.let{" · Due ${LocalDate.ofEpochDay(it)}"}.orEmpty()}",
+                    "Opened ${displayDate(d.day)}${d.dueDay?.let{" · Due ${displayDate(it)}"}.orEmpty()}",
                     style = MaterialTheme.typography.bodySmall,
                 )
                 if (d.note.isNotBlank()) Text(d.note, style = MaterialTheme.typography.bodySmall)
@@ -462,7 +462,7 @@ internal fun DebtsScreen(
                 }
                 Text("RECENT HISTORY · UP TO 100", style = MaterialTheme.typography.labelSmall)
                 Text(
-                    "Opening · ${Money.format(d.originalMinor,d.currency).takeIf{!hidden} ?: "••••"}",
+                    "Opening · ${displayMoney(d.originalMinor,d.currency).takeIf{!hidden} ?: "••••"}",
                     style = MaterialTheme.typography.bodySmall,
                 )
                 history.forEach { m ->
@@ -473,7 +473,7 @@ internal fun DebtsScreen(
                         Column(Modifier.weight(1f)) {
                             Text(
                                 m.kind.lowercase().replaceFirstChar { it.uppercase() } +
-                                    " · ${LocalDate.ofEpochDay(m.day)}",
+                                    " · ${displayDate(m.day)}",
                                 style = MaterialTheme.typography.bodySmall,
                             )
                             if (m.note.isNotBlank())
@@ -571,7 +571,7 @@ internal fun DebtsScreen(
                     (if (d.direction == "LENT") "They owe you" else "You owe them") +
                         (d.dueDay
                             ?.let {
-                                " · ${if(it<LocalDate.now().toEpochDay() && d.outstandingMinor>0)"Overdue" else "Due"} ${LocalDate.ofEpochDay(it)}"
+                                " · ${if(it<LocalDate.now().toEpochDay() && d.outstandingMinor>0)"Overdue" else "Due"} ${displayDate(it)}"
                             }
                             .orEmpty()),
                 ) {

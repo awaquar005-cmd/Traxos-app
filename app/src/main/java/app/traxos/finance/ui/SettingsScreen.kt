@@ -21,7 +21,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
-import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.traxos.finance.BuildConfig
 import app.traxos.finance.domain.Money
@@ -30,6 +29,12 @@ import app.traxos.finance.gifts.*
 internal val settingSections =
     listOf(
         "profile" to "Profile",
+        "regional" to "Currency & region",
+        "accessibility" to "Accessibility",
+        "identity" to "App identity",
+        "exports" to "Exports",
+        "help" to "Help & support",
+        "privacy" to "Privacy & permissions",
         "security" to "Security & Privacy",
         "appearance" to "Appearance & Navigation",
         "smart" to "Smart Tracking",
@@ -57,14 +62,19 @@ internal fun SettingsScreen(vm: MainViewModel, openSection: (String) -> Unit) {
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         SettingsGroup("PROFILE") {
-            SettingsRow(
-                preference.displayName.ifBlank { "Local profile" },
-                identity?.profile?.email
-                    ?: identity?.binding?.email?.let { "Linked to $it" }
-                    ?: "On this phone · local profile",
-                id = "Profile",
-            ) {
-                openSection("profile")
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                ProfilePhotoPreview()
+                Box(Modifier.weight(1f)) {
+                    SettingsRow(
+                        preference.displayName.ifBlank { "Local profile" },
+                        identity?.profile?.email
+                            ?: identity?.binding?.email?.let { "Linked to $it" }
+                            ?: "On this phone · local profile",
+                        id = "Profile",
+                    ) {
+                        openSection("profile")
+                    }
+                }
             }
         }
         SettingsGroup("SYNC & RECOVERY") {
@@ -82,9 +92,16 @@ internal fun SettingsScreen(vm: MainViewModel, openSection: (String) -> Unit) {
             SettingsRow("Appearance & Navigation", "Theme, accent, dock and layout") {
                 openSection("appearance")
             }
-            SettingsRow("Currency & region", "Default currency · no automatic conversion") {
-                openSection("data")
+            SettingsRow("Currency & region", "Formats, timezones and manual conversion rates") {
+                openSection("regional")
             }
+        }
+        SettingsGroup("DISPLAY & EXPORTS") {
+            SettingsRow("Accessibility", "Text size, contrast, haptics and motion") {
+                openSection("accessibility")
+            }
+            SettingsRow("App identity", "Traxos launcher name") { openSection("identity") }
+            SettingsRow("Exports", "PDF, CSV and exact standalone JSON") { openSection("exports") }
         }
         SettingsGroup("MONEY & TOOLS") {
             SettingsRow("Debt & planning alerts", "Budget thresholds, debt and goal reminders") {
@@ -142,6 +159,15 @@ internal fun SettingsScreen(vm: MainViewModel, openSection: (String) -> Unit) {
             }
         }
         SettingsGroup("HELP & DESIGN REVIEW") {
+            SettingsRow(
+                "Help & support",
+                "Search offline guides or prepare a safe support report",
+            ) {
+                openSection("help")
+            }
+            SettingsRow("Privacy & permissions", "Storage, services and Android controls") {
+                openSection("privacy")
+            }
             SettingsRow("Full UI review", "Explore the V3 page flows · sample data only") {
                 openSection("review")
             }
@@ -213,7 +239,7 @@ internal fun SettingsToggle(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        TraxosSwitch(checked, onChange, enabled = enabled)
+        TraxosSwitch(checked, onChange, enabled = enabled, label = title)
     }
 }
 
@@ -251,10 +277,37 @@ internal fun SettingsDetailScreen(
                 "Gift secrets and Smart Add suggestions are encrypted with separate Android Keystore keys. Security state is encrypted; the existing bank/cash ledger and metadata are app-private but not encrypted. App lock gates access; it is not full database encryption. Screenshot protection is disabled in development builds for UI review."
             )
             Text(
-                "Password-encrypted local backups exclude the card vault and app lock. No PIN reset is available. Uninstalling, clearing data or losing keys can lose records or access. Account linking is optional; online email changes and profile-photo uploads are not implemented here."
+                "Password-encrypted local backups exclude the card vault and app lock. No PIN reset is available. Uninstalling, clearing data or losing keys can lose records or access. Account linking is optional; online email changes and profile-photo uploads are not implemented here. Local profile photos are available in Profile."
             )
             TraxosButton({ privacy = false }, Modifier.fillMaxWidth()) { Text("Done") }
         }
+    val navigate: (String) -> Unit = openCatalog
+    when (section) {
+        "regional" -> {
+            RegionalSettingsScreen(vm)
+            return
+        }
+        "accessibility" -> {
+            AccessibilitySettingsScreen()
+            return
+        }
+        "identity" -> {
+            LauncherSettingsScreen()
+            return
+        }
+        "exports" -> {
+            ExportScreen()
+            return
+        }
+        "help" -> {
+            HelpSupportScreen(navigate)
+            return
+        }
+        "privacy" -> {
+            PrivacySettingsScreen(navigate)
+            return
+        }
+    }
     if (section == "security") {
         val lock = LocalLockController.current
         if (lock != null)
@@ -288,6 +341,7 @@ internal fun SettingsDetailScreen(
             "profile" -> {
                 var name by remember(prefs.displayName) { mutableStateOf(prefs.displayName) }
                 Text("Local profile", style = MaterialTheme.typography.titleLarge)
+                ProfilePhotoControls()
                 TraxosInput(
                     "Display name",
                     name,
@@ -430,6 +484,7 @@ internal fun SettingsDetailScreen(
                         style = MaterialTheme.typography.bodySmall,
                     )
                 NotificationPermissionRow()
+                NotificationChannels()
             }
             "data" -> {
                 TraxosSelector(
@@ -514,12 +569,21 @@ internal fun SettingsDetailScreen(
                         { openCatalog("reports") },
                     )
                 }
+                SettingsRow("Exports", "PDF, CSV and exact JSON") {
+                    openCatalog("settings/exports")
+                }
                 Text(
-                    "Export, portable encrypted backup and cloud sync are unavailable. Records are saved locally; uninstalling/clearing storage deletes them. App lock does not add a recovery mechanism.",
+                    "PDF/CSV/typed JSON exports and password-encrypted local/optional Drive snapshots are available. Shared live sync awaits backend setup. Uninstalling/clearing storage deletes local data; app lock does not add a recovery mechanism.",
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
             "about" -> {
+                SettingsRow("Help & support", "Offline guides and safe diagnostics") {
+                    openCatalog("settings/help")
+                }
+                SettingsRow("Privacy & permissions", "Actual storage and permission controls") {
+                    openCatalog("settings/privacy")
+                }
                 BrandMark()
                 Text(
                     "TRAXOS ${BuildConfig.VERSION_NAME}",
@@ -533,12 +597,7 @@ internal fun SettingsDetailScreen(
                     "Feedback",
                     "Open the project's GitHub issue page; submitting is your choice",
                 ) {
-                    context.startActivity(
-                        Intent(
-                            Intent.ACTION_VIEW,
-                            "https://github.com/awaquar005-cmd/Traxos-app/issues".toUri(),
-                        )
-                    )
+                    openCatalog("settings/help")
                 }
                 SettingsRow(
                     "Privacy information",

@@ -122,7 +122,7 @@ internal fun CardSchedulesScreen(
                 .filter { it.statementId == historyStatement.id }
                 .forEach { r ->
                     Text(
-                        "Previous ${if(hidden)"••••" else Money.format(r.beforeAmount,unit)} · due ${LocalDate.ofEpochDay(r.beforeDue)} · ${r.reason}",
+                        "Previous ${if(hidden)"••••" else displayMoney(r.beforeAmount,unit)} · due ${displayDate(r.beforeDue)} · ${r.reason}",
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }
@@ -200,7 +200,7 @@ internal fun CardSchedulesScreen(
                         record,
                         options.map {
                             it.id to
-                                "${Money.format(it.amountMinor,card.account.currency)} · ${LocalDate.ofEpochDay(it.day)}"
+                                "${displayMoney(it.amountMinor,card.account.currency)} · ${displayDate(it.day)}"
                         },
                         !busy,
                     ) {
@@ -369,7 +369,7 @@ internal fun CardSchedulesScreen(
                 val remaining = PlanDates.remaining(s, allocated)
                 TraxosCard {
                     Text(
-                        "${if(s.estimated)"Estimated" else "Manually entered"} · closes ${LocalDate.ofEpochDay(s.closingDay)}${if(s.voided)" · voided" else ""}",
+                        "${if(s.estimated)"Estimated" else "Manually entered"} · closes ${displayDate(s.closingDay)}${if(s.voided)" · voided" else ""}",
                         style = MaterialTheme.typography.labelSmall,
                     )
                     Row(
@@ -390,13 +390,13 @@ internal fun CardSchedulesScreen(
                         }
                     }
                     Text(
-                        "Due ${LocalDate.ofEpochDay(s.dueDay)}${if(s.dueDay<LocalDate.now().toEpochDay() && remaining>0)" · Overdue" else if(remaining==0L)" · Paid" else ""}",
+                        "Due ${displayDate(s.dueDay)}${if(s.dueDay<LocalDate.now().toEpochDay() && remaining>0)" · Overdue" else if(remaining==0L)" · Paid" else ""}",
                         style = MaterialTheme.typography.bodySmall,
                     )
                     Text(
                         if (hidden) "Statement •••• · Paid ••••"
                         else
-                            "Statement ${Money.format(s.amountMinor,card.account.currency)} · Payments after close ${Money.format(allocated,card.account.currency)}",
+                            "Statement ${displayMoney(s.amountMinor,card.account.currency)} · Payments after close ${displayMoney(allocated,card.account.currency)}",
                         style = MaterialTheme.typography.bodySmall,
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
