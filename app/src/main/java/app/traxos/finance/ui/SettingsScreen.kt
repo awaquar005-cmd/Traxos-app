@@ -87,6 +87,16 @@ internal fun SettingsScreen(vm: MainViewModel, openSection: (String) -> Unit) {
             }
         }
         SettingsGroup("MONEY & TOOLS") {
+            SettingsRow("Card statements", "Cycles, minimum dues and card payments") {
+                openSection("cards")
+            }
+            SettingsRow("Subscriptions & bills", "Renewals, installments and reviewed payments") {
+                openSection("subscriptions")
+            }
+            SettingsRow("Payment reminders", "Lead days, quiet hours and permissions") {
+                openSection("finance_reminders")
+            }
+
             SettingsRow("Accounts & balances", "Cash, bank, wallet and card liabilities") {
                 openSection("accounts")
             }
@@ -545,7 +555,7 @@ internal fun SettingsDetailScreen(
 }
 
 @Composable
-private fun NotificationPermissionRow() {
+internal fun NotificationPermissionRow() {
     val context = LocalContext.current
     var allowed by remember {
         mutableStateOf(NotificationManagerCompat.from(context).areNotificationsEnabled())
@@ -553,6 +563,9 @@ private fun NotificationPermissionRow() {
     val request =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
             allowed = it
+            (context.applicationContext as app.traxos.finance.TraxosApplication)
+                .financeScheduler
+                .kick()
             (context.applicationContext as app.traxos.finance.TraxosApplication)
                 .giftScheduler
                 .reconcile()

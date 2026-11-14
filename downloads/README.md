@@ -1,5 +1,15 @@
 # Current Personal APK
 
+**[Download TRAXOS 0.15.0 Personal APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.15.0-money-tools-personal.apk)**
+
+Install as **Update**, never uninstall/clear data. Code19, same signature, additive Room12→13 upgrade.
+
+Personal assemble, **273 tests passed (0 failures/errors/skips)** and lint passed: **0 errors, 23 warnings, 4 hint**. Signing matches0.14.0; ZIP/64-bit ELF16KiB alignment passed. [Evidence](../docs/validation/money-modules/README.md).
+
+More → Groups / Card statements / Subscriptions & bills. Groups are local only; live invitations/collaboration await setup at owner request. Historical downloads below are not recommended downgrades.
+
+# Current Personal APK
+
 **[Download TRAXOS 0.14.0 Personal APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.14.0-debts-personal.apk)**
 
 Install as **Update**, never uninstall/clear data. Code18, same signature, additive Room11→12 upgrade.

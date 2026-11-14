@@ -112,6 +112,17 @@ internal val backupTables =
         "debt_movements",
         "gift_cards",
         "gift_redemptions",
+        "shared_groups",
+        "group_members",
+        "group_events",
+        "group_shares",
+        "group_ledger_links",
+        "card_cycles",
+        "card_statements",
+        "statement_payments",
+        "statement_revisions",
+        "payment_plans",
+        "plan_payments",
     )
 
 private fun DataOutputStream.text(value: String) {
@@ -205,7 +216,7 @@ class PortableBackup(
                 val sql = db.openHelper.writableDatabase
                 BackupEnvelope.write(output, password) { data ->
                     data.writeInt(1)
-                    data.writeInt(12)
+                    data.writeInt(13)
                     data.writeInt(backupTables.size)
                     backupTables.forEach { table ->
                         data.text(table)
@@ -259,15 +270,29 @@ class PortableBackup(
                         BackupEnvelope.read(input, password) { data ->
                             require(data.readInt() == 1)
                             val sourceSchema = data.readInt()
-                            require(sourceSchema in 11..12) {
+                            require(sourceSchema in 11..13) {
                                 "This backup needs a compatible Traxos version"
                             }
+                            val added13 =
+                                setOf(
+                                    "shared_groups",
+                                    "group_members",
+                                    "group_events",
+                                    "group_shares",
+                                    "group_ledger_links",
+                                    "card_cycles",
+                                    "card_statements",
+                                    "statement_payments",
+                                    "statement_revisions",
+                                    "payment_plans",
+                                    "plan_payments",
+                                )
                             val sourceTables =
-                                if (sourceSchema == 11)
-                                    backupTables.filterNot {
-                                        it in listOf("debt_threads", "debt_movements")
-                                    }
-                                else backupTables
+                                backupTables.filterNot {
+                                    (sourceSchema < 13 && it in added13) ||
+                                        (sourceSchema == 11 &&
+                                            it in listOf("debt_threads", "debt_movements"))
+                                }
                             require(data.readInt() == sourceTables.size)
                             sourceTables.forEach { expected ->
                                 require(data.text() == expected) { "Invalid backup table" }
@@ -432,15 +457,29 @@ class PortableBackup(
                     }
                 if (pristine && seedOnly) target.execSQL("DELETE FROM categories")
                 backupTables.forEach { table ->
-                    val primary = if (table == "outbox_operations") "operationId" else "id"
+                    val primary =
+                        source.query("PRAGMA table_info(`$table`)").use { info ->
+                            buildList<Pair<Int, String>> {
+                                    while (info.moveToNext()) if (info.getInt(5) > 0)
+                                        add(info.getInt(5) to info.getString(1))
+                                }
+                                .sortedBy { it.first }
+                                .map { it.second }
+                        }
+                    require(primary.isNotEmpty()) { "Backup table has no stable identity" }
                     source.query("SELECT * FROM `$table`").use { cursor ->
                         while (cursor.moveToNext()) {
                             currentCoroutineContext().ensureActive()
                             val item = row(cursor)
-                            val id = item.getString(primary)
+                            val identities = primary.map { item.getString(it) }
+                            val id = identities.joinToString(":")
                             val existing =
                                 target
-                                    .query("SELECT * FROM `$table` WHERE `$primary`=?", arrayOf(id))
+                                    .query(
+                                        "SELECT * FROM `$table` WHERE " +
+                                            primary.joinToString(" AND ") { "`$it`=?" },
+                                        identities.toTypedArray(),
+                                    )
                                     .use { if (it.moveToFirst()) row(it) else null }
                             if (existing == null) {
                                 target.insert(table, SQLiteDatabase.CONFLICT_ABORT, values(item))
@@ -489,6 +528,76 @@ class PortableBackup(
             sql.query(query).use { require(!it.moveToFirst()) { "Invalid financial backup" } }
         }
         none("SELECT total FROM (SELECT COUNT(*) AS total FROM transactions) WHERE total>1000000")
+        none(
+            "SELECT g.id FROM shared_groups g LEFT JOIN group_members m ON m.id=g.selfId WHERE m.id IS NULL OR m.groupId!=g.id OR length(trim(g.name)) NOT BETWEEN 1 AND 80 OR g.currency NOT IN ('INR','USD','EUR','JPY','KWD') OR g.revision<1"
+        )
+        none(
+            "SELECT id FROM group_members WHERE length(trim(name)) NOT BETWEEN 1 AND 80 OR revision<1"
+        )
+        none(
+            "SELECT e.id FROM group_events e LEFT JOIN group_members p ON p.id=e.payerId LEFT JOIN group_members r ON r.id=e.receiverId WHERE p.id IS NULL OR p.groupId!=e.groupId OR e.kind NOT IN ('EXPENSE','SETTLEMENT','REVERSAL') OR e.amountMinor NOT BETWEEN 1 AND ${Money.MAX_MINOR} OR e.day NOT BETWEEN 3652 AND 84370 OR (e.kind='SETTLEMENT' AND (r.id IS NULL OR r.groupId!=e.groupId OR e.receiverId=e.payerId))"
+        )
+        none(
+            "SELECT e.id FROM group_events e LEFT JOIN categories c ON c.id=e.categoryId WHERE e.kind='EXPENSE' AND (c.id IS NULL OR c.type!='EXPENSE' OR e.splitMethod NOT IN ('EQUAL','EXACT','PERCENT','SHARES'))"
+        )
+        none(
+            "SELECT e.id FROM group_events e LEFT JOIN group_events p ON p.id=e.reversalOf WHERE (e.kind='REVERSAL' AND (p.id IS NULL OR p.reversalOf IS NOT NULL OR p.groupId!=e.groupId OR p.amountMinor!=e.amountMinor)) OR (e.kind!='REVERSAL' AND e.reversalOf IS NOT NULL)"
+        )
+        none(
+            "SELECT s.eventId FROM group_shares s JOIN group_events e ON e.id=s.eventId JOIN group_members m ON m.id=s.memberId WHERE e.kind!='EXPENSE' OR m.groupId!=e.groupId OR s.amountMinor NOT BETWEEN 0 AND ${Money.MAX_MINOR}"
+        )
+        none(
+            "SELECT e.id FROM group_events e LEFT JOIN group_shares s ON s.eventId=e.id WHERE e.kind='EXPENSE' GROUP BY e.id HAVING COALESCE(SUM(s.amountMinor),0)!=e.amountMinor"
+        )
+        none(
+            "SELECT l.recordId FROM group_ledger_links l JOIN transactions t ON t.id=l.recordId JOIN accounts a ON a.id=t.accountId JOIN group_events e ON e.id=l.eventId JOIN shared_groups g ON g.id=e.groupId WHERE t.deleted=1 OR t.linkId IS NOT NULL OR l.reportMinor!=0 OR a.currency!=g.currency OR t.day!=e.day OR t.amountMinor!=e.amountMinor OR EXISTS(SELECT 1 FROM group_events r WHERE r.reversalOf=e.id) OR NOT ((e.kind='EXPENSE' AND e.payerId=g.selfId AND t.type='EXPENSE') OR (e.kind='SETTLEMENT' AND ((e.payerId=g.selfId AND t.type='EXPENSE') OR (e.receiverId=g.selfId AND t.type='INCOME'))))"
+        )
+        none(
+            "SELECT c.accountId FROM card_cycles c JOIN accounts a ON a.id=c.accountId LEFT JOIN accounts f ON f.id=c.fundingId WHERE a.type!='CREDIT_CARD' OR c.closingDay NOT BETWEEN 1 AND 31 OR c.dueDays NOT BETWEEN 1 AND 60 OR (c.limitMinor IS NOT NULL AND c.limitMinor NOT BETWEEN 1 AND ${Money.MAX_MINOR}) OR c.minimumMinor NOT BETWEEN 0 AND ${Money.MAX_MINOR} OR c.revision<1 OR (c.fundingId IS NOT NULL AND (f.id IS NULL OR f.type='CREDIT_CARD' OR f.currency!=a.currency))"
+        )
+        none(
+            "SELECT s.id FROM card_statements s JOIN accounts a ON a.id=s.accountId WHERE a.type!='CREDIT_CARD' OR s.amountMinor NOT BETWEEN 0 AND ${Money.MAX_MINOR} OR s.minimumMinor NOT BETWEEN 0 AND s.amountMinor OR s.dueDay<s.closingDay OR s.closingDay NOT BETWEEN 3652 AND 84370 OR s.dueDay NOT BETWEEN 3652 AND 84370 OR s.revision<1"
+        )
+        none(
+            "SELECT id FROM statement_revisions WHERE beforeAmount NOT BETWEEN 0 AND ${Money.MAX_MINOR} OR beforeMinimum NOT BETWEEN 0 AND beforeAmount OR beforeDue NOT BETWEEN 3652 AND 84370 OR length(trim(reason)) NOT BETWEEN 1 AND 200"
+        )
+        none(
+            "SELECT accountId FROM card_statements WHERE voided=0 GROUP BY accountId,closingDay HAVING COUNT(*)>1"
+        )
+        none(
+            "SELECT p.id FROM statement_payments p JOIN card_statements s ON s.id=p.statementId JOIN transactions t ON t.id=p.recordId WHERE p.amountMinor<=0 OR t.type!='PAYMENT_IN' OR t.accountId!=s.accountId OR t.day<=s.closingDay"
+        )
+        none(
+            "SELECT p.recordId FROM statement_payments p JOIN transactions t ON t.id=p.recordId WHERE p.active=1 GROUP BY p.recordId HAVING SUM(p.amountMinor)>t.amountMinor"
+        )
+        none(
+            "SELECT s.id FROM card_statements s JOIN statement_payments p ON p.statementId=s.id JOIN transactions t ON t.id=p.recordId WHERE t.deleted=0 AND p.active=1 GROUP BY s.id HAVING SUM(p.amountMinor)>s.amountMinor"
+        )
+        none(
+            "SELECT p.id FROM payment_plans p JOIN accounts a ON a.id=p.accountId JOIN categories c ON c.id=p.categoryId WHERE p.currency!=a.currency OR c.type!='EXPENSE' OR p.kind NOT IN ('SUBSCRIPTION','BILL','EMI') OR p.status NOT IN ('ACTIVE','PAUSED','CANCELLED','ENDED') OR p.frequency NOT IN ('DAILY','WEEKLY','MONTHLY','QUARTERLY','YEARLY','CUSTOM') OR p.customDays NOT BETWEEN 1 AND 3650 OR p.anchorDay NOT BETWEEN 1 AND 31 OR length(trim(p.name)) NOT BETWEEN 1 AND 80 OR p.nextDay NOT BETWEEN 3652 AND 84370 OR (p.amountMinor IS NOT NULL AND p.amountMinor NOT BETWEEN 1 AND ${Money.MAX_MINOR}) OR (p.trialEnd IS NOT NULL AND p.trialEnd>p.nextDay) OR p.revision<1"
+        )
+        none(
+            "SELECT p.id FROM payment_plans p JOIN accounts a ON a.id=p.accountId LEFT JOIN transactions t ON t.id=p.purchaseId WHERE (p.kind='EMI' AND (t.id IS NULL OR t.deleted=1 OR t.type!='EXPENSE' OR t.accountId!=a.id OR a.type!='CREDIT_CARD' OR p.principalMinor!=t.amountMinor OR p.installments NOT BETWEEN 2 AND 120 OR p.frequency!='MONTHLY')) OR (p.kind!='EMI' AND (p.purchaseId IS NOT NULL OR p.installments!=0 OR p.principalMinor!=0))"
+        )
+        none(
+            "SELECT r.id FROM plan_payments r JOIN payment_plans p ON p.id=r.planId LEFT JOIN transactions t ON t.id=r.recordId WHERE r.amountMinor NOT BETWEEN 1 AND ${Money.MAX_MINOR} OR r.feeMinor NOT BETWEEN 0 AND ${Money.MAX_MINOR} OR r.paidDay NOT BETWEEN 3652 AND 84370 OR r.dueDay NOT BETWEEN 3652 AND 84370 OR (r.voided=0 AND r.occurrenceKey!=p.id||':'||r.dueDay) OR (r.voided=1 AND r.occurrenceKey!='void:'||r.id) OR (r.recordId IS NOT NULL AND (t.type!='EXPENSE' OR t.accountId!=p.accountId OR t.day!=r.paidDay OR (r.voided=0 AND t.deleted=1) OR t.amountMinor!=CASE WHEN p.kind='EMI' THEN r.feeMinor ELSE r.amountMinor END)) OR (p.kind!='EMI' AND (r.recordId IS NULL OR r.feeMinor!=0)) OR (p.kind='EMI' AND ((r.feeMinor=0 AND r.recordId IS NOT NULL) OR (r.feeMinor>0 AND r.recordId IS NULL)))"
+        )
+        none(
+            "SELECT recordId FROM plan_payments WHERE voided=0 AND recordId IS NOT NULL GROUP BY recordId HAVING COUNT(*)>1"
+        )
+        none(
+            "SELECT p.id FROM payment_plans p JOIN plan_payments r ON r.planId=p.id WHERE p.kind='EMI' AND r.voided=0 GROUP BY p.id HAVING SUM(r.amountMinor)>p.principalMinor OR COUNT(*)>p.installments"
+        )
+        none(
+            "SELECT l.recordId FROM group_ledger_links l JOIN plan_payments p ON p.recordId=l.recordId WHERE p.voided=0"
+        )
+        sql.query("SELECT offsets FROM card_cycles UNION ALL SELECT offsets FROM payment_plans")
+            .use { rows ->
+                while (rows.moveToNext()) app.traxos.finance.data.PlanDates.offsets(
+                    rows.getString(0)
+                )
+            }
+
         none("SELECT total FROM (SELECT COUNT(*) AS total FROM accounts) WHERE total>1000")
         none("SELECT total FROM (SELECT COUNT(*) AS total FROM debt_threads) WHERE total>10000")
         none(

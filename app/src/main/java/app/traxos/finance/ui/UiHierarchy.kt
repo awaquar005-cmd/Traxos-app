@@ -168,6 +168,24 @@ internal fun MoreScreen(navigate: (String) -> Unit) {
                         "People, repayments and card liabilities",
                         TraxosIcons.people,
                     ),
+                    ToolEntry(
+                        "groups",
+                        "Groups",
+                        "Local splits, members and settlements",
+                        TraxosIcons.people,
+                    ),
+                    ToolEntry(
+                        "cards",
+                        "Card statements",
+                        "Billing cycles, dues and installments",
+                        TraxosIcons.wallet,
+                    ),
+                    ToolEntry(
+                        "subscriptions",
+                        "Subscriptions & bills",
+                        "Renewals, actual payments and reminders",
+                        TraxosIcons.clock,
+                    ),
                     ToolEntry("plans", "Plans", "Budgets and savings progress", TraxosIcons.report),
                     ToolEntry("smart", "Smart Add", "Review shared text and SMS", TraxosIcons.spark),
                 )
@@ -234,18 +252,6 @@ internal fun MoreScreen(navigate: (String) -> Unit) {
                         "Savings & budgets",
                         "Targets, allocations and monthly limits",
                         TraxosIcons.target,
-                    ),
-                    ToolEntry(
-                        "groups",
-                        "Shared groups",
-                        "Invites, splits and settlements",
-                        TraxosIcons.people,
-                    ),
-                    ToolEntry(
-                        "subscriptions",
-                        "Subscriptions",
-                        "Renewals, trials and reminder flows",
-                        TraxosIcons.clock,
                     ),
                     ToolEntry(
                         "backup",

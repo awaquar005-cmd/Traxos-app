@@ -1,5 +1,23 @@
 # Current delivery
 
+- `downloads/TRAXOS-0.15.0-money-tools-personal.apk` — Personal code19, update-compatible signature.
+- `docs/MONEY_MODULES_DELIVERY_MANIFEST.json` — retained routes/old entities/protected sources and deferred live sharing.
+- `docs/validation/money-modules/` — executed tests/lint/build/signing and native host renders.
+
+# 0.15.0 changes
+
+- `data/Groups.kt`: local groups/members/events/shares and transactional read snapshots, exact split engine, immutable reversals, settlements and explicit report links.
+- `data/Obligations.kt`: card cycles/statements/revisions/matching, payment plans/occurrences/Undo, schedule/detection and reminder settings.
+- `obligations/FinanceReminders.kt`: private permission-aware local WorkManager reconciliation/receipts.
+- `ui/GroupsScreens.kt`, `CardSchedulesScreen.kt`, `SubscriptionScreens.kt`: functional wallet/detail/entry/history/settings flows.
+- `ui/MoneyToolsViewModel.kt`, `MoneyModuleComponents.kt`: lifecycle-owned single-flight writes and shared full-screen editor.
+- `data/Database.kt`, schema13, `LedgerRepository.kt`, `backup/PortableBackup.kt`: additive migration, personal-share reporting, linked-record guards, composite-key restore and financial validation.
+- `TraxosApplication.kt`, `ui/App.kt`, `Navigation.kt`, `UiHierarchy.kt`, `SettingsScreen.kt`, `domain/NavigationLayout.kt`: DI/work scheduling, real routes/optional slots, preserved settings/permission flow.
+- `MoneyModulesTest.kt`, `MoneyModulesUiTest.kt`, `FinanceReminderWorkerTest.kt`: accounting/recovery/migration/date/idempotence, native UI and actual worker fixtures.
+- `app/build.gradle.kts`: Personal code19/0.15.0-money-tools-personal; no new dependencies.
+
+# Current delivery
+
 - `downloads/TRAXOS-0.14.0-debts-personal.apk` — Personal code18, update-compatible signature.
 - `docs/DEBTS_DELIVERY_MANIFEST.json` — retained routes/old entities/protected sources.
 - `docs/validation/debts-credit/` — executed tests/lint/build/signing and native host renders.

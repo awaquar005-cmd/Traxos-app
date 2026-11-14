@@ -1,3 +1,7 @@
+# 0.15.0 preservation addendum
+
+Real local Groups, Card statements and Subscriptions & bills are added to More and optional navigation. Their former preview links alone are replaced; the reference preview catalog remains available. All existing routes/fields/defaults/QR/images/gifts/vault/CVV/lock/voice/recurring/IOUs/Plans/cloud/local backup behavior and brand/hero remain. Old Room12 entity structures are unchanged. Monthly/category reports intentionally recognize group personal shares and suppress explicitly linked cash/reimbursement entries. Backend sharing is deferred by owner choice, not claimed implemented.
+
 # 0.14.0 preservation addendum
 
 Real debts route is added, replacing only the More private-debt preview link. All prior routes, preview catalog, financial/gift/QR/images/vault/security/Plans/recurring/voice/default/preferences/Google/Drive/local recovery remain. New schema12 tables and backward-compatible archive reader preserve schema11 data; no vault export or dashboard hero change. See DEBTS_CREDIT.md.

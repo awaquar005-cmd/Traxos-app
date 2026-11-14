@@ -1,6 +1,8 @@
 # TRAXOS coding-agent handoff
 
-Current Personal release0.14.0 adds standalone private IOUs and existing card-liability overview (docs/DEBTS_CREDIT.md). Room12 is additive; keep schema11 backup import and exclude the card vault.
+Current0.15.0 adds offline local Groups, card statements and confirmed subscription/bill/EMI plans (docs/GROUPS_CARDS_BILLS.md). Owner deferred live sharing until backend setup: never claim accepted invitations or server-current balances. Room13 is additive; preserve schema11/12 archives, group self-share report semantics, prior entities/routes and vault exclusions.
+
+Historical Personal release0.14.0 adds standalone private IOUs and existing card-liability overview (docs/DEBTS_CREDIT.md). Room12 is additive; keep schema11 backup import and exclude the card vault.
 
 Read docs/V8_FEATURE_PRESERVATION.md, docs/V8_STATUS.md, docs/PROGRESS.md and the architecture before changing this app. Original HTMLs in docs/references/v8 are visual/interaction references, not a replacement specification, runtime or complete feature inventory. The V3 specification remains cumulative.
 

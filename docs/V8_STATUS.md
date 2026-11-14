@@ -1,3 +1,7 @@
+# Current0.15.0 addendum
+
+Offline local groups/members, four split modes, partial settlements/reversal history and personal-share reports; manual/estimated credit statements, cycle/limit/minimum/reminders and paired payments; subscription/bill/EMI plans, actual confirmation/matching, detection/history/Undo and private due reminders are implemented. Live invitations/group transport/authorization remain awaiting setup by owner instruction. Room13 and backup11/12 compatibility are tracked in GROUPS_CARDS_BILLS.md and current PROGRESS.md. Earlier tables below are historical snapshots.
+
 # 0.13.0 account and recovery addendum
 
 Native Drive consent, fixed-owner linking, encrypted resumable snapshots with remote read-back/restore, local-copy support and probed SAF selection are implemented. Email/password/Google account-login/provider linking use real Firebase endpoints with encrypted session storage, but owner configuration is still required; no Firebase API key/Web client was supplied and no real account/backend/phone result is claimed tested. Drive-only linking is independent of that setup. See OAUTH_DRIVE.md and the final validation report. All previous feature routes and schema11 remain; the older snapshots below are historical when superseded.

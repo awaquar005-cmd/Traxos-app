@@ -1,3 +1,7 @@
+# 0.15.0 scoped roadmap
+
+P1 offline groups/members, four deterministic split methods, personal-share reconciliation, partial net settlements/reversals and local history; P1 card cycles/statements/minimums/limits/reminders/EMI; P1 fixed/variable subscription/bill lifecycle, trial/end/quarterly/yearly/custom dates, approved-history detection and actual-payment matching/Undo. Acceptance covers preserved12→13 data/old archives, money conservation/no double counting, retries/operation collision, statement carry-forward, private notification dedupe and native forms. Live invitations, RLS and multi-device collaboration remain explicitly pending at owner direction. See GROUPS_CARDS_BILLS_PLAN.md, GROUPS_CARDS_BILLS.md and PROGRESS.md for actual delivery.
+
 # 0.14.0 scoped milestone
 
 P1 private IOU tracking and existing credit-liability overview: implement opening balance/person/direction, edits, partial/full repayment, adjustments, history/Undo, settle/archive/restore, per-currency totals, migration and encrypted-backup round trips. Acceptance: no synthetic income/expense, duplicate-safe operations, preserved records/routes, actionable configuration feedback and readable instruction padding. Group settlement, account-linked loan postings, interest and debt reminders remain planned, not implemented. See DEBTS_CREDIT.md and PROGRESS.md for executed validation.

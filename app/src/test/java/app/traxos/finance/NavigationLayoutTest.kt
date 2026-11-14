@@ -33,7 +33,7 @@ class NavigationLayoutTest {
                 assertThrows(IllegalArgumentException::class.java) { Layout.validate(slots) }
             }
         assertThrows(IllegalArgumentException::class.java) {
-            Layout.replace(Layout.defaults, 0, "groups")
+            Layout.replace(Layout.defaults, 0, "investments")
         }
     }
 

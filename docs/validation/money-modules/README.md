@@ -1,0 +1,13 @@
+# Groups, statements and payment plans validation
+
+Personal assemble, **273 tests passed (0 failures/errors/skips)** and lint passed: **0 errors, 23 warnings, 4 hint**. Signing matches0.14.0; ZIP/64-bit ELF16KiB alignment passed.
+
+[Exact suites/signature](host-results.json) · [Full build log](build.log) · [Preservation manifest](../../MONEY_MODULES_DELIVERY_MANIFEST.json). Native PNGs use isolated fixtures, never production dummy data.
+
+New tests cover all four split methods/stable remainders, invalid allocations/foreign members/operation collisions, personal-share and mixed-payer report conservation, partial settlements/reversals/restart, archived data, statement/minimum/limit/date/estimate handling, overlapping statements, paired payment/matching/unmatching/deletion, bank-confirmed adjustment history, fixed/variable plans, duplicate confirm/concurrent retries, matching/Undo, trial/end/pause/cancel, exact EMI principal/fees, leap/month-end/quarterly/yearly/custom schedules, conservative detection, reminder tokens/quiet hours, actual private worker delivery/dedupe/cancel/denied permission, schema12→13 preservation, actual schema12 encrypted-archive/idempotent restore and encrypted new-module roundtrip/composite-key restore. Native flows create groups with an inline member preserving draft, pay a statement in dark mode and create/confirm a subscription without posting upcoming dates. All prior242 tests retained; the old unimplemented-Groups assertion now rejects an actually unimplemented destination. Native tests await active, rendered controls after Room invalidation. Group/plan UI uses transactional relation snapshots after the full run exposed an intermediate missing-member state; the isolated new-module and legacy-transfer native suite passes after the fix.
+
+Live group invitations/collaboration/authorization intentionally await backend setup by owner choice. No real Google/Firebase/backend/physical phone/OEM/notification timing/keyboard/TalkBack/large-font certification is claimed. Existing ledger/card vault security boundaries remain unchanged.
+
+[Executed full test task log](test-execution.log) records the successful273-test execution. The final build log reuses that unchanged successful test output (`UP-TO-DATE`) while assembling and running lint.
+
+Host-test limitation: an existing legacy transfer Save-button poll intermittently timed out in full-suite runs while its isolated native test passed. Selected-account assertions were added; the final full273-test execution passed. This is not physical IME/phone certification; retain the transfer/keyboard device check. No production transfer accounting implementation was changed.

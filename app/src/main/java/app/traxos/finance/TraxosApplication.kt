@@ -51,6 +51,9 @@ open class TraxosApplication : Application(), androidx.work.Configuration.Provid
     }
     val recurring by lazy { app.traxos.finance.data.RecurringRepository(database) }
     val recurringScheduler by lazy { app.traxos.finance.recurring.RecurringScheduler(this) }
+    val financeScheduler by lazy { app.traxos.finance.obligations.FinanceScheduler(this) }
+    val groups by lazy { app.traxos.finance.data.GroupsRepository(database) }
+    val obligations by lazy { app.traxos.finance.data.ObligationsRepository(database) }
     val plans by lazy { app.traxos.finance.data.PlansRepository(database) }
     val database by lazy { TraxosDatabase.open(this) }
     val repository by lazy { LedgerRepository(database) }
@@ -70,5 +73,6 @@ open class TraxosApplication : Application(), androidx.work.Configuration.Provid
         super.onCreate()
         giftScheduler.start()
         recurringScheduler.start()
+        financeScheduler.start()
     }
 }

@@ -121,7 +121,8 @@ fun TraxosApp(vm: MainViewModel) {
             route.startsWith("account/") ||
             route.startsWith("gift_edit/") ||
             route.startsWith("ui_review") ||
-            route.startsWith("card_details/")
+            route.startsWith("card_details/") ||
+            route.startsWith("money_edit/")
     val transferEvents = remember {
         kotlinx.coroutines.channels.Channel<String>(kotlinx.coroutines.channels.Channel.BUFFERED)
     }
@@ -228,6 +229,7 @@ fun TraxosApp(vm: MainViewModel) {
         mainNav("transactions")
     }
     val feedback: (Feedback) -> Unit = { f ->
+        app.financeScheduler.kick()
         if (f.close) {
             snackbar.currentSnackbarData?.dismiss()
             vm.refresh()
@@ -292,6 +294,11 @@ fun TraxosApp(vm: MainViewModel) {
                                 "gift/{id}" -> "Gift card"
                                 "more" -> "More"
                                 "debts" -> "Debts & credit"
+                                "groups" -> "Groups"
+                                "group/{id}" -> "Group"
+                                "cards" -> "Card statements"
+                                "subscriptions" -> "Subscriptions & bills"
+                                "finance_reminders" -> "Payment reminders"
                                 "smart" -> "Smart Add"
                                 "plans" -> "Plans"
                                 "voice" -> "Voice entry"
@@ -320,6 +327,10 @@ fun TraxosApp(vm: MainViewModel) {
                                                 ?.route
                                                 ?.startsWith("settings") == true) ||
                                         route == "categories" ||
+                                        route.startsWith("group/") ||
+                                        route == "cards" ||
+                                        route == "subscriptions" ||
+                                        route == "finance_reminders" ||
                                         route.startsWith("labels/") ||
                                         route.startsWith("card_payment/") ||
                                         route == "settings" ||
@@ -343,6 +354,8 @@ fun TraxosApp(vm: MainViewModel) {
                                         if (route != "home") add("home" to "Dashboard")
                                         add("add" to "Quick add")
                                         if (route != "accounts") add("accounts" to "Accounts")
+                                        if (route == "accounts" || route == "debts")
+                                            add("cards" to "Card statements")
                                         add("smart" to "Smart review")
                                         if (route != "settings") add("settings" to "Settings")
                                         add("backup" to "Backup")
@@ -479,6 +492,9 @@ fun TraxosApp(vm: MainViewModel) {
                                 "reports" -> "reports"
                                 "accounts" -> "accounts"
                                 "voice" -> "voice"
+                                "cards" -> "cards"
+                                "subscriptions" -> "subscriptions"
+                                "finance_reminders" -> "finance_reminders"
                                 "gift_settings" -> "gift_settings"
                                 else -> "settings/$section"
                             }
@@ -543,6 +559,48 @@ fun TraxosApp(vm: MainViewModel) {
             }
             composable("deleted") {
                 RoutePage("deleted") { DeletedTransactionsScreen(vm, prefs.balancesHidden) }
+            }
+            composable("groups") {
+                RoutePage("groups") {
+                    GroupsWallet(currency = prefs.defaultCurrency, navigate = mainNav)
+                }
+            }
+            composable("group/{id}") { e ->
+                RoutePage("group") {
+                    GroupDetail(
+                        e.arguments?.getString("id").orEmpty(),
+                        mainNav,
+                        prefs.balancesHidden,
+                    )
+                }
+            }
+            composable("cards") {
+                RoutePage("cards") { CardSchedulesScreen(mainNav, prefs.balancesHidden) }
+            }
+            composable("subscriptions") {
+                RoutePage("subscriptions") { SubscriptionsScreen(mainNav, prefs.balancesHidden) }
+            }
+            composable("finance_reminders") {
+                RoutePage("finance_reminders") { FinanceReminderSettingsScreen() }
+            }
+            composable("money_edit/{kind}/{id}") { e ->
+                val kind = e.arguments?.getString("kind").orEmpty()
+                val id = e.arguments?.getString("id").orEmpty()
+                val close: () -> Unit = {
+                    nav.popBackStack()
+                    Unit
+                }
+                RoutePage("money_editor") {
+                    when (kind) {
+                        "GROUP",
+                        "GROUP_EXPENSE",
+                        "GROUP_SETTLE" -> GroupEditor(kind, id, prefs.defaultCurrency, close)
+                        "STATEMENT_EDIT" -> CardStatementAdjustmentEditor(id, close)
+                        "CYCLE",
+                        "STATEMENT" -> CardScheduleEditor(kind, id, close)
+                        else -> SubscriptionEditor(kind, id, close)
+                    }
+                }
             }
             composable("debts") {
                 val debts = remember(app.database) { DebtsRepository(app.database) }

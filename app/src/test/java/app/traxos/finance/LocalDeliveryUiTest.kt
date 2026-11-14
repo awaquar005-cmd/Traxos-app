@@ -121,7 +121,17 @@ class LocalDeliveryUiTest {
                 )
             transferAmount.performScrollTo().performTextReplacement("50")
             transferAmount.assertTextContains("50")
-            await("transfer_save")
+            compose.onNodeWithTag("selector_From account").assertTextContains("First bank · INR")
+            compose.onNodeWithTag("selector_To account").assertTextContains("Pocket cash · INR")
+            try {
+                await("transfer_save")
+            } catch (e: AssertionError) {
+                val roots = compose.onAllNodes(isRoot(), useUnmergedTree = true)
+                for (i in 0 until roots.fetchSemanticsNodes().size) println(
+                    roots[i].printToString()
+                )
+                throw e
+            }
             compose.onNodeWithTag("transfer_save").performClick()
             await("page_home")
             compose.waitUntil(10000) { runBlocking { app.repository.dao.recordCount() == 2L } }

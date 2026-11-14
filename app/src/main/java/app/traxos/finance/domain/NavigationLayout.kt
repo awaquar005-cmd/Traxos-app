@@ -15,6 +15,9 @@ object NavigationLayout {
             "plans",
             "voice",
             "debts",
+            "groups",
+            "cards",
+            "subscriptions",
         )
     // Default positions remain stable when new implemented screens join the registry.
     val defaults = listOf("home", "transactions", "accounts", "settings")

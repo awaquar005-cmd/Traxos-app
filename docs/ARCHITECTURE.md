@@ -1,3 +1,9 @@
+# 0.15.0 money-module boundary
+
+Group/plan UI reads use Room @Transaction relation snapshots to prevent transient missing-member or final-installment states. GroupsRepository owns exact split allocations and immutable local events; every unreversed group event contributes the local self share to personal summary/category reports. Explicit existing-payment links suppress ordinary ledger report amounts, while account balances retain the full real cash movement. Settlement links suppress income/expense because shares were already recognized. Ledger edits/deletes guard active links. No shared server transport exists yet by owner choice.
+
+ObligationsRepository owns immutable occurrence identities, manually confirmed expenses or evidence matching, historical card statement metadata/revisions and paired bill payments via a private ledger writer inside Room transactions. Card statements are overlapping snapshots; each sees actual payments after close, not summed separate liabilities. EMI principal is already booked and is never posted twice. WorkManager owns private receipt-deduped reminders; ViewModels own lifecycle/single-flight controls. Room13 is additive; portable restore uses actual primary keys and validates new financial references. See GROUPS_CARDS_BILLS.md.
+
 # 0.14.0 debt boundary
 
 Private IOUs use two additive Room12 tables with revision-checked repository transactions and idempotent immutable movements. They do not post bank cash flows or inflate existing card liabilities. UI reads reactive Room sources; card payment delegates to the existing paired ledger writer. Snapshots include/validate new tables and read schema11 archives without debt rows. Navigation adds an optional real debts route without changing saved slots. Account form groups opt into12dp/10dp spacing; list groups keep their compact layout. See DEBTS_CREDIT.md.

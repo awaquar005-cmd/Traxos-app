@@ -215,12 +215,12 @@ interface LedgerDao {
     ): PagingSource<Int, RecordRow>
 
     @Query(
-        "SELECT a.currency, COALESCE(SUM(CASE WHEN t.type = 'EXPENSE' THEN t.amountMinor WHEN t.type = 'REFUND' THEN -t.amountMinor ELSE 0 END),0) AS expenseMinor, COALESCE(SUM(CASE WHEN t.type = 'INCOME' THEN t.amountMinor ELSE 0 END),0) AS incomeMinor FROM transactions t JOIN accounts a ON a.id = t.accountId WHERE t.deleted = 0 AND t.profileId = 'local' AND t.day >= :start AND t.day < :end GROUP BY a.currency"
+        "SELECT currency,SUM(expenseMinor) AS expenseMinor,SUM(incomeMinor) AS incomeMinor FROM (SELECT a.currency, COALESCE(SUM(CASE WHEN t.type='EXPENSE' THEN COALESCE((SELECT reportMinor FROM group_ledger_links WHERE recordId=t.id),t.amountMinor) WHEN t.type='REFUND' THEN -t.amountMinor ELSE 0 END),0) AS expenseMinor,COALESCE(SUM(CASE WHEN t.type='INCOME' THEN COALESCE((SELECT reportMinor FROM group_ledger_links WHERE recordId=t.id),t.amountMinor) ELSE 0 END),0) AS incomeMinor FROM transactions t JOIN accounts a ON a.id=t.accountId WHERE t.deleted=0 AND t.profileId='local' AND t.day>=:start AND t.day<:end GROUP BY a.currency UNION ALL SELECT g.currency,SUM(s.amountMinor) AS expenseMinor,0 AS incomeMinor FROM group_shares s JOIN group_events e ON e.id=s.eventId JOIN shared_groups g ON g.id=e.groupId WHERE e.kind='EXPENSE' AND s.memberId=g.selfId AND e.day>=:start AND e.day<:end AND NOT EXISTS(SELECT 1 FROM group_events r WHERE r.reversalOf=e.id) GROUP BY g.currency) GROUP BY currency"
     )
     fun summary(start: Long, end: Long): Flow<List<Summary>>
 
     @Query(
-        "SELECT a.currency, c.id AS categoryId, c.name AS categoryName, c.icon AS categoryIcon, c.color AS categoryColor, SUM(CASE WHEN t.type='EXPENSE' THEN t.amountMinor ELSE 0 END) AS expenseMinor, SUM(CASE WHEN t.type='REFUND' THEN t.amountMinor ELSE 0 END) AS refundMinor, SUM(CASE WHEN t.type='INCOME' THEN t.amountMinor ELSE 0 END) AS incomeMinor, COUNT(*) AS entries FROM transactions t JOIN accounts a ON a.id=t.accountId JOIN categories c ON c.id=t.categoryId WHERE t.profileId='local' AND t.deleted=0 AND t.type IN ('EXPENSE','REFUND','INCOME') AND t.day>=:start AND t.day<:end GROUP BY a.currency,c.id ORDER BY a.currency,c.name COLLATE NOCASE,c.id"
+        "SELECT currency,categoryId,categoryName,categoryIcon,categoryColor,SUM(expenseMinor) AS expenseMinor,SUM(refundMinor) AS refundMinor,SUM(incomeMinor) AS incomeMinor,SUM(entries) AS entries FROM (SELECT a.currency,c.id AS categoryId,c.name AS categoryName,c.icon AS categoryIcon,c.color AS categoryColor,SUM(CASE WHEN t.type='EXPENSE' THEN COALESCE((SELECT reportMinor FROM group_ledger_links WHERE recordId=t.id),t.amountMinor) ELSE 0 END) AS expenseMinor,SUM(CASE WHEN t.type='REFUND' THEN t.amountMinor ELSE 0 END) AS refundMinor,SUM(CASE WHEN t.type='INCOME' THEN COALESCE((SELECT reportMinor FROM group_ledger_links WHERE recordId=t.id),t.amountMinor) ELSE 0 END) AS incomeMinor,COUNT(*) AS entries FROM transactions t JOIN accounts a ON a.id=t.accountId JOIN categories c ON c.id=t.categoryId WHERE t.profileId='local' AND t.deleted=0 AND t.type IN ('EXPENSE','REFUND','INCOME') AND t.day>=:start AND t.day<:end GROUP BY a.currency,c.id UNION ALL SELECT g.currency,c.id AS categoryId,c.name AS categoryName,c.icon AS categoryIcon,c.color AS categoryColor,SUM(s.amountMinor) AS expenseMinor,0 AS refundMinor,0 AS incomeMinor,COUNT(*) AS entries FROM group_shares s JOIN group_events e ON e.id=s.eventId JOIN shared_groups g ON g.id=e.groupId JOIN categories c ON c.id=e.categoryId WHERE e.kind='EXPENSE' AND s.memberId=g.selfId AND e.day>=:start AND e.day<:end AND NOT EXISTS(SELECT 1 FROM group_events r WHERE r.reversalOf=e.id) GROUP BY g.currency,c.id) GROUP BY currency,categoryId ORDER BY currency,categoryName COLLATE NOCASE,categoryId"
     )
     fun categoryReport(start: Long, end: Long): Flow<List<CategoryReport>>
 
@@ -304,11 +304,29 @@ interface LedgerDao {
             GoalMovement::class,
             DebtThread::class,
             DebtMovement::class,
+            ExpenseGroup::class,
+            GroupMember::class,
+            GroupEvent::class,
+            GroupShare::class,
+            GroupLedgerLink::class,
+            CardCycle::class,
+            CardStatement::class,
+            StatementPayment::class,
+            StatementRevision::class,
+            PaymentPlan::class,
+            PlanPayment::class,
+            IgnoredPlan::class,
+            FinanceReminderSettings::class,
+            FinanceReminderReceipt::class,
         ],
-    version = 12,
+    version = 13,
     exportSchema = true,
 )
 abstract class TraxosDatabase : RoomDatabase() {
+    abstract fun groups(): GroupsDao
+
+    abstract fun obligations(): ObligationsDao
+
     abstract fun debts(): DebtsDao
 
     abstract fun plans(): PlansDao
@@ -529,6 +547,103 @@ abstract class TraxosDatabase : RoomDatabase() {
                 }
             }
 
+        val MIGRATION_12_13 =
+            object : Migration(12, 13) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS `shared_groups` (id TEXT NOT NULL,name TEXT NOT NULL,currency TEXT NOT NULL,selfId TEXT NOT NULL,archived INTEGER NOT NULL,revision INTEGER NOT NULL,operationId TEXT NOT NULL,PRIMARY KEY(id))"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS `group_members` (id TEXT NOT NULL,groupId TEXT NOT NULL,name TEXT NOT NULL,archived INTEGER NOT NULL,revision INTEGER NOT NULL,operationId TEXT NOT NULL,PRIMARY KEY(id),FOREIGN KEY(groupId) REFERENCES shared_groups(id) ON UPDATE NO ACTION ON DELETE RESTRICT)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_group_members_groupId ON `group_members` (groupId)"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS `group_events` (id TEXT NOT NULL,groupId TEXT NOT NULL,kind TEXT NOT NULL,payerId TEXT NOT NULL,receiverId TEXT,amountMinor INTEGER NOT NULL,day INTEGER NOT NULL,title TEXT NOT NULL,splitMethod TEXT NOT NULL,createdAt INTEGER NOT NULL,reversalOf TEXT,categoryId TEXT,PRIMARY KEY(id),FOREIGN KEY(groupId) REFERENCES shared_groups(id) ON UPDATE NO ACTION ON DELETE RESTRICT)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_group_events_day ON group_events(day)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_group_events_groupId_createdAt ON `group_events` (groupId,createdAt)"
+                    )
+                    db.execSQL(
+                        "CREATE UNIQUE INDEX IF NOT EXISTS index_group_events_reversalOf ON `group_events` (reversalOf)"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS `group_shares` (eventId TEXT NOT NULL,memberId TEXT NOT NULL,amountMinor INTEGER NOT NULL,PRIMARY KEY(eventId,memberId),FOREIGN KEY(eventId) REFERENCES group_events(id) ON UPDATE NO ACTION ON DELETE RESTRICT,FOREIGN KEY(memberId) REFERENCES group_members(id) ON UPDATE NO ACTION ON DELETE RESTRICT)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_group_shares_memberId ON `group_shares` (memberId)"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS `group_ledger_links` (recordId TEXT NOT NULL,eventId TEXT NOT NULL,reportMinor INTEGER NOT NULL,PRIMARY KEY(recordId),FOREIGN KEY(recordId) REFERENCES transactions(id) ON UPDATE NO ACTION ON DELETE RESTRICT,FOREIGN KEY(eventId) REFERENCES group_events(id) ON UPDATE NO ACTION ON DELETE RESTRICT)"
+                    )
+                    db.execSQL(
+                        "CREATE UNIQUE INDEX IF NOT EXISTS index_group_ledger_links_eventId ON `group_ledger_links` (eventId)"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS `card_cycles` (accountId TEXT NOT NULL,closingDay INTEGER NOT NULL,dueDays INTEGER NOT NULL,limitMinor INTEGER,minimumMinor INTEGER NOT NULL,fundingId TEXT,reminders INTEGER NOT NULL,offsets TEXT NOT NULL,revision INTEGER NOT NULL,operationId TEXT NOT NULL,PRIMARY KEY(accountId),FOREIGN KEY(accountId) REFERENCES accounts(id) ON UPDATE NO ACTION ON DELETE RESTRICT)"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS `card_statements` (id TEXT NOT NULL,accountId TEXT NOT NULL,closingDay INTEGER NOT NULL,dueDay INTEGER NOT NULL,amountMinor INTEGER NOT NULL,minimumMinor INTEGER NOT NULL,estimated INTEGER NOT NULL,voided INTEGER NOT NULL,revision INTEGER NOT NULL,operationId TEXT NOT NULL,PRIMARY KEY(id),FOREIGN KEY(accountId) REFERENCES accounts(id) ON UPDATE NO ACTION ON DELETE RESTRICT)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_card_statements_accountId_closingDay ON `card_statements` (accountId,closingDay)"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS statement_revisions (id TEXT NOT NULL,statementId TEXT NOT NULL,beforeAmount INTEGER NOT NULL,beforeMinimum INTEGER NOT NULL,beforeDue INTEGER NOT NULL,beforeEstimated INTEGER NOT NULL,reason TEXT NOT NULL,createdAt INTEGER NOT NULL,PRIMARY KEY(id),FOREIGN KEY(statementId) REFERENCES card_statements(id) ON UPDATE NO ACTION ON DELETE RESTRICT)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_statement_revisions_statementId ON statement_revisions(statementId)"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS `statement_payments` (id TEXT NOT NULL,statementId TEXT NOT NULL,recordId TEXT NOT NULL,amountMinor INTEGER NOT NULL,createdAt INTEGER NOT NULL,active INTEGER NOT NULL,PRIMARY KEY(id),FOREIGN KEY(statementId) REFERENCES card_statements(id) ON UPDATE NO ACTION ON DELETE RESTRICT,FOREIGN KEY(recordId) REFERENCES transactions(id) ON UPDATE NO ACTION ON DELETE RESTRICT)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_statement_payments_statementId ON `statement_payments` (statementId)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_statement_payments_recordId ON `statement_payments` (recordId)"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS `payment_plans` (id TEXT NOT NULL,kind TEXT NOT NULL,name TEXT NOT NULL,accountId TEXT NOT NULL,categoryId TEXT NOT NULL,currency TEXT NOT NULL,amountMinor INTEGER,frequency TEXT NOT NULL,customDays INTEGER NOT NULL,anchorDay INTEGER NOT NULL,nextDay INTEGER NOT NULL,trialEnd INTEGER,endDay INTEGER,status TEXT NOT NULL,reminders INTEGER NOT NULL,offsets TEXT NOT NULL,purchaseId TEXT,installments INTEGER NOT NULL,principalMinor INTEGER NOT NULL,revision INTEGER NOT NULL,operationId TEXT NOT NULL,PRIMARY KEY(id),FOREIGN KEY(accountId) REFERENCES accounts(id) ON UPDATE NO ACTION ON DELETE RESTRICT,FOREIGN KEY(categoryId) REFERENCES categories(id) ON UPDATE NO ACTION ON DELETE RESTRICT)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_payment_plans_accountId ON `payment_plans` (accountId)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_payment_plans_categoryId ON `payment_plans` (categoryId)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_payment_plans_status_nextDay ON `payment_plans` (status,nextDay)"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS `plan_payments` (id TEXT NOT NULL,planId TEXT NOT NULL,dueDay INTEGER NOT NULL,paidDay INTEGER NOT NULL,amountMinor INTEGER NOT NULL,feeMinor INTEGER NOT NULL,recordId TEXT,createdAt INTEGER NOT NULL,occurrenceKey TEXT NOT NULL,createdRecord INTEGER NOT NULL,voided INTEGER NOT NULL,PRIMARY KEY(id),FOREIGN KEY(planId) REFERENCES payment_plans(id) ON UPDATE NO ACTION ON DELETE RESTRICT,FOREIGN KEY(recordId) REFERENCES transactions(id) ON UPDATE NO ACTION ON DELETE RESTRICT)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_plan_payments_planId_dueDay ON `plan_payments` (planId,dueDay)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_plan_payments_recordId ON `plan_payments` (recordId)"
+                    )
+                    db.execSQL(
+                        "CREATE UNIQUE INDEX IF NOT EXISTS index_plan_payments_occurrenceKey ON plan_payments(occurrenceKey)"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS `plan_ignored` (key TEXT NOT NULL,PRIMARY KEY(`key`))"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS `finance_reminder_settings` (id INTEGER NOT NULL,enabled INTEGER NOT NULL,offsets TEXT NOT NULL,quietStart INTEGER NOT NULL,quietEnd INTEGER NOT NULL,PRIMARY KEY(id))"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS `finance_reminder_receipts` (token TEXT NOT NULL,sentAt INTEGER NOT NULL,PRIMARY KEY(token))"
+                    )
+                }
+            }
+
+        // Only one active occurrence per plan/due date; reversed rows retain immutable identity.
         fun open(context: Context, name: String = "traxos.db"): TraxosDatabase =
             Room.databaseBuilder(context, TraxosDatabase::class.java, name)
                 .addMigrations(
@@ -543,6 +658,7 @@ abstract class TraxosDatabase : RoomDatabase() {
                     MIGRATION_9_10,
                     MIGRATION_10_11,
                     MIGRATION_11_12,
+                    MIGRATION_12_13,
                 )
                 .addCallback(
                     object : Callback() {

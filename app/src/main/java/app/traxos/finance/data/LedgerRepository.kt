@@ -117,6 +117,13 @@ class LedgerRepository(private val db: TraxosDatabase) {
             LocalDate.ofEpochDay(day)
             require(note.length <= 500) { "Note must contain at most 500 characters" }
             val old = dao.record(id)
+            require(
+                db.groups().link(id) == null &&
+                    db.obligations().paymentForRecord(id) == null &&
+                    db.obligations().plans().first().none { it.purchaseId == id }
+            ) {
+                "This transaction belongs to a group or payment plan. Reverse/unlink the group event first; payment-plan history must be preserved."
+            }
             require(old?.linkId == null) { "Use paired payment controls for card payments" }
             require(old?.revision == expectedRevision && old?.deleted != true) {
                 "Transaction changed. Reopen it before saving."
@@ -187,6 +194,13 @@ class LedgerRepository(private val db: TraxosDatabase) {
     ) =
         mutate(operationId) {
             val old = requireNotNull(dao.record(id)) { "Transaction not found" }
+            require(
+                db.groups().link(id) == null &&
+                    db.obligations().paymentForRecord(id) == null &&
+                    db.obligations().plans().first().none { it.purchaseId == id }
+            ) {
+                "This transaction is linked to a group or payment plan. Preserve its history or reverse the group link first."
+            }
             require(old.revision == expectedRevision) {
                 "Transaction changed. Reopen it before continuing."
             }

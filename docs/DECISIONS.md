@@ -1,3 +1,11 @@
+# 0.15.0 decisions
+
+- Owner explicitly chose local groups while live invitations/collaboration await setup; never simulate acceptance, current shared balances or backend authorization.
+- Recognize self shares across all unreversed local group expenses, including mixed payers; explicitly linked full payments/reimbursements/settlements are suppressed from ordinary reports. Group rows do not post bank transactions.
+- Card statements overlap: actual payments after closing reduce each applicable snapshot. Audit allocations do not create money or artificial extra dues. Bank-confirmed revisions retain old figures; do not infer refund/interest/minimum formulas.
+- Subscriptions/bills require actual confirmation or matching. Preserve legacy auto-posting recurring rules and warn about overlap. EMI tracks already-booked principal; fees remain explicit expenses.
+- Add no SDK; use Room13, existing exact Money/ledger/backup, native permission APIs and private WorkManager reminders.
+
 # 0.14.0 decisions
 
 - IOUs start as explicit standalone tracking of existing debts; no implicit expense/income or duplicate bank writer. Existing card liabilities stay ledger-derived. Bank-linked lending and group integration require a later accounting contract.
