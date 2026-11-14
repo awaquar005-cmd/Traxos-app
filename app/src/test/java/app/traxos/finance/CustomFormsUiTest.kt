@@ -54,12 +54,14 @@ class CustomFormsUiTest {
             }
             compose.onNodeWithTag("center_action").performClick()
             compose.waitUntil(5000) {
+                compose.mainClock.advanceTimeBy(32)
                 compose.onAllNodesWithTag("input_amount").fetchSemanticsNodes().isNotEmpty()
             }
             compose.onNodeWithTag("input_amount").performTextInput("0")
             awaitEnabled("form_save")
             compose.onNodeWithTag("form_save").performClick()
             compose.waitUntil(5000) {
+                compose.mainClock.advanceTimeBy(32)
                 compose.onAllNodesWithTag("form_error").fetchSemanticsNodes().isNotEmpty()
             }
             compose.onNodeWithTag("input_amount").performTextReplacement("25.00")
@@ -84,6 +86,7 @@ class CustomFormsUiTest {
                     .action!!
             compose.runOnIdle { repeat(10) { save() } }
             compose.waitUntil(10000) {
+                compose.mainClock.advanceTimeBy(32)
                 compose.onAllNodesWithTag("page_transaction_form").fetchSemanticsNodes().isEmpty()
             }
             assertEquals(1L, runBlocking { app.repository.dao.recordCount() })
@@ -92,9 +95,11 @@ class CustomFormsUiTest {
             assertEquals(LocalDate.now().minusDays(1).toEpochDay(), record.day)
             compose.onNodeWithTag("nav_transactions").performClick()
             compose.waitUntil(10000) {
+                compose.mainClock.advanceTimeBy(32)
                 compose.onAllNodesWithText("UI saved expense").fetchSemanticsNodes().isNotEmpty()
             }
-            compose.onNodeWithText("UI saved expense").performClick()
+            compose.waitForIdle()
+            compose.onNodeWithText("UI saved expense").performScrollTo().performClick()
             openDelete()
             compose.onNodeWithText("Cancel").performClick()
             compose.onNodeWithTag("traxos_dialog").assertDoesNotExist()
@@ -124,6 +129,7 @@ class CustomFormsUiTest {
             compose.onNodeWithTag("nav_accounts").performClick()
             compose.onNodeWithText("Add account").performClick()
             compose.waitUntil(5000) {
+                compose.mainClock.advanceTimeBy(32)
                 compose.onAllNodesWithTag("input_account_name").fetchSemanticsNodes().isNotEmpty()
             }
             compose.onNodeWithTag("selector_Account type").performClick()
@@ -142,13 +148,16 @@ class CustomFormsUiTest {
             awaitEnabled("form_save")
             compose.onNodeWithTag("form_save").performClick()
             compose.waitUntil(10000) {
+                compose.mainClock.advanceTimeBy(32)
                 compose.onAllNodesWithTag("page_account_form").fetchSemanticsNodes().isEmpty()
             }
             compose.waitUntil(10000) {
+                compose.mainClock.advanceTimeBy(32)
                 compose.onAllNodesWithText("New wallet").fetchSemanticsNodes().isNotEmpty()
             }
             compose.onNodeWithText("New wallet").performClick()
             compose.waitUntil(5000) {
+                compose.mainClock.advanceTimeBy(32)
                 compose.onAllNodesWithTag("input_account_name").fetchSemanticsNodes().isNotEmpty()
             }
             compose.onNodeWithTag("input_account_name").performTextReplacement("Renamed wallet")
@@ -171,17 +180,20 @@ class CustomFormsUiTest {
             awaitHome()
             compose.onNodeWithTag("center_action").performClick()
             compose.waitUntil(5000) {
+                compose.mainClock.advanceTimeBy(32)
                 compose.onAllNodesWithTag("input_amount").fetchSemanticsNodes().isNotEmpty()
             }
             compose.onNodeWithTag("input_amount").performTextInput("12.50")
             compose.onNodeWithText("Create account").performScrollTo().performClick()
             compose.waitUntil(5000) {
+                compose.mainClock.advanceTimeBy(32)
                 compose.onAllNodesWithTag("input_account_name").fetchSemanticsNodes().isNotEmpty()
             }
             compose.onNodeWithTag("input_account_name").performTextInput("Draft account")
             awaitEnabled("form_save")
             compose.onNodeWithTag("form_save").performClick()
             compose.waitUntil(10000) {
+                compose.mainClock.advanceTimeBy(32)
                 compose.onAllNodesWithTag("page_account_form").fetchSemanticsNodes().isEmpty()
             }
             compose.onNodeWithTag("page_transaction_form").assertExists()
@@ -195,6 +207,7 @@ class CustomFormsUiTest {
             }
             // Wait on the visible completion state so Robolectric pumps Android main continuations.
             compose.waitUntil(10000) {
+                compose.mainClock.advanceTimeBy(32)
                 compose.onAllNodesWithTag("page_transaction_form").fetchSemanticsNodes().isEmpty()
             }
             assertEquals(1L, runBlocking { app.repository.dao.recordCount() })
@@ -207,6 +220,7 @@ class CustomFormsUiTest {
 
     private fun awaitEnabled(tag: String) {
         compose.waitUntil(5000) {
+            compose.mainClock.advanceTimeBy(32)
             compose.onAllNodes(hasTestTag(tag) and isEnabled()).fetchSemanticsNodes().isNotEmpty()
         }
     }
@@ -215,6 +229,7 @@ class CustomFormsUiTest {
         awaitEnabled("form_delete")
         compose.onNodeWithTag("form_delete").performScrollTo().performClick()
         compose.waitUntil(5000) {
+            compose.mainClock.advanceTimeBy(32)
             compose.onAllNodesWithTag("traxos_dialog").fetchSemanticsNodes().isNotEmpty()
         }
     }
@@ -245,6 +260,7 @@ class CustomFormsUiTest {
 
     private fun awaitHome() {
         compose.waitUntil(15000) {
+            compose.mainClock.advanceTimeBy(32)
             compose.onAllNodesWithText("TOTAL BALANCE").fetchSemanticsNodes().isNotEmpty()
         }
     }

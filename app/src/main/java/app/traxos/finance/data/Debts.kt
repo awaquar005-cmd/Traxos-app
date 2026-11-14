@@ -221,6 +221,9 @@ class DebtsRepository(val db: TraxosDatabase) {
                     "Debt changed or archived; reopen it"
                 }
                 val last = requireNotNull(db.debts().last(id)) { "Nothing to undo" }
+                require(db.planning().movementFunding(last.id) == null) {
+                    "Use linked Undo from the debt page"
+                }
                 val next = Math.subtractExact(old.outstandingMinor, last.deltaMinor)
                 require(next in 0..Money.MAX_MINOR)
                 db.debts()

@@ -87,6 +87,10 @@ internal fun SettingsScreen(vm: MainViewModel, openSection: (String) -> Unit) {
             }
         }
         SettingsGroup("MONEY & TOOLS") {
+            SettingsRow("Debt & planning alerts", "Budget thresholds, debt and goal reminders") {
+                openSection("planning_settings")
+            }
+
             SettingsRow("Card statements", "Cycles, minimum dues and card payments") {
                 openSection("cards")
             }

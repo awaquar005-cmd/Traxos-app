@@ -1,3 +1,7 @@
+# Current extension
+
+Current0.16.0 adds principal-only account-linked IOUs, selected contacts/explicit sharing, budget periods/thresholds and account-backed goals/deadlines. Room14 is additive; preserve old entities and schema11–14 encrypted snapshots, reservation ownership and principal/report semantics. Read docs/DEBT_PLANNING_EXTENSIONS.md. Do not undo allocated/archive safeguards or claim bank payment execution.
+
 # TRAXOS coding-agent handoff
 
 Current0.15.0 adds offline local Groups, card statements and confirmed subscription/bill/EMI plans (docs/GROUPS_CARDS_BILLS.md). Owner deferred live sharing until backend setup: never claim accepted invitations or server-current balances. Room13 is additive; preserve schema11/12 archives, group self-share report semantics, prior entities/routes and vault exclusions.

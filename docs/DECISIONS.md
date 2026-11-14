@@ -1,3 +1,11 @@
+# 0.16.0 decisions
+
+- Keep loan principal distinct from income/spending; match rather than repost existing bank records, with explicit release and linked Undo. Never initiate bank payments.
+- Contact picker instead of broad contacts permission; explicit editable WhatsApp preview instead of automatic messaging.
+- Salary anchors clamp per month, fixed periods are inclusive; exact integer threshold arithmetic avoids overflow.
+- Goal earmarks do not change account balances; actual transfers use existing paired writer. Aggregate reservations include archived goals and never silently disappear. Later spending shows underfunding.
+- Reuse WorkManager delivery/quiet hours/receipt infrastructure; reminders are best effort, no exact alarm. General Room encryption is not claimed.
+
 # 0.15.0 decisions
 
 - Owner explicitly chose local groups while live invitations/collaboration await setup; never simulate acceptance, current shared balances or backend authorization.

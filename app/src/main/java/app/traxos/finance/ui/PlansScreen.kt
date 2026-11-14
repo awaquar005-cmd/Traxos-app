@@ -24,7 +24,19 @@ internal fun PlansScreen(
     defaultCurrency: String,
     recurring: () -> Unit,
     hidden: Boolean = false,
+    navigate: (String) -> Unit = {},
+    changed: () -> Unit = {},
 ) {
+    val extension = remember(repo.db) { PlanningExtensionsRepository(repo.db) }
+    val loadedGoalPreferences by extension.dao.goalPreferences().collectAsStateWithLifecycle(null)
+    val goalPreferences = loadedGoalPreferences.orEmpty()
+    val goalFunding by extension.dao.goalFunding().collectAsStateWithLifecycle(emptyList())
+    val reservations by extension.dao.reservations().collectAsStateWithLifecycle(emptyList())
+    val accounts by repo.db.ledger().accounts().collectAsStateWithLifecycle(emptyList())
+    val rules by extension.dao.budgetRules().collectAsStateWithLifecycle(emptyList())
+    val settings by extension.dao.settings().collectAsStateWithLifecycle(PlanningSettings())
+    var historyGoal by remember { mutableStateOf<SavingsGoal?>(null) }
+    var undoGoal by remember { mutableStateOf<SavingsGoal?>(null) }
     val budgets by
         remember(repo) { repo.budgets.map<List<Budget>, List<Budget>?> { it } }
             .collectAsStateWithLifecycle(null)
@@ -59,6 +71,7 @@ internal fun PlansScreen(
         scope.launch {
             try {
                 block()
+                changed()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: IllegalArgumentException) {
@@ -69,6 +82,21 @@ internal fun PlansScreen(
                 busy = false
             }
         }
+    }
+    historyGoal?.let { GoalHistorySheet(it, { historyGoal = null }, extension, hidden) }
+    undoGoal?.let { g ->
+        TraxosDialog(
+            "Undo linked progress?",
+            "Only undo an accidental record. A transfer created with this progress is reversed in the ledger, not by your bank. Already-spent transferred funds cannot be undone.",
+            "Undo",
+            {
+                undoGoal = null
+                act { extension.undoGoal(g.id, g.revision, UUID.randomUUID().toString()) }
+            },
+            { undoGoal = null },
+            destructive = true,
+            enabled = !busy,
+        )
     }
     if (editor == "budget") {
         val original = budget
@@ -86,6 +114,12 @@ internal fun PlansScreen(
                 )
             }
         val operation = rememberSaveable(original?.id) { UUID.randomUUID().toString() }
+        val rule = rules.firstOrNull { it.budgetId == original?.id }
+        var alerts by rememberSaveable(original?.id) { mutableStateOf(rule?.enabled ?: true) }
+        var thresholds by
+            rememberSaveable(original?.id) {
+                mutableStateOf(rule?.thresholds ?: settings?.thresholds ?: "80,100")
+            }
         TraxosSheet(
             if (original == null) "New budget" else "Edit budget",
             {
@@ -128,6 +162,14 @@ internal fun PlansScreen(
                 enabled = !busy,
                 id = "budget_amount",
             )
+            TraxosCheckbox(alerts, { alerts = it }, "Threshold alerts", enabled = !busy)
+            if (alerts)
+                TraxosInput(
+                    "Threshold percentages",
+                    thresholds,
+                    { thresholds = it },
+                    enabled = !busy,
+                )
             if (error != null) TraxosNotice(error!!, NoticeKind.ERROR)
             TraxosButton(
                 {
@@ -135,13 +177,15 @@ internal fun PlansScreen(
                         require(all || category.isNotBlank()) {
                             "Choose a category or All spending"
                         }
-                        repo.budget(
+                        extension.monthly(
                             selectedMonth,
                             currency,
                             if (all) null else category,
                             Money.parse(amount, currency),
                             original?.revision ?: 0,
                             operation,
+                            alerts,
+                            thresholds,
                         )
                         editor = ""
                     }
@@ -154,7 +198,7 @@ internal fun PlansScreen(
             }
         }
     }
-    if (editor == "goal") {
+    if (editor == "goal" && loadedGoalPreferences != null) {
         val original = goal
         val id = rememberSaveable(original?.id) { original?.id ?: UUID.randomUUID().toString() }
         val operation = rememberSaveable(original?.id) { UUID.randomUUID().toString() }
@@ -166,6 +210,24 @@ internal fun PlansScreen(
                 mutableStateOf(
                     original?.let { Money.editable(it.targetMinor, it.currency) }.orEmpty()
                 )
+            }
+        val pref = goalPreferences.firstOrNull { it.goalId == original?.id }
+        var deadline by
+            rememberSaveable(original?.id, pref?.revision) {
+                mutableStateOf(
+                    pref
+                        ?.deadlineDay
+                        ?.let { java.time.LocalDate.ofEpochDay(it).toString() }
+                        .orEmpty()
+                )
+            }
+        var reminders by
+            rememberSaveable(original?.id, pref?.revision) {
+                mutableStateOf(pref?.reminders ?: true)
+            }
+        var offsets by
+            rememberSaveable(original?.id, pref?.revision) {
+                mutableStateOf(pref?.offsets ?: "7,1,0")
             }
         TraxosSheet(
             if (original == null) "New goal" else "Edit goal",
@@ -200,6 +262,18 @@ internal fun PlansScreen(
                 enabled = !busy,
                 id = "goal_target",
             )
+            TraxosCheckbox(
+                deadline.isBlank(),
+                { deadline = if (it) "" else java.time.LocalDate.now().plusMonths(1).toString() },
+                "No deadline",
+                enabled = !busy,
+            )
+            if (deadline.isNotBlank()) {
+                TraxosDateField("Target date", deadline, !busy) { deadline = it }
+                TraxosCheckbox(reminders, { reminders = it }, "Deadline reminders", enabled = !busy)
+                if (reminders)
+                    TraxosInput("Days before deadline", offsets, { offsets = it }, enabled = !busy)
+            }
             Text(
                 "Progress is an earmark you record, not an extra asset or a bank transfer.",
                 style = MaterialTheme.typography.bodySmall,
@@ -208,13 +282,18 @@ internal fun PlansScreen(
             TraxosButton(
                 {
                     act {
-                        repo.goal(
+                        extension.goal(
                             id,
                             name,
                             currency,
                             Money.parse(target, currency),
                             original?.revision ?: 0,
                             operation,
+                            deadline
+                                .takeIf { it.isNotBlank() }
+                                ?.let { java.time.LocalDate.parse(it).toEpochDay() },
+                            reminders,
+                            offsets,
                         )
                         editor = ""
                     }
@@ -231,6 +310,14 @@ internal fun PlansScreen(
         val selected = goal!!
         var amount by rememberSaveable(selected.id, editor) { mutableStateOf("") }
         val operation = rememberSaveable(selected.id, editor) { UUID.randomUUID().toString() }
+        var mode by rememberSaveable(selected.id, editor) { mutableStateOf("MANUAL") }
+        var account by rememberSaveable(selected.id, editor) { mutableStateOf("") }
+        var otherAccount by rememberSaveable(selected.id, editor) { mutableStateOf("") }
+        var transferDate by
+            rememberSaveable(selected.id, editor) {
+                mutableStateOf(java.time.LocalDate.now().toString())
+            }
+
         TraxosSheet(
             if (editor == "add_progress") "Add progress" else "Remove progress",
             {
@@ -242,7 +329,7 @@ internal fun PlansScreen(
             scrollable = true,
         ) {
             Text(
-                "${selected.name} · ${selected.currency}. This updates tracked progress only. Use Accounts → Transfer for a real movement of money.",
+                "${selected.name} · ${selected.currency}. Choose whether progress is unlinked, account-backed or recorded with a real transfer.",
                 style = MaterialTheme.typography.bodySmall,
             )
             TraxosInput(
@@ -253,15 +340,38 @@ internal fun PlansScreen(
                 enabled = !busy,
                 id = "goal_progress",
             )
+            GoalFundingFields(
+                extension,
+                selected.currency,
+                editor == "add_progress",
+                mode,
+                account,
+                otherAccount,
+                transferDate,
+                !busy,
+                { mode = it },
+                { account = it },
+                { otherAccount = it },
+                { transferDate = it },
+            )
             if (error != null) TraxosNotice(error!!, NoticeKind.ERROR)
             TraxosButton(
                 {
                     val add = editor == "add_progress"
                     act {
-                        repo.contribute(
+                        require(mode == "MANUAL" || account.isNotBlank()) {
+                            "Choose a funding account"
+                        }
+                        require(mode != "TRANSFER" || otherAccount.isNotBlank()) {
+                            "Choose the other transfer account"
+                        }
+                        extension.contribution(
                             selected.id,
                             selected.revision,
                             Money.parse(amount, selected.currency) * (if (add) 1 else -1),
+                            if (mode == "MANUAL") null else account,
+                            if (mode == "TRANSFER") otherAccount else null,
+                            java.time.LocalDate.parse(transferDate).toEpochDay(),
                             operation,
                         )
                         editor = ""
@@ -303,6 +413,16 @@ internal fun PlansScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+        item {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TraxosTextButton({ navigate("period_budgets") }, Modifier.weight(1f)) {
+                    Text("Cycles")
+                }
+                TraxosTextButton({ navigate("planning_settings") }, Modifier.weight(1f)) {
+                    Text("Alerts")
+                }
+            }
         }
         item {
             Row(Modifier.fillMaxWidth()) {
@@ -426,6 +546,41 @@ internal fun PlansScreen(
                             "${Money.format(g.savedMinor,g.currency)} of ${Money.format(g.targetMinor,g.currency)}",
                         style = MaterialTheme.typography.bodyMedium,
                     )
+                    goalPreferences
+                        .firstOrNull { it.goalId == g.id }
+                        ?.deadlineDay
+                        ?.let { day ->
+                            Text(
+                                "Target ${java.time.LocalDate.ofEpochDay(day)}${if(day<java.time.LocalDate.now().toEpochDay() && g.savedMinor<g.targetMinor)" · Overdue" else ""}",
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                    val backed = reservations.filter { it.goalId == g.id }.sumOf { it.amountMinor }
+                    if (backed != 0L)
+                        Text(
+                            if (hidden) "Account-backed ••••"
+                            else "Account-backed ${Money.format(backed,g.currency)}",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    val underfunded =
+                        reservations
+                            .filter { it.goalId == g.id && it.amountMinor > 0 }
+                            .any { r ->
+                                val total =
+                                    reservations
+                                        .filter { it.accountId == r.accountId }
+                                        .sumOf { it.amountMinor }
+                                (accounts.firstOrNull { it.account.id == r.accountId }?.balanceMinor
+                                    ?: 0) < total
+                            }
+                    if (underfunded)
+                        TraxosNotice(
+                            "Funding account no longer covers all earmarks. Progress is kept; review the allocations.",
+                            NoticeKind.WARNING,
+                        )
+                    TraxosTextButton({ historyGoal = g }, Modifier.fillMaxWidth()) {
+                        Text("History")
+                    }
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         if (!g.archived) {
                             CompactAction(
@@ -451,9 +606,20 @@ internal fun PlansScreen(
                             CompactAction(
                                 "Undo",
                                 {
-                                    act {
-                                        repo.undo(g.id, g.revision, UUID.randomUUID().toString())
-                                    }
+                                    if (
+                                        reservations.any {
+                                            it.goalId == g.id && it.amountMinor != 0L
+                                        }
+                                    )
+                                        undoGoal = g
+                                    else
+                                        act {
+                                            extension.undoGoal(
+                                                g.id,
+                                                g.revision,
+                                                UUID.randomUUID().toString(),
+                                            )
+                                        }
                                 },
                                 Modifier.weight(1f),
                                 !busy,

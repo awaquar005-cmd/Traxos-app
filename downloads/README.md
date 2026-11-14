@@ -1,5 +1,15 @@
 # Current Personal APK
 
+**[Download TRAXOS0.16.0 Personal APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.16.0-debt-plans-personal.apk)**
+
+Install as **Update**, never uninstall/clear data. Code20, same signature, additive Room13→14.
+
+Personal APK built; **299 tests passed across the full run and targeted rerun (0 remaining failures/errors/skips)**. Lint: **0 errors, 23 warnings, 4 hints**. Signing and16KiB ZIP/64-bit ELF alignment verified. [Evidence](../docs/validation/debt-planning/README.md).
+
+Debts → Account / Person / Share; Plans → Cycles / Alerts, goal deadlines and account backing. Historical APKs below are not recommended downgrades.
+
+# Current Personal APK
+
 **[Download TRAXOS 0.15.0 Personal APK](https://github.com/awaquar005-cmd/Traxos-app/raw/refs/heads/main/downloads/TRAXOS-0.15.0-money-tools-personal.apk)**
 
 Install as **Update**, never uninstall/clear data. Code19, same signature, additive Room12→13 upgrade.

@@ -1,3 +1,13 @@
+# Current0.16.0 delivery
+
+- `downloads/TRAXOS-0.16.0-debt-plans-personal.apk` — Personal code20, update-compatible signing.
+- `data/PlanningExtensions.kt` — entities/repository/exact period/reservation rules.
+- `ui/DebtPlanningComponents.kt`, `ui/PlanningExtensionScreens.kt` — contact/share/funding/period/settings UI.
+- `DebtsScreen.kt`, `PlansScreen.kt`, `App.kt`, `SettingsScreen.kt`, `LedgerScreens.kt` — connected existing workflows.
+- `Database.kt`, schema14, `Money.kt`, `LedgerRepository.kt`, `Debts.kt`, `Plans.kt`, `Groups.kt`, `Obligations.kt`, `PortableBackup.kt`, `FinanceReminders.kt`, `TraxosApplication.kt` — migration/accounting/link ownership/recovery/reminders.
+- Three new test files: DebtPlanningExtensionsTest, DebtPlanningUiTest, PlanningAlertsWorkerTest.
+- `docs/DEBT_PLANNING_EXTENSIONS.md`, plan, manifest and `docs/validation/debt-planning/` — usage/accounting/limits and executed evidence.
+
 # Current delivery
 
 - `downloads/TRAXOS-0.15.0-money-tools-personal.apk` — Personal code19, update-compatible signature.

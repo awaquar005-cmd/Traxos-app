@@ -24,14 +24,26 @@ internal fun DebtsScreen(
     currencyDefault: String,
     hidden: Boolean,
     payCard: (String) -> Unit,
+    initialDebt: String = "",
+    changed: () -> Unit = {},
 ) {
+    val extension = remember(repo.db) { PlanningExtensionsRepository(repo.db) }
+    val loadedPreferences by extension.dao.debtPreferences().collectAsStateWithLifecycle(null)
+    val debtPreferences = loadedPreferences.orEmpty()
+    val funding by extension.dao.debtFunding().collectAsStateWithLifecycle(emptyList())
+    val people by extension.dao.people().collectAsStateWithLifecycle(emptyList())
+    var extras by remember { mutableStateOf("") }
+    var sharing by remember { mutableStateOf(false) }
+    var confirmUndo by remember { mutableStateOf(false) }
     val threads by
         remember(repo) { repo.threads.map<List<DebtThread>, List<DebtThread>?> { it } }
             .collectAsStateWithLifecycle(null)
     val accounts by repo.db.ledger().accounts().collectAsStateWithLifecycle(emptyList())
     var filter by rememberSaveable { mutableStateOf("ACTIVE") }
-    var selected by rememberSaveable { mutableStateOf("") }
-    var editor by rememberSaveable { mutableStateOf("") }
+    var selected by rememberSaveable { mutableStateOf(initialDebt) }
+    var editor by rememberSaveable {
+        mutableStateOf(if (initialDebt.isNotBlank()) "detail" else "")
+    }
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
@@ -43,6 +55,7 @@ internal fun DebtsScreen(
         scope.launch {
             try {
                 block()
+                changed()
                 editor = ""
             } catch (e: CancellationException) {
                 throw e
@@ -55,8 +68,30 @@ internal fun DebtsScreen(
             }
         }
     }
+    if (extras.isNotBlank() && debt != null) DebtExtrasSheet(debt.id, extras, { extras = "" })
+    if (sharing && debt != null)
+        DebtShareSheet(
+            debt,
+            people.firstOrNull {
+                it.id == debtPreferences.firstOrNull { p -> p.debtId == debt.id }?.personId
+            },
+            { sharing = false },
+        )
+    if (confirmUndo && debt != null)
+        TraxosDialog(
+            "Undo repayment?",
+            "An account movement created here is reversed in the ledger. A pre-existing matched transaction is kept. Only undo an accidental record; Traxos cannot reverse an actual bank payment.",
+            "Undo",
+            {
+                confirmUndo = false
+                act { extension.undoDebt(debt.id, debt.revision, UUID.randomUUID().toString()) }
+            },
+            { confirmUndo = false },
+            destructive = true,
+            enabled = !busy,
+        )
     key(editor, selected) {
-        if (editor == "new" || editor == "edit" && debt != null) {
+        if ((editor == "new" || editor == "edit" && debt != null) && loadedPreferences != null) {
             val old = if (editor == "edit") debt else null
             val identity = rememberSaveable { UUID.randomUUID().toString() }
             val operation = rememberSaveable { UUID.randomUUID().toString() }
@@ -75,6 +110,14 @@ internal fun DebtsScreen(
                 mutableStateOf(old?.dueDay?.let { LocalDate.ofEpochDay(it).toString() }.orEmpty())
             }
             var note by rememberSaveable { mutableStateOf(old?.note.orEmpty()) }
+            val oldPreferences = debtPreferences.firstOrNull { it.debtId == old?.id }
+            var personId by rememberSaveable { mutableStateOf(oldPreferences?.personId.orEmpty()) }
+            var reminders by rememberSaveable { mutableStateOf(oldPreferences?.reminders ?: false) }
+            var offsets by rememberSaveable { mutableStateOf(oldPreferences?.offsets ?: "7,1,0") }
+            var details by rememberSaveable { mutableStateOf(false) }
+            var fundingMode by rememberSaveable { mutableStateOf("NONE") }
+            var fundingAccount by rememberSaveable { mutableStateOf("") }
+            var existingRecord by rememberSaveable { mutableStateOf("") }
             TraxosSheet(
                 if (old == null) "New debt" else "Edit debt",
                 {
@@ -86,7 +129,7 @@ internal fun DebtsScreen(
                 true,
             ) {
                 TraxosNotice(
-                    "Track an existing IOU. This does not post a bank transaction or change account balances.",
+                    "Track an IOU. Account changes are optional and must describe real money paid or received; lending and repayments are not spending or income.",
                     NoticeKind.INFO,
                 )
                 TraxosSegment(
@@ -128,6 +171,44 @@ internal fun DebtsScreen(
                 )
                 if (due.isNotBlank()) TraxosDateField("Due date", due, !busy) { due = it }
                 TraxosInput("Note · optional", note, { note = it.take(500) }, enabled = !busy)
+                if (old == null)
+                    DebtFundingFields(
+                        extension,
+                        currency,
+                        direction == "BORROWED",
+                        amount,
+                        date,
+                        fundingMode,
+                        fundingAccount,
+                        existingRecord,
+                        !busy,
+                        { fundingMode = it },
+                        { fundingAccount = it },
+                        { existingRecord = it },
+                    )
+                TraxosTextButton({ details = !details }, Modifier.fillMaxWidth(), !busy) {
+                    Text(if (details) "Less" else "Details")
+                }
+                if (details) {
+                    PersonChooser(extension, personId, !busy) {
+                        personId = it?.id.orEmpty()
+                        if (it != null) person = it.name
+                    }
+                    TraxosCheckbox(
+                        reminders,
+                        { reminders = it },
+                        "Due reminders",
+                        enabled = !busy && due.isNotBlank(),
+                    )
+                    if (reminders && due.isNotBlank())
+                        TraxosInput(
+                            "Days before due · 0 means due date",
+                            offsets,
+                            { offsets = it },
+                            enabled = !busy,
+                        )
+                }
+
                 error?.let { TraxosNotice(it, NoticeKind.ERROR) }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TraxosTextButton(
@@ -143,7 +224,7 @@ internal fun DebtsScreen(
                     TraxosButton(
                         {
                             act {
-                                repo.save(
+                                extension.saveDebt(
                                     DebtThread(
                                         old?.id ?: identity,
                                         person,
@@ -158,6 +239,12 @@ internal fun DebtsScreen(
                                         operationId = operation,
                                     ),
                                     old?.revision ?: 0,
+                                    if (old == null && fundingMode != "NONE") fundingAccount
+                                    else null,
+                                    if (fundingMode == "MATCH") existingRecord else null,
+                                    personId.takeIf { it.isNotBlank() },
+                                    reminders && due.isNotBlank(),
+                                    offsets,
                                 )
                             }
                         },
@@ -172,6 +259,9 @@ internal fun DebtsScreen(
         } else if (editor in listOf("REPAYMENT", "INCREASE", "DECREASE") && debt != null) {
             val d = debt
             val kind = editor
+            var fundingMode by rememberSaveable { mutableStateOf("NONE") }
+            var fundingAccount by rememberSaveable { mutableStateOf("") }
+            var existingRecord by rememberSaveable { mutableStateOf("") }
             val operation = rememberSaveable { UUID.randomUUID().toString() }
             var amount by rememberSaveable { mutableStateOf("") }
             var date by rememberSaveable { mutableStateOf(LocalDate.now().toString()) }
@@ -190,7 +280,7 @@ internal fun DebtsScreen(
                 MoneyText(d.outstandingMinor, d.currency, hidden = hidden)
                 TraxosNotice(
                     if (kind == "REPAYMENT")
-                        "Record only a repayment already made. Account balances are unchanged; this is not income or an expense."
+                        "Record an actual repayment. Optionally record or match its account movement below. Principal is never income or spending."
                     else "Correct the IOU balance without creating income or spending.",
                     NoticeKind.INFO,
                 )
@@ -204,6 +294,21 @@ internal fun DebtsScreen(
                 )
                 TraxosDateField("Date", date, !busy) { date = it }
                 TraxosInput("Note · optional", note, { note = it.take(500) }, enabled = !busy)
+                if (kind == "REPAYMENT")
+                    DebtFundingFields(
+                        extension,
+                        d.currency,
+                        d.direction == "LENT",
+                        amount,
+                        date,
+                        fundingMode,
+                        fundingAccount,
+                        existingRecord,
+                        !busy,
+                        { fundingMode = it },
+                        { fundingAccount = it },
+                        { existingRecord = it },
+                    )
                 error?.let { TraxosNotice(it, NoticeKind.ERROR) }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TraxosTextButton(
@@ -220,15 +325,27 @@ internal fun DebtsScreen(
                         {
                             act {
                                 val minor = Money.parse(amount, d.currency)
-                                repo.move(
-                                    d.id,
-                                    d.revision,
-                                    if (kind == "INCREASE") minor else -minor,
-                                    kind,
-                                    LocalDate.parse(date).toEpochDay(),
-                                    note,
-                                    operation,
-                                )
+                                if (kind == "REPAYMENT")
+                                    extension.repay(
+                                        d.id,
+                                        d.revision,
+                                        minor,
+                                        LocalDate.parse(date).toEpochDay(),
+                                        note,
+                                        if (fundingMode != "NONE") fundingAccount else null,
+                                        if (fundingMode == "MATCH") existingRecord else null,
+                                        operation,
+                                    )
+                                else
+                                    repo.move(
+                                        d.id,
+                                        d.revision,
+                                        if (kind == "INCREASE") minor else -minor,
+                                        kind,
+                                        LocalDate.parse(date).toEpochDay(),
+                                        note,
+                                        operation,
+                                    )
                             }
                         },
                         Modifier.weight(1f),
@@ -266,6 +383,25 @@ internal fun DebtsScreen(
                     style = MaterialTheme.typography.bodySmall,
                 )
                 if (d.note.isNotBlank()) Text(d.note, style = MaterialTheme.typography.bodySmall)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TraxosTextButton(
+                        { extras = "FUNDING" },
+                        Modifier.weight(1f),
+                        !busy && !d.archived,
+                    ) {
+                        Text("Account")
+                    }
+                    TraxosTextButton(
+                        { extras = "PERSON" },
+                        Modifier.weight(1f),
+                        !busy && !d.archived,
+                    ) {
+                        Text("Person")
+                    }
+                    TraxosTextButton({ sharing = true }, Modifier.weight(1f), !busy) {
+                        Text("Share")
+                    }
+                }
                 error?.let { TraxosNotice(it, NoticeKind.ERROR) }
                 if (!d.archived) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -292,7 +428,24 @@ internal fun DebtsScreen(
                             Text("Reduce")
                         }
                         TraxosTextButton(
-                            { act { repo.undo(d.id, d.revision, UUID.randomUUID().toString()) } },
+                            {
+                                if (
+                                    funding.any {
+                                        it.debtId == d.id &&
+                                            it.movementId == undoable?.id &&
+                                            it.active
+                                    }
+                                )
+                                    confirmUndo = true
+                                else
+                                    act {
+                                        extension.undoDebt(
+                                            d.id,
+                                            d.revision,
+                                            UUID.randomUUID().toString(),
+                                        )
+                                    }
+                            },
                             Modifier.weight(1f),
                             !busy && undoable != null,
                         ) {

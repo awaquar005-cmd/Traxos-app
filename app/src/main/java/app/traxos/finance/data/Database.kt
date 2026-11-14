@@ -154,7 +154,7 @@ data class Summary(val currency: String, val expenseMinor: Long, val incomeMinor
 @Dao
 interface LedgerDao {
     @Query(
-        "SELECT a.*, a.openingMinor + COALESCE(SUM(CASE WHEN t.deleted = 0 THEN CASE WHEN t.type IN ('INCOME','REFUND','PAYMENT_IN','TRANSFER_IN') THEN t.amountMinor ELSE -t.amountMinor END ELSE 0 END),0) AS balanceMinor FROM accounts a LEFT JOIN transactions t ON a.id = t.accountId WHERE a.profileId = 'local' GROUP BY a.id ORDER BY a.archived, a.name COLLATE NOCASE"
+        "SELECT a.*, a.openingMinor + COALESCE(SUM(CASE WHEN t.deleted = 0 THEN CASE WHEN t.type IN ('INCOME','REFUND','PAYMENT_IN','TRANSFER_IN','DEBT_IN') THEN t.amountMinor ELSE -t.amountMinor END ELSE 0 END),0) AS balanceMinor FROM accounts a LEFT JOIN transactions t ON a.id = t.accountId WHERE a.profileId = 'local' GROUP BY a.id ORDER BY a.archived, a.name COLLATE NOCASE"
     )
     fun accounts(): Flow<List<AccountBalance>>
 
@@ -195,12 +195,12 @@ interface LedgerDao {
     @Query("SELECT COUNT(*) FROM outbox_operations") suspend fun operationCount(): Long
 
     @Query(
-        "SELECT t.*, a.name AS accountName, c.name AS categoryName, a.currency, m.name AS merchantName, c.icon AS categoryIcon, c.color AS categoryColor, (SELECT MIN(o.createdAt) FROM outbox_operations o WHERE o.entityId=t.id AND o.entityType='TRANSACTION') AS loggedAt FROM transactions t JOIN accounts a ON a.id = t.accountId JOIN categories c ON c.id = t.categoryId LEFT JOIN entry_labels m ON m.id = t.merchantId WHERE t.deleted = 0 AND t.profileId = 'local' ORDER BY t.day DESC, t.id DESC LIMIT 6"
+        "SELECT t.*, a.name AS accountName, CASE WHEN t.type IN ('DEBT_IN','DEBT_OUT') OR EXISTS(SELECT 1 FROM debt_funding df WHERE df.recordId=t.id AND df.active=1) THEN 'Loan principal' ELSE c.name END AS categoryName, a.currency, m.name AS merchantName, c.icon AS categoryIcon, c.color AS categoryColor, (SELECT MIN(o.createdAt) FROM outbox_operations o WHERE o.entityId=t.id AND o.entityType='TRANSACTION') AS loggedAt FROM transactions t JOIN accounts a ON a.id = t.accountId JOIN categories c ON c.id = t.categoryId LEFT JOIN entry_labels m ON m.id = t.merchantId WHERE t.deleted = 0 AND t.profileId = 'local' ORDER BY t.day DESC, t.id DESC LIMIT 6"
     )
     fun recent(): Flow<List<RecordRow>>
 
     @Query(
-        "SELECT t.*, a.name AS accountName, c.name AS categoryName, a.currency, m.name AS merchantName, c.icon AS categoryIcon, c.color AS categoryColor, (SELECT MIN(o.createdAt) FROM outbox_operations o WHERE o.entityId=t.id AND o.entityType='TRANSACTION') AS loggedAt FROM transactions t JOIN accounts a ON a.id = t.accountId JOIN categories c ON c.id = t.categoryId LEFT JOIN entry_labels m ON m.id = t.merchantId WHERE t.deleted = :deleted AND (NOT :deleted OR t.linkId IS NULL OR t.type IN ('TRANSFER_OUT','PAYMENT_OUT')) AND t.profileId = 'local' AND t.day >= :start AND t.day <= :end AND (:account='' OR t.accountId=:account) AND (:category='' OR t.categoryId=:category) AND (:currency='' OR a.currency=:currency) AND (:filter='ALL' OR (:filter='EXPENSES' AND t.type IN ('EXPENSE','REFUND')) OR (:filter='INCOME' AND t.type='INCOME') OR (:filter='TRANSFERS' AND t.type IN ('TRANSFER_IN','TRANSFER_OUT')) OR (:filter='CARD_PAYMENTS' AND t.type IN ('PAYMENT_IN','PAYMENT_OUT'))) AND (t.note LIKE '%' || :search || '%' ESCAPE '\\' OR c.name LIKE '%' || :search || '%' ESCAPE '\\' OR a.name LIKE '%' || :search || '%' ESCAPE '\\' OR m.name LIKE '%' || :search || '%' ESCAPE '\\') ORDER BY CASE WHEN :sort='OLDEST' THEN t.day END ASC, CASE WHEN :sort='OLDEST' THEN t.id END ASC, t.day DESC, t.id DESC"
+        "SELECT t.*, a.name AS accountName, CASE WHEN t.type IN ('DEBT_IN','DEBT_OUT') OR EXISTS(SELECT 1 FROM debt_funding df WHERE df.recordId=t.id AND df.active=1) THEN 'Loan principal' ELSE c.name END AS categoryName, a.currency, m.name AS merchantName, c.icon AS categoryIcon, c.color AS categoryColor, (SELECT MIN(o.createdAt) FROM outbox_operations o WHERE o.entityId=t.id AND o.entityType='TRANSACTION') AS loggedAt FROM transactions t JOIN accounts a ON a.id = t.accountId JOIN categories c ON c.id = t.categoryId LEFT JOIN entry_labels m ON m.id = t.merchantId WHERE t.deleted = :deleted AND (NOT :deleted OR t.linkId IS NULL OR t.type IN ('TRANSFER_OUT','PAYMENT_OUT')) AND t.profileId = 'local' AND t.day >= :start AND t.day <= :end AND (:account='' OR t.accountId=:account) AND (:category='' OR t.categoryId=:category) AND (:currency='' OR a.currency=:currency) AND (:filter='ALL' OR (:filter='EXPENSES' AND t.type IN ('EXPENSE','REFUND') AND NOT EXISTS(SELECT 1 FROM debt_funding df WHERE df.recordId=t.id AND df.active=1)) OR (:filter='INCOME' AND t.type='INCOME' AND NOT EXISTS(SELECT 1 FROM debt_funding df WHERE df.recordId=t.id AND df.active=1)) OR (:filter='TRANSFERS' AND t.type IN ('TRANSFER_IN','TRANSFER_OUT')) OR (:filter='CARD_PAYMENTS' AND t.type IN ('PAYMENT_IN','PAYMENT_OUT'))) AND (t.note LIKE '%' || :search || '%' ESCAPE '\\' OR c.name LIKE '%' || :search || '%' ESCAPE '\\' OR a.name LIKE '%' || :search || '%' ESCAPE '\\' OR m.name LIKE '%' || :search || '%' ESCAPE '\\') ORDER BY CASE WHEN :sort='OLDEST' THEN t.day END ASC, CASE WHEN :sort='OLDEST' THEN t.id END ASC, t.day DESC, t.id DESC"
     )
     fun page(
         search: String,
@@ -215,12 +215,12 @@ interface LedgerDao {
     ): PagingSource<Int, RecordRow>
 
     @Query(
-        "SELECT currency,SUM(expenseMinor) AS expenseMinor,SUM(incomeMinor) AS incomeMinor FROM (SELECT a.currency, COALESCE(SUM(CASE WHEN t.type='EXPENSE' THEN COALESCE((SELECT reportMinor FROM group_ledger_links WHERE recordId=t.id),t.amountMinor) WHEN t.type='REFUND' THEN -t.amountMinor ELSE 0 END),0) AS expenseMinor,COALESCE(SUM(CASE WHEN t.type='INCOME' THEN COALESCE((SELECT reportMinor FROM group_ledger_links WHERE recordId=t.id),t.amountMinor) ELSE 0 END),0) AS incomeMinor FROM transactions t JOIN accounts a ON a.id=t.accountId WHERE t.deleted=0 AND t.profileId='local' AND t.day>=:start AND t.day<:end GROUP BY a.currency UNION ALL SELECT g.currency,SUM(s.amountMinor) AS expenseMinor,0 AS incomeMinor FROM group_shares s JOIN group_events e ON e.id=s.eventId JOIN shared_groups g ON g.id=e.groupId WHERE e.kind='EXPENSE' AND s.memberId=g.selfId AND e.day>=:start AND e.day<:end AND NOT EXISTS(SELECT 1 FROM group_events r WHERE r.reversalOf=e.id) GROUP BY g.currency) GROUP BY currency"
+        "SELECT currency,SUM(expenseMinor) AS expenseMinor,SUM(incomeMinor) AS incomeMinor FROM (SELECT a.currency, COALESCE(SUM(CASE WHEN t.type='EXPENSE' THEN CASE WHEN EXISTS(SELECT 1 FROM debt_funding df WHERE df.recordId=t.id AND df.active=1) THEN 0 ELSE COALESCE((SELECT reportMinor FROM group_ledger_links WHERE recordId=t.id),t.amountMinor) END WHEN t.type='REFUND' THEN -t.amountMinor ELSE 0 END),0) AS expenseMinor,COALESCE(SUM(CASE WHEN t.type='INCOME' THEN CASE WHEN EXISTS(SELECT 1 FROM debt_funding df WHERE df.recordId=t.id AND df.active=1) THEN 0 ELSE COALESCE((SELECT reportMinor FROM group_ledger_links WHERE recordId=t.id),t.amountMinor) END ELSE 0 END),0) AS incomeMinor FROM transactions t JOIN accounts a ON a.id=t.accountId WHERE t.deleted=0 AND t.profileId='local' AND t.day>=:start AND t.day<:end GROUP BY a.currency UNION ALL SELECT g.currency,SUM(s.amountMinor) AS expenseMinor,0 AS incomeMinor FROM group_shares s JOIN group_events e ON e.id=s.eventId JOIN shared_groups g ON g.id=e.groupId WHERE e.kind='EXPENSE' AND s.memberId=g.selfId AND e.day>=:start AND e.day<:end AND NOT EXISTS(SELECT 1 FROM group_events r WHERE r.reversalOf=e.id) GROUP BY g.currency) GROUP BY currency"
     )
     fun summary(start: Long, end: Long): Flow<List<Summary>>
 
     @Query(
-        "SELECT currency,categoryId,categoryName,categoryIcon,categoryColor,SUM(expenseMinor) AS expenseMinor,SUM(refundMinor) AS refundMinor,SUM(incomeMinor) AS incomeMinor,SUM(entries) AS entries FROM (SELECT a.currency,c.id AS categoryId,c.name AS categoryName,c.icon AS categoryIcon,c.color AS categoryColor,SUM(CASE WHEN t.type='EXPENSE' THEN COALESCE((SELECT reportMinor FROM group_ledger_links WHERE recordId=t.id),t.amountMinor) ELSE 0 END) AS expenseMinor,SUM(CASE WHEN t.type='REFUND' THEN t.amountMinor ELSE 0 END) AS refundMinor,SUM(CASE WHEN t.type='INCOME' THEN COALESCE((SELECT reportMinor FROM group_ledger_links WHERE recordId=t.id),t.amountMinor) ELSE 0 END) AS incomeMinor,COUNT(*) AS entries FROM transactions t JOIN accounts a ON a.id=t.accountId JOIN categories c ON c.id=t.categoryId WHERE t.profileId='local' AND t.deleted=0 AND t.type IN ('EXPENSE','REFUND','INCOME') AND t.day>=:start AND t.day<:end GROUP BY a.currency,c.id UNION ALL SELECT g.currency,c.id AS categoryId,c.name AS categoryName,c.icon AS categoryIcon,c.color AS categoryColor,SUM(s.amountMinor) AS expenseMinor,0 AS refundMinor,0 AS incomeMinor,COUNT(*) AS entries FROM group_shares s JOIN group_events e ON e.id=s.eventId JOIN shared_groups g ON g.id=e.groupId JOIN categories c ON c.id=e.categoryId WHERE e.kind='EXPENSE' AND s.memberId=g.selfId AND e.day>=:start AND e.day<:end AND NOT EXISTS(SELECT 1 FROM group_events r WHERE r.reversalOf=e.id) GROUP BY g.currency,c.id) GROUP BY currency,categoryId ORDER BY currency,categoryName COLLATE NOCASE,categoryId"
+        "SELECT currency,categoryId,categoryName,categoryIcon,categoryColor,SUM(expenseMinor) AS expenseMinor,SUM(refundMinor) AS refundMinor,SUM(incomeMinor) AS incomeMinor,SUM(entries) AS entries FROM (SELECT a.currency,c.id AS categoryId,c.name AS categoryName,c.icon AS categoryIcon,c.color AS categoryColor,SUM(CASE WHEN t.type='EXPENSE' THEN CASE WHEN EXISTS(SELECT 1 FROM debt_funding df WHERE df.recordId=t.id AND df.active=1) THEN 0 ELSE COALESCE((SELECT reportMinor FROM group_ledger_links WHERE recordId=t.id),t.amountMinor) END ELSE 0 END) AS expenseMinor,SUM(CASE WHEN t.type='REFUND' THEN t.amountMinor ELSE 0 END) AS refundMinor,SUM(CASE WHEN t.type='INCOME' THEN CASE WHEN EXISTS(SELECT 1 FROM debt_funding df WHERE df.recordId=t.id AND df.active=1) THEN 0 ELSE COALESCE((SELECT reportMinor FROM group_ledger_links WHERE recordId=t.id),t.amountMinor) END ELSE 0 END) AS incomeMinor,COUNT(*) AS entries FROM transactions t JOIN accounts a ON a.id=t.accountId JOIN categories c ON c.id=t.categoryId WHERE t.profileId='local' AND t.deleted=0 AND t.type IN ('EXPENSE','REFUND','INCOME') AND t.day>=:start AND t.day<:end GROUP BY a.currency,c.id UNION ALL SELECT g.currency,c.id AS categoryId,c.name AS categoryName,c.icon AS categoryIcon,c.color AS categoryColor,SUM(s.amountMinor) AS expenseMinor,0 AS refundMinor,0 AS incomeMinor,COUNT(*) AS entries FROM group_shares s JOIN group_events e ON e.id=s.eventId JOIN shared_groups g ON g.id=e.groupId JOIN categories c ON c.id=e.categoryId WHERE e.kind='EXPENSE' AND s.memberId=g.selfId AND e.day>=:start AND e.day<:end AND NOT EXISTS(SELECT 1 FROM group_events r WHERE r.reversalOf=e.id) GROUP BY g.currency,c.id) GROUP BY currency,categoryId ORDER BY currency,categoryName COLLATE NOCASE,categoryId"
     )
     fun categoryReport(start: Long, end: Long): Flow<List<CategoryReport>>
 
@@ -313,16 +313,26 @@ interface LedgerDao {
             CardStatement::class,
             StatementPayment::class,
             StatementRevision::class,
+            SavedPerson::class,
+            DebtPreferences::class,
+            DebtFunding::class,
+            PeriodBudget::class,
+            BudgetAlertRule::class,
+            GoalPreferences::class,
+            GoalFunding::class,
+            PlanningSettings::class,
             PaymentPlan::class,
             PlanPayment::class,
             IgnoredPlan::class,
             FinanceReminderSettings::class,
             FinanceReminderReceipt::class,
         ],
-    version = 13,
+    version = 14,
     exportSchema = true,
 )
 abstract class TraxosDatabase : RoomDatabase() {
+    abstract fun planning(): PlanningDao
+
     abstract fun groups(): GroupsDao
 
     abstract fun obligations(): ObligationsDao
@@ -644,6 +654,69 @@ abstract class TraxosDatabase : RoomDatabase() {
             }
 
         // Only one active occurrence per plan/due date; reversed rows retain immutable identity.
+        val MIGRATION_13_14 =
+            object : Migration(13, 14) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS saved_people (id TEXT NOT NULL,name TEXT NOT NULL,phone TEXT NOT NULL,identityKey TEXT NOT NULL,revision INTEGER NOT NULL,operationId TEXT NOT NULL,PRIMARY KEY(id))"
+                    )
+                    db.execSQL(
+                        "CREATE UNIQUE INDEX IF NOT EXISTS index_saved_people_identityKey ON saved_people(identityKey)"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS debt_preferences (debtId TEXT NOT NULL,personId TEXT,reminders INTEGER NOT NULL,offsets TEXT NOT NULL,revision INTEGER NOT NULL,operationId TEXT NOT NULL,PRIMARY KEY(debtId),FOREIGN KEY(debtId) REFERENCES debt_threads(id) ON UPDATE NO ACTION ON DELETE RESTRICT,FOREIGN KEY(personId) REFERENCES saved_people(id) ON UPDATE NO ACTION ON DELETE RESTRICT)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_debt_preferences_personId ON debt_preferences(personId)"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS debt_funding (id TEXT NOT NULL,debtId TEXT NOT NULL,movementId TEXT,recordId TEXT NOT NULL,createdRecord INTEGER NOT NULL,active INTEGER NOT NULL,activeRecordKey TEXT NOT NULL,eventKey TEXT NOT NULL,PRIMARY KEY(id),FOREIGN KEY(debtId) REFERENCES debt_threads(id) ON UPDATE NO ACTION ON DELETE RESTRICT,FOREIGN KEY(movementId) REFERENCES debt_movements(id) ON UPDATE NO ACTION ON DELETE RESTRICT,FOREIGN KEY(recordId) REFERENCES transactions(id) ON UPDATE NO ACTION ON DELETE RESTRICT)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_debt_funding_debtId ON debt_funding(debtId)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_debt_funding_movementId ON debt_funding(movementId)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_debt_funding_recordId ON debt_funding(recordId)"
+                    )
+                    db.execSQL(
+                        "CREATE UNIQUE INDEX IF NOT EXISTS index_debt_funding_activeRecordKey ON debt_funding(activeRecordKey)"
+                    )
+                    db.execSQL(
+                        "CREATE UNIQUE INDEX IF NOT EXISTS index_debt_funding_eventKey ON debt_funding(eventKey)"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS period_budgets (id TEXT NOT NULL,name TEXT NOT NULL,kind TEXT NOT NULL,currency TEXT NOT NULL,categoryId TEXT,startDay INTEGER NOT NULL,endDay INTEGER,salaryDay INTEGER NOT NULL,limitMinor INTEGER NOT NULL,alerts INTEGER NOT NULL,thresholds TEXT NOT NULL,archived INTEGER NOT NULL,scopeKey TEXT NOT NULL,revision INTEGER NOT NULL,operationId TEXT NOT NULL,PRIMARY KEY(id),FOREIGN KEY(categoryId) REFERENCES categories(id) ON UPDATE NO ACTION ON DELETE RESTRICT)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_period_budgets_categoryId ON period_budgets(categoryId)"
+                    )
+                    db.execSQL(
+                        "CREATE UNIQUE INDEX IF NOT EXISTS index_period_budgets_scopeKey ON period_budgets(scopeKey)"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS budget_alert_rules (budgetId TEXT NOT NULL,enabled INTEGER NOT NULL,thresholds TEXT NOT NULL,PRIMARY KEY(budgetId),FOREIGN KEY(budgetId) REFERENCES budgets(id) ON UPDATE NO ACTION ON DELETE CASCADE)"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS goal_preferences (goalId TEXT NOT NULL,deadlineDay INTEGER,reminders INTEGER NOT NULL,offsets TEXT NOT NULL,revision INTEGER NOT NULL,operationId TEXT NOT NULL,PRIMARY KEY(goalId),FOREIGN KEY(goalId) REFERENCES savings_goals(id) ON UPDATE NO ACTION ON DELETE RESTRICT)"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS goal_funding (movementId TEXT NOT NULL,accountId TEXT NOT NULL,transferId TEXT,transferActive INTEGER NOT NULL,PRIMARY KEY(movementId),FOREIGN KEY(movementId) REFERENCES goal_movements(id) ON UPDATE NO ACTION ON DELETE RESTRICT,FOREIGN KEY(accountId) REFERENCES accounts(id) ON UPDATE NO ACTION ON DELETE RESTRICT,FOREIGN KEY(transferId) REFERENCES transactions(id) ON UPDATE NO ACTION ON DELETE RESTRICT)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_goal_funding_accountId ON goal_funding(accountId)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS index_goal_funding_transferId ON goal_funding(transferId)"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS planning_settings (id INTEGER NOT NULL,budgetAlerts INTEGER NOT NULL,thresholds TEXT NOT NULL,PRIMARY KEY(id))"
+                    )
+                }
+            }
+
         fun open(context: Context, name: String = "traxos.db"): TraxosDatabase =
             Room.databaseBuilder(context, TraxosDatabase::class.java, name)
                 .addMigrations(
@@ -659,6 +732,7 @@ abstract class TraxosDatabase : RoomDatabase() {
                     MIGRATION_10_11,
                     MIGRATION_11_12,
                     MIGRATION_12_13,
+                    MIGRATION_13_14,
                 )
                 .addCallback(
                     object : Callback() {

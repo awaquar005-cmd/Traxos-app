@@ -118,6 +118,11 @@ class LedgerRepository(private val db: TraxosDatabase) {
             require(note.length <= 500) { "Note must contain at most 500 characters" }
             val old = dao.record(id)
             require(
+                db.planning().debtRecord(id) == null && db.planning().transferFunding(id) == null
+            ) {
+                "Manage this linked loan or goal from its original page"
+            }
+            require(
                 db.groups().link(id) == null &&
                     db.obligations().paymentForRecord(id) == null &&
                     db.obligations().plans().first().none { it.purchaseId == id }
@@ -194,6 +199,23 @@ class LedgerRepository(private val db: TraxosDatabase) {
     ) =
         mutate(operationId) {
             val old = requireNotNull(dao.record(id)) { "Transaction not found" }
+            require(
+                db.planning().debtRecord(id) == null && db.planning().transferFunding(id) == null
+            ) {
+                "Undo/unlink this account movement from Debts or Plans first"
+            }
+            if (!deleted)
+                require(
+                    db.planning().debtFunding().first().none {
+                        it.createdRecord && it.recordId == id
+                    } &&
+                        db.planning().goalFunding().first().none {
+                            it.transferId != null &&
+                                dao.linked(it.transferId).any { r -> r.id == id }
+                        }
+                ) {
+                    "Keep linked history; record a new debt/goal movement instead of restoring it independently"
+                }
             require(
                 db.groups().link(id) == null &&
                     db.obligations().paymentForRecord(id) == null &&
@@ -375,6 +397,48 @@ class LedgerRepository(private val db: TraxosDatabase) {
             dao.insertRecord(outgoing)
             recordJournal(op, incoming, "CREATE", 0)
             recordJournal(pairedId(op), outgoing, "CREATE", 0)
+        }
+
+    /**
+     * Real loan principal cash movement, never income or expenditure. Caller attaches an IOU in the
+     * same transaction.
+     */
+    suspend fun postDebt(
+        op: String,
+        accountId: String,
+        amount: Long,
+        day: Long,
+        incoming: Boolean,
+        note: String,
+    ) =
+        mutate(op) {
+            require(amount in 1..Money.MAX_MINOR && note.length <= 120)
+            LocalDate.ofEpochDay(day)
+            val a =
+                requireNotNull(dao.accounts().first().firstOrNull { it.account.id == accountId })
+            require(
+                !a.account.archived &&
+                    a.account.type != "CREDIT_CARD" &&
+                    day >= a.account.openingDate
+            )
+            if (!incoming)
+                require(a.balanceMinor >= amount) { "Loan movement exceeds recorded account funds" }
+            require(dao.recordCount() < Money.MAX_TRANSACTIONS)
+            val category =
+                requireNotNull(dao.categories().first().firstOrNull { it.type == "EXPENSE" })
+            val record =
+                LedgerRecord(
+                    op,
+                    accountId,
+                    category.id,
+                    if (incoming) "DEBT_IN" else "DEBT_OUT",
+                    amount,
+                    day,
+                    ZoneId.systemDefault().id,
+                    note,
+                )
+            dao.insertRecord(record)
+            recordJournal(op, record, "CREATE", 0)
         }
 
     /** Owned-account movement, never income/spending. Both legs and journal commit together. */

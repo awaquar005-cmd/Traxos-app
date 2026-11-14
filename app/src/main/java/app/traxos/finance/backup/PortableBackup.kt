@@ -123,6 +123,13 @@ internal val backupTables =
         "statement_revisions",
         "payment_plans",
         "plan_payments",
+        "saved_people",
+        "debt_preferences",
+        "debt_funding",
+        "period_budgets",
+        "budget_alert_rules",
+        "goal_preferences",
+        "goal_funding",
     )
 
 private fun DataOutputStream.text(value: String) {
@@ -216,7 +223,7 @@ class PortableBackup(
                 val sql = db.openHelper.writableDatabase
                 BackupEnvelope.write(output, password) { data ->
                     data.writeInt(1)
-                    data.writeInt(13)
+                    data.writeInt(14)
                     data.writeInt(backupTables.size)
                     backupTables.forEach { table ->
                         data.text(table)
@@ -270,7 +277,7 @@ class PortableBackup(
                         BackupEnvelope.read(input, password) { data ->
                             require(data.readInt() == 1)
                             val sourceSchema = data.readInt()
-                            require(sourceSchema in 11..13) {
+                            require(sourceSchema in 11..14) {
                                 "This backup needs a compatible Traxos version"
                             }
                             val added13 =
@@ -287,9 +294,20 @@ class PortableBackup(
                                     "payment_plans",
                                     "plan_payments",
                                 )
+                            val added14 =
+                                setOf(
+                                    "saved_people",
+                                    "debt_preferences",
+                                    "debt_funding",
+                                    "period_budgets",
+                                    "budget_alert_rules",
+                                    "goal_preferences",
+                                    "goal_funding",
+                                )
                             val sourceTables =
                                 backupTables.filterNot {
-                                    (sourceSchema < 13 && it in added13) ||
+                                    (sourceSchema < 14 && it in added14) ||
+                                        (sourceSchema < 13 && it in added13) ||
                                         (sourceSchema == 11 &&
                                             it in listOf("debt_threads", "debt_movements"))
                                 }
@@ -528,6 +546,76 @@ class PortableBackup(
             sql.query(query).use { require(!it.moveToFirst()) { "Invalid financial backup" } }
         }
         none("SELECT total FROM (SELECT COUNT(*) AS total FROM transactions) WHERE total>1000000")
+        none("SELECT p.debtId FROM debt_preferences p WHERE p.revision<1")
+        none(
+            "SELECT f.id FROM debt_funding f JOIN debt_threads d ON d.id=f.debtId JOIN transactions t ON t.id=f.recordId LEFT JOIN debt_movements m ON m.id=f.movementId JOIN accounts a ON a.id=t.accountId WHERE (f.active=1 AND (t.deleted=1 OR a.type='CREDIT_CARD' OR a.currency!=d.currency OR t.linkId IS NOT NULL OR f.activeRecordKey!=f.recordId OR f.eventKey!=CASE WHEN f.movementId IS NULL THEN 'opening:'||d.id ELSE 'movement:'||m.id END OR (f.movementId IS NULL AND (t.amountMinor!=d.originalMinor OR t.day!=d.day)) OR (f.movementId IS NOT NULL AND (m.debtId!=d.id OR m.kind!='REPAYMENT' OR t.amountMinor!=-m.deltaMinor OR t.day!=m.day OR EXISTS(SELECT 1 FROM debt_movements u WHERE u.undoOf=m.id))) OR t.type!=CASE WHEN f.createdRecord=1 THEN CASE WHEN (f.movementId IS NULL AND d.direction='BORROWED') OR (f.movementId IS NOT NULL AND d.direction='LENT') THEN 'DEBT_IN' ELSE 'DEBT_OUT' END ELSE CASE WHEN (f.movementId IS NULL AND d.direction='BORROWED') OR (f.movementId IS NOT NULL AND d.direction='LENT') THEN 'INCOME' ELSE 'EXPENSE' END END)) OR (f.active=0 AND (f.activeRecordKey!='void:'||f.id OR f.eventKey!='void:'||f.id OR (f.createdRecord=1 AND t.deleted=0)))"
+        )
+        none(
+            "SELECT t.id FROM transactions t WHERE t.type IN ('DEBT_IN','DEBT_OUT') AND (t.linkId IS NOT NULL OR (t.deleted=0 AND NOT EXISTS(SELECT 1 FROM debt_funding f WHERE f.recordId=t.id AND f.active=1 AND f.createdRecord=1)))"
+        )
+        none(
+            "SELECT f.id FROM debt_funding f WHERE f.active=1 AND (EXISTS(SELECT 1 FROM group_ledger_links g WHERE g.recordId=f.recordId) OR EXISTS(SELECT 1 FROM plan_payments p WHERE p.recordId=f.recordId AND p.voided=0))"
+        )
+        none(
+            "SELECT p.id FROM period_budgets p LEFT JOIN categories c ON c.id=p.categoryId WHERE length(trim(p.name)) NOT BETWEEN 1 AND 80 OR p.kind NOT IN ('SALARY','CUSTOM') OR p.currency NOT IN ('INR','USD','EUR','JPY','KWD') OR p.limitMinor NOT BETWEEN 1 AND ${Money.MAX_MINOR} OR p.startDay NOT BETWEEN 3652 AND 84370 OR (p.categoryId IS NOT NULL AND (c.id IS NULL OR c.type!='EXPENSE')) OR (p.kind='CUSTOM' AND (p.endDay IS NULL OR p.endDay<p.startDay OR p.endDay-p.startDay>3660 OR p.salaryDay!=0)) OR (p.kind='SALARY' AND (p.endDay IS NOT NULL OR p.salaryDay NOT BETWEEN 1 AND 31)) OR p.revision<1"
+        )
+        none(
+            "SELECT goalId FROM goal_preferences WHERE revision<1 OR (deadlineDay IS NOT NULL AND deadlineDay NOT BETWEEN 3652 AND 84370)"
+        )
+        none(
+            "SELECT f.movementId FROM goal_funding f JOIN goal_movements m ON m.id=f.movementId JOIN savings_goals g ON g.id=m.goalId JOIN accounts a ON a.id=f.accountId WHERE a.currency!=g.currency OR a.type='CREDIT_CARD'"
+        )
+        none(
+            "SELECT f.accountId FROM goal_funding f JOIN goal_movements m ON m.id=f.movementId GROUP BY f.accountId,m.goalId HAVING SUM(m.deltaMinor)<0"
+        )
+        none(
+            "SELECT g.id FROM savings_goals g JOIN goal_movements m ON m.goalId=g.id JOIN goal_funding f ON f.movementId=m.id GROUP BY g.id HAVING SUM(m.deltaMinor)>g.savedMinor"
+        )
+        none(
+            "SELECT f.movementId FROM goal_funding f JOIN goal_movements m ON m.id=f.movementId LEFT JOIN goal_funding p ON p.movementId=m.undoOf WHERE m.undoOf IS NOT NULL AND (p.movementId IS NULL OR p.accountId!=f.accountId OR f.transferId IS NOT NULL)"
+        )
+        none(
+            "SELECT f.movementId FROM goal_funding f JOIN goal_movements m ON m.id=f.movementId JOIN transactions t ON t.id=f.transferId JOIN transactions p ON p.linkId=t.linkId AND p.id!=t.id WHERE t.type!='TRANSFER_OUT' OR p.type!='TRANSFER_IN' OR t.amountMinor!=ABS(m.deltaMinor) OR m.undoOf IS NOT NULL OR (f.transferActive=1 AND (t.deleted=1 OR p.deleted=1)) OR (f.transferActive=0 AND (t.deleted=0 OR p.deleted=0)) OR (m.deltaMinor>0 AND p.accountId!=f.accountId) OR (m.deltaMinor<0 AND t.accountId!=f.accountId)"
+        )
+        sql.query("SELECT phone,name,identityKey FROM saved_people").use { rows ->
+            while (rows.moveToNext()) {
+                val phone = app.traxos.finance.data.BudgetPeriods.phone(rows.getString(0))
+                val name = rows.getString(1)
+                require(
+                    name.trim().length in 1..80 &&
+                        phone == rows.getString(0) &&
+                        rows.getString(2) ==
+                            app.traxos.finance.data.LedgerRepository.nameKey(name) + ":" + phone
+                ) {
+                    "Invalid saved person"
+                }
+            }
+        }
+        sql.query(
+                "SELECT offsets FROM debt_preferences UNION ALL SELECT offsets FROM goal_preferences"
+            )
+            .use { rows ->
+                while (rows.moveToNext()) app.traxos.finance.data.PlanDates.offsets(
+                    rows.getString(0)
+                )
+            }
+        sql.query(
+                "SELECT thresholds FROM period_budgets UNION ALL SELECT thresholds FROM budget_alert_rules"
+            )
+            .use { rows ->
+                while (rows.moveToNext()) app.traxos.finance.data.BudgetPeriods.thresholds(
+                    rows.getString(0)
+                )
+            }
+        sql.query("SELECT startDay,salaryDay FROM period_budgets WHERE kind='SALARY'").use { rows ->
+            while (rows.moveToNext()) {
+                val date = java.time.LocalDate.ofEpochDay(rows.getLong(0))
+                require(date.dayOfMonth == minOf(rows.getInt(1), date.lengthOfMonth())) {
+                    "Invalid salary-cycle anchor"
+                }
+            }
+        }
+
         none(
             "SELECT g.id FROM shared_groups g LEFT JOIN group_members m ON m.id=g.selfId WHERE m.id IS NULL OR m.groupId!=g.id OR length(trim(g.name)) NOT BETWEEN 1 AND 80 OR g.currency NOT IN ('INR','USD','EUR','JPY','KWD') OR g.revision<1"
         )
@@ -630,7 +718,7 @@ class PortableBackup(
             "SELECT id FROM accounts WHERE currency NOT IN ('INR','USD','EUR','JPY','KWD') OR type NOT IN ('CASH','BANK','WALLET','CREDIT_CARD') OR openingMinor < -${Money.MAX_MINOR} OR openingMinor > ${Money.MAX_MINOR}"
         )
         none(
-            "SELECT id FROM transactions WHERE amountMinor<=0 OR amountMinor>${Money.MAX_MINOR} OR type NOT IN ('EXPENSE','INCOME','REFUND','TRANSFER_IN','TRANSFER_OUT','PAYMENT_IN','PAYMENT_OUT')"
+            "SELECT id FROM transactions WHERE amountMinor<=0 OR amountMinor>${Money.MAX_MINOR} OR type NOT IN ('EXPENSE','INCOME','REFUND','TRANSFER_IN','TRANSFER_OUT','PAYMENT_IN','PAYMENT_OUT','DEBT_IN','DEBT_OUT')"
         )
         none(
             "SELECT t.id FROM transactions t LEFT JOIN transactions p ON p.linkId=t.linkId AND p.id!=t.id WHERE t.linkId IS NOT NULL GROUP BY t.id HAVING COUNT(p.id)!=1 OR MIN(p.amountMinor)!=t.amountMinor OR MIN(p.deleted)!=t.deleted"

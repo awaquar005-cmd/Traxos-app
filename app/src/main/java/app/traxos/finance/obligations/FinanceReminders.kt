@@ -71,7 +71,7 @@ class FinanceReminderWorker(context: Context, params: WorkerParameters) :
                 manager.createNotificationChannel(
                     NotificationChannel(
                         "finance_due",
-                        "Bills and card reminders",
+                        "Money and planning reminders",
                         NotificationManager.IMPORTANCE_DEFAULT,
                     )
                 )
@@ -115,6 +115,140 @@ class FinanceReminderWorker(context: Context, params: WorkerParameters) :
                                 )
                         }
                 }
+                if (settings.enabled) {
+                    val extension = app.planning
+                    val debtPrefs =
+                        extension.dao.debtPreferences().first().associateBy { it.debtId }
+                    app.database
+                        .debts()
+                        .threads()
+                        .first()
+                        .filter {
+                            !it.archived &&
+                                it.outstandingMinor > 0 &&
+                                it.dueDay != null &&
+                                debtPrefs[it.id]?.reminders == true
+                        }
+                        .forEach { d ->
+                            eligible +=
+                                FinanceReminderPlan.due(
+                                    "debt:${d.id}",
+                                    d.dueDay!!,
+                                    debtPrefs.getValue(d.id).offsets,
+                                    today,
+                                )
+                        }
+                    val goalPrefs =
+                        extension.dao.goalPreferences().first().associateBy { it.goalId }
+                    app.database
+                        .plans()
+                        .goals()
+                        .first()
+                        .filter {
+                            !it.archived &&
+                                it.savedMinor < it.targetMinor &&
+                                goalPrefs[it.id]?.reminders == true &&
+                                goalPrefs[it.id]?.deadlineDay != null
+                        }
+                        .forEach { g ->
+                            val p = goalPrefs.getValue(g.id)
+                            eligible +=
+                                FinanceReminderPlan.due(
+                                    "goal:${g.id}",
+                                    p.deadlineDay!!,
+                                    p.offsets,
+                                    today,
+                                )
+                        }
+                    val planningSettings = extension.dao.settings().first() ?: PlanningSettings()
+                    if (planningSettings.budgetAlerts) {
+                        val month = java.time.YearMonth.now()
+                        val monthlyReport =
+                            app.database
+                                .ledger()
+                                .categoryReport(
+                                    month.atDay(1).toEpochDay(),
+                                    month.plusMonths(1).atDay(1).toEpochDay(),
+                                )
+                                .first()
+                        val rules = extension.dao.budgetRules().first().associateBy { it.budgetId }
+                        fun addThresholds(
+                            target: String,
+                            range: BudgetPeriods.Window,
+                            spent: Long,
+                            limit: Long,
+                            thresholds: String,
+                        ) {
+                            BudgetPeriods.thresholds(thresholds)
+                                .filter { BudgetPeriods.reached(spent, limit, it) }
+                                .forEach { t ->
+                                    eligible +=
+                                        FinanceReminderPlan.Due(
+                                            "$target:${range.start}:$t",
+                                            target,
+                                            range.end,
+                                            t,
+                                        )
+                                }
+                        }
+                        app.database
+                            .plans()
+                            .budgets()
+                            .first()
+                            .filter {
+                                it.month == month.toString() && rules[it.id]?.enabled != false
+                            }
+                            .forEach { b ->
+                                val spent =
+                                    monthlyReport
+                                        .filter {
+                                            it.currency == b.currency &&
+                                                (b.categoryId == null ||
+                                                    b.categoryId == it.categoryId)
+                                        }
+                                        .sumOf { it.expenseMinor - it.refundMinor }
+                                addThresholds(
+                                    "budget:monthly:${b.id}",
+                                    BudgetPeriods.Window(
+                                        month.atDay(1).toEpochDay(),
+                                        month.atEndOfMonth().toEpochDay(),
+                                    ),
+                                    spent,
+                                    b.limitMinor,
+                                    rules[b.id]?.thresholds ?: planningSettings.thresholds,
+                                )
+                            }
+                        extension.dao
+                            .budgets()
+                            .first()
+                            .filter { !it.archived && it.alerts }
+                            .forEach { b ->
+                                val range = BudgetPeriods.window(b, today)
+                                if (today in range.start..range.end) {
+                                    val report =
+                                        app.database
+                                            .ledger()
+                                            .categoryReport(range.start, range.end + 1)
+                                            .first()
+                                    val spent =
+                                        report
+                                            .filter {
+                                                it.currency == b.currency &&
+                                                    (b.categoryId == null ||
+                                                        b.categoryId == it.categoryId)
+                                            }
+                                            .sumOf { it.expenseMinor - it.refundMinor }
+                                    addThresholds(
+                                        "budget:period:${b.id}",
+                                        range,
+                                        spent,
+                                        b.limitMinor,
+                                        b.thresholds,
+                                    )
+                                }
+                            }
+                    }
+                }
                 val tags = eligible.map { it.token }.toSet()
                 manager.activeNotifications
                     .filter {
@@ -148,9 +282,25 @@ class FinanceReminderWorker(context: Context, params: WorkerParameters) :
                             val notification =
                                 NotificationCompat.Builder(applicationContext, "finance_due")
                                     .setSmallIcon(R.drawable.traxos_mark)
-                                    .setContentTitle("Traxos · payment reminder")
+                                    .setContentTitle(
+                                        when {
+                                            due.target.startsWith("budget:") ->
+                                                "Traxos · budget alert"
+                                            due.target.startsWith("debt:") ->
+                                                "Traxos · debt reminder"
+                                            due.target.startsWith("goal:") ->
+                                                "Traxos · savings reminder"
+                                            else -> "Traxos · payment reminder"
+                                        }
+                                    )
                                     .setContentText(
-                                        if (due.dueDay < today)
+                                        if (due.target.startsWith("budget:"))
+                                            "A recorded budget threshold was reached. Open Traxos to review."
+                                        else if (due.target.startsWith("debt:"))
+                                            "A recorded IOU needs review. Open Traxos for the details."
+                                        else if (due.target.startsWith("goal:"))
+                                            "A savings deadline needs review. Open Traxos for the details."
+                                        else if (due.dueDay < today)
                                             "A payment is overdue. Open Traxos to review it."
                                         else "A payment is coming up. Open Traxos to review it."
                                     )

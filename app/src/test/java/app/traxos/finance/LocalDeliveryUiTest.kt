@@ -34,6 +34,7 @@ class LocalDeliveryUiTest {
 
     private fun await(tag: String) {
         compose.waitUntil(15000) {
+            compose.mainClock.advanceTimeBy(32)
             compose.onAllNodes(hasTestTag(tag) and isEnabled()).fetchSemanticsNodes().isNotEmpty()
         }
     }
@@ -196,6 +197,7 @@ class LocalDeliveryUiTest {
             await("center_action")
             compose.onNodeWithTag("nav_transactions").performClick()
             compose.waitUntil(15000) {
+                compose.mainClock.advanceTimeBy(32)
                 compose.onAllNodesWithText("Lunch with friends").fetchSemanticsNodes().isNotEmpty()
             }
             compose.onNodeWithText("Every transaction.").assertIsDisplayed()

@@ -67,7 +67,29 @@ class GiftReminderWorkerTest {
                 it.tag == token
             }
         assertEquals(1, notifications.size)
-        val extras = notifications.single().notification.extras.toString()
+        // Inspect rendered text, not Bundle.toString(): internal object identity hashes
+        // can coincidentally contain the four-digit test PIN.
+        fun visibleText(notification: android.app.Notification): String {
+            val extras = notification.extras
+            val keys =
+                listOf(
+                    android.app.Notification.EXTRA_TITLE,
+                    android.app.Notification.EXTRA_TEXT,
+                    android.app.Notification.EXTRA_BIG_TEXT,
+                    android.app.Notification.EXTRA_SUB_TEXT,
+                    android.app.Notification.EXTRA_INFO_TEXT,
+                    android.app.Notification.EXTRA_SUMMARY_TEXT,
+                )
+            return (keys.mapNotNull { extras.getCharSequence(it)?.toString() } +
+                    extras
+                        .getCharSequenceArray(android.app.Notification.EXTRA_TEXT_LINES)
+                        .orEmpty()
+                        .map { it.toString() } +
+                    listOfNotNull(notification.tickerText?.toString()) +
+                    listOfNotNull(notification.publicVersion?.let { visibleText(it) }))
+                .joinToString("\n")
+        }
+        val extras = visibleText(notifications.single().notification)
         assertFalse(extras.contains("SECRET-1234"))
         assertFalse(extras.contains("4444"))
         assertFalse(extras.contains("Private merchant"))

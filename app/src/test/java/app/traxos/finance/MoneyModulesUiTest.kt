@@ -41,6 +41,7 @@ class MoneyModulesUiTest {
 
     private fun await(tag: String) {
         compose.waitUntil(15000) {
+            compose.mainClock.advanceTimeBy(32)
             compose.onAllNodes(hasTestTag(tag) and isEnabled()).fetchSemanticsNodes().isNotEmpty()
         }
     }
@@ -88,6 +89,7 @@ class MoneyModulesUiTest {
             compose.onNodeWithTag("input_group_member").performTextReplacement("Friend fixture")
             compose.onNode(hasText("Save") and hasAnyAncestor(isDialog())).performClick()
             compose.waitUntil(15000) {
+                compose.mainClock.advanceTimeBy(32)
                 compose.onAllNodes(hasTestTag("input_group_member")).fetchSemanticsNodes().isEmpty()
             }
             compose
@@ -159,6 +161,11 @@ class MoneyModulesUiTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             more("cards")
             await("card_schedules")
+            compose.waitUntil(15000) {
+                compose.mainClock.advanceTimeBy(32)
+                compose.onAllNodes(hasText("Pay") and isEnabled()).fetchSemanticsNodes().isNotEmpty()
+            }
+            compose.waitForIdle()
             compose.onNodeWithText("Pay").performScrollTo().performClick()
             compose.onNodeWithTag("selector_From account").performClick()
             compose.onNodeWithText("Bank fixture").performClick()

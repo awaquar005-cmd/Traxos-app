@@ -21,7 +21,7 @@ import java.time.format.DateTimeFormatter
 internal fun HomeScreen(
     state: ReadState.Ready,
     createAccount: () -> Unit,
-    openRecord: (String) -> Unit,
+    openRecord: (RecordRow) -> Unit,
     hidden: Boolean = false,
     toggleVisibility: () -> Unit = {},
     search: () -> Unit = {},
@@ -199,9 +199,7 @@ internal fun HomeScreen(
                             "Your ledger starts here",
                             "Record your first expense or income using Add.",
                         )
-                    state.recent.forEach { row ->
-                        RecordItem(row, hidden) { openRecord(row.record.id) }
-                    }
+                    state.recent.forEach { row -> RecordItem(row, hidden) { openRecord(row) } }
                 }
             }
         }

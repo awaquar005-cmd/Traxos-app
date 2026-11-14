@@ -6,6 +6,7 @@ import java.time.YearMonth
 import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 
 @Entity(
@@ -214,6 +215,17 @@ class PlansRepository(val db: TraxosDatabase) {
                     "Goal changed or archived; refresh first"
                 }
                 val next = Math.addExact(g.savedMinor, delta)
+                if (delta < 0)
+                    require(
+                        next >=
+                            db.planning()
+                                .reservations()
+                                .first()
+                                .filter { it.goalId == id }
+                                .sumOf { it.amountMinor }
+                    ) {
+                        "Select the funding account to withdraw linked progress"
+                    }
                 require(next in 0..Money.MAX_MINOR) {
                     "Progress cannot be negative or exceed the supported limit"
                 }
@@ -236,6 +248,9 @@ class PlansRepository(val db: TraxosDatabase) {
                 require(!g.archived && g.revision == revision) { "Goal changed; refresh first" }
                 val previous =
                     requireNotNull(db.plans().lastUndoable(id)) { "No progress entry to undo" }
+                require(db.planning().goalFunding(previous.id) == null) {
+                    "Use linked Undo from Plans"
+                }
                 val next = Math.subtractExact(g.savedMinor, previous.deltaMinor)
                 require(next in 0..Money.MAX_MINOR)
                 db.plans()

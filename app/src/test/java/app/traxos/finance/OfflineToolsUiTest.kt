@@ -68,6 +68,7 @@ class OfflineToolsUiTest {
 
     private fun awaitTag(tag: String) {
         compose.waitUntil(15000) {
+            compose.mainClock.advanceTimeBy(32)
             compose.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty()
         }
     }
@@ -100,6 +101,7 @@ class OfflineToolsUiTest {
                 .onNodeWithTag("activity_scope_summary")
                 .assertTextContains("INR", substring = true)
             compose.waitUntil(15000) {
+                compose.mainClock.advanceTimeBy(32)
                 compose.onAllNodesWithText("Demo lunch").fetchSemanticsNodes().isNotEmpty()
             }
             compose.onNodeWithText("Demo lunch").assertExists()

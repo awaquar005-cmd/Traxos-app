@@ -430,7 +430,10 @@ class GroupsRepository(val db: TraxosDatabase) {
                     ) {
                         "Choose a matching expense, currency, date and amount"
                     }
-                    require(db.groups().link(recordId) == null) {
+                    require(
+                        db.groups().link(recordId) == null &&
+                            db.planning().debtRecord(recordId) == null
+                    ) {
                         "This transaction is already linked"
                     }
                     require(db.obligations().paymentForRecord(recordId) == null) {
@@ -528,6 +531,7 @@ class GroupsRepository(val db: TraxosDatabase) {
                     )
                     require(
                         db.groups().link(recordId) == null &&
+                            db.planning().debtRecord(recordId) == null &&
                             db.obligations().paymentForRecord(recordId) == null
                     )
                     link = GroupLedgerLink(recordId, operation, 0)

@@ -1,0 +1,8 @@
+# Debt and planning extension contract
+
+Preserve all0.15.0 records, routes and defaults. Additive Room14 only; keep old archives and vault exclusions. No new cloud service, SDK, emulator or broad contacts permission.
+
+1. Debt: explicitly create or match opening/repayment account movements; lending/borrowing/repayment principal is never ordinary income or spending. Atomic operation IDs/revision guards, cross-currency/credit-card rejection, linked-record protection and Undo/unlink semantics. Optional saved people and user-selected Android phone contact; manual fallback. WhatsApp/system sharing must preview person, amount, date, due date and optional reason, open only on a tap and never claim sent/delivered. Private local due reminders and working preferences.
+2. Budgets: preserve monthly budgets and add fixed custom ranges / anchored monthly salary cycles with month-end/leap behavior. Exact report-based spending (including group self shares and refunds), per-budget threshold rules, master controls, private once-per-period notifications and no ledger writes.
+3. Goals: deadline/reminder settings, account-backed earmarks and optional real own-account transfers. Earmarks never inflate account balances or create income/expense. Prevent earmarking the same account funds repeatedly across goals; warn if later spending makes an account underfunded. Atomic linked Undo, stable histories and currency rules.
+4. Extend existing private WorkManager/permission/quiet-hour controls; no duplicate/stale notifications. Extend authenticated backups and actual migration/financial/native/permission tests. Report phone/contact/WhatsApp/OEM gates honestly, keep only the Personal APK and update docs/PROGRESS.md and FILES.md.

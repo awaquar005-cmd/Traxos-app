@@ -51,7 +51,9 @@ internal fun RecordItem(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Icon(
-                    if (row.record.type.startsWith("TRANSFER")) TraxosIcons.transfer
+                    if (row.record.type.startsWith("DEBT") || row.categoryName == "Loan principal")
+                        TraxosIcons.people
+                    else if (row.record.type.startsWith("TRANSFER")) TraxosIcons.transfer
                     else catalogIcon(row.categoryIcon),
                     null,
                     Modifier.size(24.dp),
@@ -83,7 +85,13 @@ internal fun RecordItem(
                             prefix =
                                 if (
                                     row.record.type in
-                                        listOf("INCOME", "REFUND", "PAYMENT_IN", "TRANSFER_IN")
+                                        listOf(
+                                            "INCOME",
+                                            "REFUND",
+                                            "PAYMENT_IN",
+                                            "TRANSFER_IN",
+                                            "DEBT_IN",
+                                        )
                                 )
                                     "+ "
                                 else "− ",
@@ -98,7 +106,7 @@ internal fun RecordItem(
                     prefix =
                         if (
                             row.record.type in
-                                listOf("INCOME", "REFUND", "PAYMENT_IN", "TRANSFER_IN")
+                                listOf("INCOME", "REFUND", "PAYMENT_IN", "TRANSFER_IN", "DEBT_IN")
                         )
                             "+ "
                         else "− ",
@@ -128,7 +136,7 @@ internal fun RecordItem(
 @Composable
 internal fun TransactionsScreen(
     vm: MainViewModel,
-    open: (String) -> Unit,
+    open: (RecordRow) -> Unit,
     hidden: Boolean,
     focusSearch: Boolean,
     onFocusHandled: () -> Unit,
@@ -334,7 +342,7 @@ internal fun TransactionsScreen(
                             bottomEnd = bottom,
                         ),
                     ) {
-                        open(r.record.id)
+                        open(r)
                     }
                 }
             }

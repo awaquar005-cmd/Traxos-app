@@ -250,6 +250,30 @@ fun TraxosApp(vm: MainViewModel) {
                 if (result == SnackbarResult.ActionPerformed) vm.undo(f)
             }
     }
+    val openRecord: (RecordRow) -> Unit = { row ->
+        val id = row.record.id
+        val principal = row.record.type.startsWith("DEBT") || row.categoryName == "Loan principal"
+        if (!principal) nav.navigate("transaction/$id") { launchSingleTop = true }
+        else
+            scope.launch {
+                try {
+                    val debt = app.planning.dao.debtRecord(id)
+                    if (debt != null) nav.navigate("debt/${debt.debtId}") { launchSingleTop = true }
+                    else if (app.repository.dao.record(id)?.type?.startsWith("DEBT") == true)
+                        mainNav("debts")
+                    else nav.navigate("transaction/$id") { launchSingleTop = true }
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    feedback(
+                        Feedback(
+                            "Could not open this record. Saved data is kept.",
+                            kind = NoticeKind.ERROR,
+                        )
+                    )
+                }
+            }
+    }
     LaunchedEffect(vm) { for (event in vm.events) feedback(event) }
     LaunchedEffect(transferEvents) {
         for (id in transferEvents) {
@@ -301,6 +325,9 @@ fun TraxosApp(vm: MainViewModel) {
                                 "finance_reminders" -> "Payment reminders"
                                 "smart" -> "Smart Add"
                                 "plans" -> "Plans"
+                                "period_budgets" -> "Budget periods"
+                                "planning_settings" -> "Debt & planning alerts"
+                                "debt/{id}" -> "Debt"
                                 "voice" -> "Voice entry"
                                 "cloud_setup" -> "Account & Drive"
                                 "backup" -> "Backups & recovery"
@@ -327,6 +354,9 @@ fun TraxosApp(vm: MainViewModel) {
                                                 ?.route
                                                 ?.startsWith("settings") == true) ||
                                         route == "categories" ||
+                                        route == "period_budgets" ||
+                                        route == "planning_settings" ||
+                                        route.startsWith("debt/") ||
                                         route.startsWith("group/") ||
                                         route == "cards" ||
                                         route == "subscriptions" ||
@@ -423,7 +453,7 @@ fun TraxosApp(vm: MainViewModel) {
                         HomeScreen(
                             it,
                             { nav.navigate("account/new") { launchSingleTop = true } },
-                            { id -> nav.navigate("transaction/$id") { launchSingleTop = true } },
+                            openRecord,
                             prefs.balancesHidden,
                             { vm.balancesHidden(!prefs.balancesHidden) },
                             search,
@@ -454,7 +484,7 @@ fun TraxosApp(vm: MainViewModel) {
                 RoutePage("transactions") {
                     TransactionsScreen(
                         vm,
-                        { nav.navigate("transaction/$it") { launchSingleTop = true } },
+                        openRecord,
                         prefs.balancesHidden,
                         focusSearch,
                         { focusSearch = false },
@@ -495,6 +525,7 @@ fun TraxosApp(vm: MainViewModel) {
                                 "cards" -> "cards"
                                 "subscriptions" -> "subscriptions"
                                 "finance_reminders" -> "finance_reminders"
+                                "planning_settings" -> "planning_settings"
                                 "gift_settings" -> "gift_settings"
                                 else -> "settings/$section"
                             }
@@ -540,6 +571,8 @@ fun TraxosApp(vm: MainViewModel) {
                         prefs.defaultCurrency,
                         { recurringOpen = true },
                         prefs.balancesHidden,
+                        mainNav,
+                        app.financeScheduler::kick,
                     )
                 }
             }
@@ -595,6 +628,7 @@ fun TraxosApp(vm: MainViewModel) {
                         "GROUP",
                         "GROUP_EXPENSE",
                         "GROUP_SETTLE" -> GroupEditor(kind, id, prefs.defaultCurrency, close)
+                        "PERIOD" -> PeriodBudgetEditor(id, prefs.defaultCurrency, close)
                         "STATEMENT_EDIT" -> CardStatementAdjustmentEditor(id, close)
                         "CYCLE",
                         "STATEMENT" -> CardScheduleEditor(kind, id, close)
@@ -602,12 +636,41 @@ fun TraxosApp(vm: MainViewModel) {
                     }
                 }
             }
+            composable("period_budgets") {
+                RoutePage("period_budgets") {
+                    PeriodBudgetsScreen(prefs.defaultCurrency, prefs.balancesHidden, mainNav)
+                }
+            }
+            composable("planning_settings") {
+                RoutePage("planning_settings") { PlanningSettingsScreen(mainNav) }
+            }
+            composable("debt/{id}") { e ->
+                val debts = remember(app.database) { DebtsRepository(app.database) }
+                RoutePage("debt") {
+                    DebtsScreen(
+                        debts,
+                        prefs.defaultCurrency,
+                        prefs.balancesHidden,
+                        payCard = { id ->
+                            nav.navigate("card_payment/$id") { launchSingleTop = true }
+                        },
+                        initialDebt = e.arguments?.getString("id").orEmpty(),
+                        changed = app.financeScheduler::kick,
+                    )
+                }
+            }
             composable("debts") {
                 val debts = remember(app.database) { DebtsRepository(app.database) }
                 RoutePage("debts") {
-                    DebtsScreen(debts, prefs.defaultCurrency, prefs.balancesHidden) { id ->
-                        nav.navigate("card_payment/$id") { launchSingleTop = true }
-                    }
+                    DebtsScreen(
+                        debts,
+                        prefs.defaultCurrency,
+                        prefs.balancesHidden,
+                        payCard = { id ->
+                            nav.navigate("card_payment/$id") { launchSingleTop = true }
+                        },
+                        changed = app.financeScheduler::kick,
+                    )
                 }
             }
             composable("more") { RoutePage("more") { MoreScreen(mainNav) } }

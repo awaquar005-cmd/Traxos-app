@@ -1,3 +1,7 @@
+# Current0.16.0 scope
+
+Debt account links/contacts/explicit sharing/reminders and budget periods/thresholds/goal deadlines/account backing are implemented. Personal APK built; **299 tests passed across the full run and targeted rerun (0 remaining failures/errors/skips)**. Lint: **0 errors, 23 warnings, 4 hints**. Signing and16KiB ZIP/64-bit ELF alignment verified.; physical/OEM acceptance remains pending. See DEBT_PLANNING_EXTENSIONS.md and PROGRESS.md. Prior entries below are historical.
+
 # Current0.15.0 addendum
 
 Offline local groups/members, four split modes, partial settlements/reversal history and personal-share reports; manual/estimated credit statements, cycle/limit/minimum/reminders and paired payments; subscription/bill/EMI plans, actual confirmation/matching, detection/history/Undo and private due reminders are implemented. Live invitations/group transport/authorization remain awaiting setup by owner instruction. Room13 and backup11/12 compatibility are tracked in GROUPS_CARDS_BILLS.md and current PROGRESS.md. Earlier tables below are historical snapshots.

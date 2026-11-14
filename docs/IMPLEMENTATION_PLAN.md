@@ -1,3 +1,7 @@
+# 0.16.0 scoped completion
+
+P1 debt account movements/matching/contacts/explicit sharing/due reminders; P1 custom and salary-period budgets/threshold notifications; P1 goal deadlines/account allocations and paired transfers. Preserve manual workflows and old records, exact principal/report accounting, aggregate earmark limits, idempotency, encrypted recovery and private deduplicated reminders. [Acceptance plan](DEBT_PLANNING_EXTENSIONS_PLAN.md), [delivery semantics](DEBT_PLANNING_EXTENSIONS.md). Live sharing remains deferred by owner choice.
+
 # 0.15.0 scoped roadmap
 
 P1 offline groups/members, four deterministic split methods, personal-share reconciliation, partial net settlements/reversals and local history; P1 card cycles/statements/minimums/limits/reminders/EMI; P1 fixed/variable subscription/bill lifecycle, trial/end/quarterly/yearly/custom dates, approved-history detection and actual-payment matching/Undo. Acceptance covers preserved12→13 data/old archives, money conservation/no double counting, retries/operation collision, statement carry-forward, private notification dedupe and native forms. Live invitations, RLS and multi-device collaboration remain explicitly pending at owner direction. See GROUPS_CARDS_BILLS_PLAN.md, GROUPS_CARDS_BILLS.md and PROGRESS.md for actual delivery.

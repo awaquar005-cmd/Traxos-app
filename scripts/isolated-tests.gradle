@@ -1,0 +1,7 @@
+// Optional sequential class isolation for native Robolectric regression runs.
+// Usage: ./gradlew -I scripts/isolated-tests.gradle :app:testPersonalDebugUnitTest
+allprojects {
+ tasks.withType(Test).configureEach {
+  forkEvery = 1
+ }
+}
